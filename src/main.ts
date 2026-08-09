@@ -14,14 +14,14 @@ import { 获取浏览器定位 } from "./定位";
 import { 读取全部配置 } from "./规则/配置读取";
 import { 获取神圣纪念日 } from "./规则/神圣纪念日";
 import type { 时辰规则判断 } from "./规则/时辰规则";
-import type { 时辰概览项 } from "./历法/十二时辰";
+import type { 时辰概览段, 时辰概览项 } from "./历法/十二时辰";
 import {
   从时间戳读取北京时间,
   格式化日期时间,
   获取传统节日,
   创建北京时间,
 } from "./历法";
-import { 计算当前历时, type 时间依据 } from "./当前历时";
+import { 初始化时辰配置, 计算当前历时, type 时间依据 } from "./当前历时";
 import {
   创建分钟实时更新器,
   创建实时查询时间,
@@ -53,8 +53,10 @@ let 用户已选择时间依据 = false;
 let 当前经度: number | null = null;
 let 当前定位状态: 定位状态 = "未定位";
 let 定位说明 = "尚未定位，当前使用北京时间";
+let 展开时辰键: string | null = null;
 
 const 配置结果 = 读取全部配置();
+const 已解析时辰配置 = 初始化时辰配置(配置结果);
 const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "神圣纪念日.txt");
 const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
 const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
@@ -142,12 +144,46 @@ function 时辰概览卡片(项目: 时辰概览项): string {
       <header><strong>${项目.名称}</strong>${项目.当前 ? "<span>当前</span>" : ""}</header>
       <div class="hour-segments">
         ${项目.时段.map((时段) => `
-          <div class="hour-segment${时段.当前 ? " is-current" : ""}">
+          <button
+            type="button"
+            class="hour-segment${时段.当前 ? " is-current" : ""}${展开时辰键 === 时段.键 ? " is-expanded" : ""}"
+            data-hour-key="${时段.键}"
+            aria-expanded="${展开时辰键 === 时段.键}"
+            aria-label="${时段.名称}，${时段.时间范围}，${时段.时柱}时，${时段.值神}${时段.吉凶}，点击${展开时辰键 === 时段.键 ? "收起" : "查看详情"}"
+          >
             <div class="hour-time">${项目.时段.length > 1 ? `<span>${时段.名称}</span>` : ""}<time>${时段.时间范围}</time></div>
             <div class="hour-meta"><strong>${时段.时柱}时</strong><span>${时段.值神}</span><em class="is-${时段.吉凶}">${时段.吉凶}</em></div>
-          </div>`).join("")}
+          </button>`).join("")}
       </div>
     </article>`;
+}
+
+function 时辰详情标签(标题: string, 内容: string[], 类型 = "normal"): string {
+  const 空提示 = 标题 === "日时关系" ? "无特殊关系" : 标题 === "时宜" || 标题 === "时忌" ? "暂无明确通用条目" : "无";
+  return `
+    <div class="hour-detail-group is-${类型}">
+      <dt>${标题}</dt>
+      <dd>${内容.length > 0 ? 内容.map((条目) => `<span>${转义HTML(条目)}</span>`).join("") : `<em>${空提示}</em>`}</dd>
+    </div>`;
+}
+
+function 时辰展开详情(时段: 时辰概览段 | undefined): string {
+  if (!时段) return "";
+  return `
+    <section class="hour-detail" aria-label="${时段.名称}详细时辰信息">
+      <header>
+        <div><strong>${时段.名称}</strong><span>${时段.时柱}时 · ${时段.时间范围}</span></div>
+        <p>${时段.值神} · <em class="is-${时段.吉凶}">${时段.吉凶}</em></p>
+      </header>
+      <dl>
+        ${时辰详情标签("日时关系", 时段.详情.日时关系)}
+        ${时辰详情标签("吉神", 时段.详情.吉神, "good")}
+        ${时辰详情标签("凶煞", 时段.详情.凶煞, "bad")}
+        ${时辰详情标签("时宜", 时段.详情.时宜, "good")}
+        ${时辰详情标签("时忌", 时段.详情.时忌, "bad")}
+      </dl>
+      <small>依据：${时段.详情.依据}</small>
+    </section>`;
 }
 
 function 渲染(): void {
@@ -163,9 +199,9 @@ function 渲染(): void {
     Number(分文本),
     0,
   );
-  const 当前历时 = 计算当前历时(北京时间, 当前时间依据, 当前经度, 配置结果);
-  const { 最终, 历法结果, 四柱, 时辰规则, 真太阳时结果, 十二时辰, 时辰吉凶配置错误 } = 当前历时;
-  const 错误总数 = 基础配置错误总数 + 时辰吉凶配置错误.length;
+  const 当前历时 = 计算当前历时(北京时间, 当前时间依据, 当前经度, 配置结果, 已解析时辰配置);
+  const { 最终, 历法结果, 四柱, 时辰规则, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
+  const 错误总数 = 基础配置错误总数 + 时辰配置错误.length;
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
   const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 历法结果.农历);
@@ -179,6 +215,9 @@ function 渲染(): void {
   const 最终日期提示 = `${最终.日柱计算时间.年}年${最终.日柱计算时间.月}月${最终.日柱计算时间.日}日`;
   const 时间模式说明 = 时间查询.模式 === "实时" ? "实时更新" : "手动查询";
   const 切换目标 = 当前时间依据 === "北京时间" ? "真太阳时" : "北京时间";
+  const 全部时段 = 十二时辰.项目.flatMap((项目) => 项目.时段);
+  const 展开时辰 = 全部时段.find((时段) => 时段.键 === 展开时辰键);
+  if (展开时辰键 && !展开时辰) 展开时辰键 = null;
 
   根节点.innerHTML = `
     <main class="page-shell">
@@ -230,6 +269,7 @@ function 渲染(): void {
           <section class="hour-overview" aria-label="十二时辰">
             <h3>十二时辰</h3>
             <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
+            ${时辰展开详情(展开时辰)}
           </section>
         </aside>
 
@@ -294,34 +334,30 @@ function 渲染(): void {
           </div>
         </article>
 
-        <section class="calculation-card" aria-label="时间、定位与计算依据">
-          <h2>时间与计算依据</h2>
+        <section class="calculation-card" aria-label="时间与计算依据">
           <div class="time-controls">
-            <label>查询时间（${时间模式说明}）<input type="time" data-time-input value="${时间查询.时间}" aria-label="查询时间"></label>
+            <label>查询时间 · ${时间模式说明}<input type="time" data-time-input value="${时间查询.时间}" aria-label="查询时间"></label>
             <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
               ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
             </button>
             <p class="location-status is-${当前定位状态}">${定位说明}</p>
           </div>
 
-          <div class="detail-rule"></div>
-          <dl class="calculation-list">
-            <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
-            <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
-            <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
-            <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
-            <div><dt>节气</dt><dd>${节气显示}</dd></div>
-          </dl>
+          <details class="calculation-details">
+            <summary>计算详情</summary>
+            <dl class="calculation-list">
+              <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
+              <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
+              <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
+              <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
+              <div><dt>节气</dt><dd>${节气显示}</dd></div>
+            </dl>
+            <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
+          </details>
 
-          <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
-
-          <div class="config-status${错误总数 > 0 ? " has-error" : ""}">
-            <span class="status-dot" aria-hidden="true"></span>
-            <div>
-              <strong>传统规则配置</strong>
-              <p>已读取 ${配置结果.length} 个文件，共 ${规则总数} 条规则${错误总数 > 0 ? `，${错误总数} 条待修正` : ""}</p>
-            </div>
-          </div>
+          <p class="config-status${错误总数 > 0 ? " has-error" : ""}">
+            规则配置：已读取 ${配置结果.length} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
+          </p>
         </section>
       </section>
 
@@ -344,6 +380,13 @@ function 更新显示年月(年: number, 月: number): void {
 根节点.addEventListener("click", async (事件) => {
   const 目标 = (事件.target as HTMLElement).closest<HTMLButtonElement>("button");
   if (!目标) return;
+
+  const 时辰键 = 目标.dataset.hourKey;
+  if (时辰键) {
+    展开时辰键 = 展开时辰键 === 时辰键 ? null : 时辰键;
+    渲染();
+    return;
+  }
 
   const 日期 = 目标.dataset.day;
   if (日期) {

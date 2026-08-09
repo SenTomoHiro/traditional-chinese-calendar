@@ -150,4 +150,32 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
     expect(页面样式).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
   });
+
+  it("十二时辰支持单项展开且详情留在模块内部", () => {
+    const 网格位置 = 页面源码.indexOf('class="hour-grid"');
+    const 详情位置 = 页面源码.indexOf("${时辰展开详情(展开时辰)}");
+    expect(页面源码).toContain('data-hour-key="${时段.键}"');
+    expect(页面源码).toContain('aria-expanded="${展开时辰键 === 时段.键}"');
+    expect(页面源码).toContain("展开时辰键 = 展开时辰键 === 时辰键 ? null : 时辰键");
+    expect(页面源码).toContain('class="hour-detail"');
+    expect(详情位置).toBeGreaterThan(网格位置);
+    expect(页面源码).toContain('时辰详情标签("日时关系"');
+    expect(页面源码).toContain('时辰详情标签("吉神"');
+    expect(页面源码).toContain('时辰详情标签("凶煞"');
+    expect(页面源码).toContain('时辰详情标签("时宜"');
+    expect(页面源码).toContain('时辰详情标签("时忌"');
+  });
+
+  it("双栏采用左宽右窄且移动端仍为单栏", () => {
+    expect(页面样式).toContain("grid-template-columns: minmax(0, 1.38fr) minmax(360px, 1fr)");
+    expect(页面样式).toMatch(/@media \(max-width: 820px\)[\s\S]*grid-template-columns:\s*1fr/u);
+  });
+
+  it("时间依据默认折叠并把规则配置弱化成自动统计行", () => {
+    expect(页面源码).toContain('<details class="calculation-details">');
+    expect(页面源码).toContain("<summary>计算详情</summary>");
+    expect(页面源码).not.toContain('<h2>时间与计算依据</h2>');
+    expect(页面源码).toContain("规则配置：已读取 ${配置结果.length} 个文件 · ${规则总数} 条规则");
+    expect(页面源码).not.toContain("<strong>传统规则配置</strong>");
+  });
 });

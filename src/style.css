@@ -75,7 +75,7 @@ button:focus-visible {
   grid-template-areas:
     "detail calendar"
     "calculation calendar";
-  grid-template-columns: minmax(360px, 0.82fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1.38fr) minmax(360px, 1fr);
   grid-template-rows: auto 1fr;
   overflow: hidden;
   background: var(--surface);
@@ -275,7 +275,7 @@ button:focus-visible {
 .calculation-card {
   position: relative;
   grid-area: calculation;
-  padding: 26px clamp(28px, 3.5vw, 42px) clamp(34px, 4vw, 46px);
+  padding: 16px clamp(28px, 3.5vw, 42px) 20px;
   color: var(--panel-ink);
   background: var(--panel);
   border-top: 1px solid var(--panel-line);
@@ -395,17 +395,11 @@ button:focus-visible {
   font-weight: 500;
 }
 
-.detail-rule {
-  height: 1px;
-  margin: 30px 0 18px;
-  background: var(--panel-line);
-}
-
 .time-controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
-  margin-top: 15px;
+  margin-top: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
@@ -462,13 +456,22 @@ button:focus-visible {
   color: var(--danger);
 }
 
-.calculation-card > h2 {
-  margin: 0;
-  color: var(--gold-soft);
+.calculation-details {
+  margin-top: 10px;
+  color: var(--panel-muted);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+
+.calculation-details summary {
+  width: max-content;
+  color: var(--panel-muted);
+  cursor: pointer;
+}
+
+.calculation-details[open] summary {
+  margin-bottom: 7px;
+  color: var(--gold-soft);
 }
 
 .calculation-list {
@@ -625,7 +628,7 @@ button:focus-visible {
 
 .hour-card {
   min-width: 0;
-  padding: 9px;
+  padding: 8px;
   background: color-mix(in srgb, var(--gold) 7%, transparent);
   border: 1px solid var(--panel-line);
   border-radius: 10px;
@@ -661,8 +664,31 @@ button:focus-visible {
   gap: 7px;
 }
 
+.hour-segment {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 3px;
+  color: inherit;
+  text-align: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.hour-segment:hover {
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+.hour-segment.is-expanded {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 76%, var(--gold-soft));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-soft) 25%, transparent);
+}
+
 .hour-segment + .hour-segment {
-  padding-top: 7px;
+  padding-top: 6px;
   border-top: 1px solid var(--panel-line);
 }
 
@@ -724,41 +750,135 @@ button:focus-visible {
   color: var(--danger);
 }
 
-.config-status {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  margin-top: 24px;
+.hour-detail {
+  margin-top: 12px;
   padding: 14px;
-  background: color-mix(in srgb, var(--gold) 9%, transparent);
-  border: 1px solid var(--panel-line);
+  color: var(--panel-ink);
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold-soft) 40%, var(--panel-line));
   border-radius: 12px;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-.status-dot {
-  flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
-  margin-top: 5px;
-  background: var(--gold-soft);
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold-soft) 14%, transparent);
+.hour-detail > header {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--panel-line);
 }
 
-.config-status.has-error .status-dot {
-  background: var(--danger);
+.hour-detail > header div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 9px;
+  align-items: baseline;
 }
 
-.config-status strong {
-  font-size: 12px;
+.hour-detail > header strong {
+  color: var(--gold-soft);
+  font-size: 15px;
 }
 
-.config-status p {
-  margin: 3px 0 0;
+.hour-detail > header span,
+.hour-detail > header p {
+  margin: 0;
   color: var(--panel-muted);
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.5;
+}
+
+.hour-detail > header p {
+  flex: 0 0 auto;
+}
+
+.hour-detail > header em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.hour-detail > header em.is-吉 {
+  color: var(--gold-soft);
+}
+
+.hour-detail > header em.is-凶,
+.hour-detail > header em.is-— {
+  color: var(--danger);
+}
+
+.hour-detail dl {
+  display: grid;
+  gap: 9px;
+  margin: 12px 0 0;
+}
+
+.hour-detail-group {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.hour-detail-group dt {
+  color: var(--panel-muted);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.hour-detail-group dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+}
+
+.hour-detail-group dd span,
+.hour-detail-group dd em {
+  padding: 2px 6px;
+  color: var(--panel-ink);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.hour-detail-group.is-good dd span {
+  color: var(--gold-soft);
+  border-color: color-mix(in srgb, var(--gold-soft) 34%, transparent);
+}
+
+.hour-detail-group.is-bad dd span {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+}
+
+.hour-detail-group dd em {
+  color: var(--panel-muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.hour-detail > small {
+  display: block;
+  margin-top: 12px;
+  color: color-mix(in srgb, var(--panel-muted) 74%, transparent);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.config-status {
+  margin: 10px 0 0;
+  color: color-mix(in srgb, var(--panel-muted) 72%, transparent);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.config-status.has-error {
+  color: var(--danger);
 }
 
 @media (max-width: 820px) {
@@ -834,7 +954,7 @@ button:focus-visible {
   }
 
   .calculation-card {
-    padding: 26px 24px 30px;
+    padding: 16px 24px 20px;
   }
 
   .lunar-title {
@@ -866,6 +986,26 @@ button:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .hour-detail {
+    padding: 12px;
+  }
+
+}
+
+@media (max-width: 350px) {
+  .detail-card,
+  .calculation-card {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .hour-card {
+    padding: 6px;
+  }
+
+  .hour-detail-group {
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
 }
 
 @media (prefers-color-scheme: dark) {

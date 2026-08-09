@@ -34,7 +34,8 @@ describe("中文配置读取", () => {
   it("现有全部中文配置文件都能正常读取", () => {
     const 配置目录 = resolve(process.cwd(), "配置");
     const 文件列表 = readdirSync(配置目录).filter((名称) => 名称.endsWith(".txt"));
-    expect(文件列表).toHaveLength(11);
+    expect(文件列表).toEqual(expect.arrayContaining(["时辰吉凶.txt", "时辰神煞.txt", "时辰宜忌.txt"]));
+    expect(文件列表.length).toBeGreaterThanOrEqual(13);
 
     for (const 文件名 of 文件列表) {
       const 内容 = readFileSync(resolve(配置目录, 文件名), "utf8");
