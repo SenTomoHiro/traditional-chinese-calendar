@@ -14,6 +14,7 @@ import { 获取浏览器定位 } from "./定位";
 import { 读取全部配置 } from "./规则/配置读取";
 import { 获取神圣纪念日 } from "./规则/神圣纪念日";
 import type { 时辰规则判断 } from "./规则/时辰规则";
+import type { 时辰概览项 } from "./历法/十二时辰";
 import {
   从时间戳读取北京时间,
   格式化日期时间,
@@ -56,7 +57,7 @@ let 定位说明 = "尚未定位，当前使用北京时间";
 const 配置结果 = 读取全部配置();
 const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "神圣纪念日.txt");
 const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
-const 错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
+const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
 
 function 设置日期(日期: Date): void {
   const 当前北京时间 = 从时间戳读取北京时间();
@@ -135,6 +136,20 @@ function 规则标记(规则: 时辰规则判断): string {
     </div>`;
 }
 
+function 时辰概览卡片(项目: 时辰概览项): string {
+  return `
+    <article class="hour-card${项目.当前 ? " is-current" : ""}" aria-label="${项目.名称}${项目.当前 ? "，当前时辰" : ""}">
+      <header><strong>${项目.名称}</strong>${项目.当前 ? "<span>当前</span>" : ""}</header>
+      <div class="hour-segments">
+        ${项目.时段.map((时段) => `
+          <div class="hour-segment${时段.当前 ? " is-current" : ""}">
+            <div class="hour-time">${项目.时段.length > 1 ? `<span>${时段.名称}</span>` : ""}<time>${时段.时间范围}</time></div>
+            <div class="hour-meta"><strong>${时段.时柱}时</strong><span>${时段.值神}</span><em class="is-${时段.吉凶}">${时段.吉凶}</em></div>
+          </div>`).join("")}
+      </div>
+    </article>`;
+}
+
 function 渲染(): void {
   const 月历格 = 创建月历格(状态.年, 状态.月);
   const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念配置);
@@ -149,7 +164,8 @@ function 渲染(): void {
     0,
   );
   const 当前历时 = 计算当前历时(北京时间, 当前时间依据, 当前经度, 配置结果);
-  const { 最终, 历法结果, 四柱, 时辰规则, 真太阳时结果 } = 当前历时;
+  const { 最终, 历法结果, 四柱, 时辰规则, 真太阳时结果, 十二时辰, 时辰吉凶配置错误 } = 当前历时;
+  const 错误总数 = 基础配置错误总数 + 时辰吉凶配置错误.length;
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
   const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 历法结果.农历);
@@ -209,6 +225,11 @@ function 渲染(): void {
           <section class="rule-results" aria-label="风水禁忌速查">
             <h3>风水禁忌速查</h3>
             ${时辰规则.map(规则标记).join("")}
+          </section>
+
+          <section class="hour-overview" aria-label="十二时辰">
+            <h3>十二时辰</h3>
+            <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
           </section>
         </aside>
 
@@ -292,7 +313,7 @@ function 渲染(): void {
             <div><dt>节气</dt><dd>${节气显示}</dd></div>
           </dl>
 
-          <p class="calculation-note">当前统一按${当前时间依据}计算；日柱从子时开始的 23:00 换日</p>
+          <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
 
           <div class="config-status${错误总数 > 0 ? " has-error" : ""}">
             <span class="status-dot" aria-hidden="true"></span>

@@ -544,13 +544,15 @@ button:focus-visible {
   letter-spacing: 0.04em;
 }
 
-.rule-results {
+.rule-results,
+.hour-overview {
   margin-top: 28px;
   padding-top: 20px;
   border-top: 1px solid var(--panel-line);
 }
 
-.rule-results h3 {
+.rule-results h3,
+.hour-overview h3 {
   margin: 0 0 9px;
   color: var(--gold-soft);
   font-size: 12px;
@@ -612,6 +614,114 @@ button:focus-visible {
   color: var(--panel-muted);
   font-size: 10px;
   line-height: 1.45;
+}
+
+.hour-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.hour-card {
+  min-width: 0;
+  padding: 9px;
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+}
+
+.hour-card.is-current {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  border-color: var(--gold-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.hour-card > header {
+  display: flex;
+  gap: 5px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.hour-card > header strong {
+  color: var(--panel-ink);
+  font-size: 11px;
+}
+
+.hour-card > header span {
+  color: var(--gold-soft);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.hour-segments {
+  display: grid;
+  gap: 7px;
+}
+
+.hour-segment + .hour-segment {
+  padding-top: 7px;
+  border-top: 1px solid var(--panel-line);
+}
+
+.hour-time,
+.hour-meta {
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.hour-time {
+  color: var(--panel-muted);
+  font-size: 8px;
+}
+
+.hour-time span {
+  flex: 0 0 auto;
+  color: var(--gold-soft);
+}
+
+.hour-time time {
+  white-space: nowrap;
+}
+
+.hour-meta {
+  margin-top: 4px;
+  font-size: 9px;
+}
+
+.hour-meta strong {
+  color: var(--panel-ink);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.hour-meta span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--panel-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hour-meta em {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.hour-meta em.is-吉 {
+  color: var(--gold-soft);
+}
+
+.hour-meta em.is-凶,
+.hour-meta em.is-— {
+  color: var(--danger);
 }
 
 .config-status {
@@ -750,6 +860,10 @@ button:focus-visible {
 
   .detail-rule {
     margin-top: 24px;
+  }
+
+  .hour-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
 }

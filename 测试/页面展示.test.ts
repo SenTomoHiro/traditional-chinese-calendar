@@ -131,8 +131,23 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("const 是今天 = 是同一天(当前日期, 最终.最终时间)");
   });
 
-  it("页面明确提示按当前时间依据的23点换日", () => {
-    expect(页面源码).toContain("日柱从子时开始的 23:00 换日");
-    expect(页面源码).not.toContain("日柱以最终计算时间 00:00 换日");
+  it("页面明确区分23点进入子时与午夜换日", () => {
+    expect(页面源码).toContain("23:00进入子时，日柱仍在00:00换日");
+    expect(页面源码).not.toContain("日柱从子时开始的 23:00 换日");
+  });
+
+  it("十二时辰位于风水禁忌速查之后并使用响应式多列布局", () => {
+    const 风水位置 = 页面源码.indexOf('aria-label="风水禁忌速查"');
+    const 时辰位置 = 页面源码.indexOf('class="hour-overview"');
+    expect(时辰位置).toBeGreaterThan(风水位置);
+    expect(页面源码).toContain('<h3>十二时辰</h3>');
+    expect(页面源码).toContain("十二时辰.项目.map(时辰概览卡片)");
+    expect(页面源码).toContain('class="hour-card${项目.当前 ? " is-current" : ""}"');
+    expect(页面源码).toContain("${时段.时间范围}");
+    expect(页面源码).toContain("${时段.时柱}时");
+    expect(页面源码).toContain("${时段.值神}");
+    expect(页面源码).toContain("${时段.吉凶}");
+    expect(页面样式).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+    expect(页面样式).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
   });
 });
