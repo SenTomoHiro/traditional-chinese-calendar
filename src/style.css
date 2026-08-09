@@ -26,6 +26,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: var(--ink);
   background:
     radial-gradient(circle at 8% 10%, rgba(166, 68, 54, 0.08), transparent 28rem),
     radial-gradient(circle at 88% 78%, rgba(52, 89, 73, 0.09), transparent 34rem),
@@ -101,7 +102,11 @@ h1 {
 
 .calendar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.9fr);
+  grid-template-areas:
+    "detail calendar"
+    "calculation calendar";
+  grid-template-columns: minmax(360px, 0.82fr) minmax(0, 1.25fr);
+  grid-template-rows: auto 1fr;
   overflow: hidden;
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
@@ -110,7 +115,9 @@ h1 {
 }
 
 .calendar-card {
+  grid-area: calendar;
   padding: clamp(22px, 4vw, 48px);
+  border-left: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
 .calendar-toolbar {
@@ -278,10 +285,28 @@ h1 {
 }
 
 .detail-card {
+  grid-area: detail;
   position: relative;
-  padding: clamp(28px, 4vw, 48px);
+  padding: clamp(34px, 4vw, 48px) clamp(28px, 3.5vw, 42px);
   color: #eef1ec;
   background: #29463a;
+}
+
+.calculation-card {
+  position: relative;
+  grid-area: calculation;
+  padding: 26px clamp(28px, 3.5vw, 42px) clamp(34px, 4vw, 46px);
+  color: #eef1ec;
+  background: #29463a;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.calculation-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  content: "";
+  background: var(--accent);
 }
 
 .detail-accent {
@@ -297,23 +322,63 @@ h1 {
   color: #d8a69d;
 }
 
-.selected-day-number {
-  margin: 22px 0 4px;
+.lunar-title {
+  margin: 18px 0 8px;
   color: #fffaf3;
-  font-family: Georgia, serif;
-  font-size: clamp(66px, 8vw, 92px);
-  line-height: 0.9;
+  font-size: clamp(38px, 4.3vw, 54px);
+  font-weight: 550;
+  line-height: 1.12;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
 }
 
-.detail-card h2 {
-  margin: 20px 0 5px;
-  font-size: 20px;
-  font-weight: 500;
-}
-
-.weekday {
+.solar-date {
   margin: 0;
   color: #b8c8bf;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.pillar-core {
+  margin-top: 30px;
+}
+
+.pillar-core > span,
+.value-star-core > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #d8a69d;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.pillar-core strong {
+  display: block;
+  color: #fffaf3;
+  font-size: clamp(17px, 2vw, 21px);
+  font-weight: 500;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.value-star-core {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  margin-top: 22px;
+}
+
+.value-star-core > span {
+  margin: 0;
+}
+
+.value-star-core strong {
+  color: #fffaf3;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .detail-rule {
@@ -326,7 +391,7 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
-  margin-top: 22px;
+  margin-top: 15px;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
@@ -383,37 +448,44 @@ h1 {
   color: #e5b0a8;
 }
 
-.detail-list {
+.calculation-card > h2 {
+  margin: 0;
+  color: #d8a69d;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.calculation-list {
   margin: 0;
 }
 
-.detail-list > div {
+.calculation-list > div {
   display: grid;
   grid-template-columns: 58px 1fr;
   gap: 14px;
-  padding: 8px 0;
+  padding: 7px 0;
 }
 
-.detail-list dt {
+.calculation-list dt {
   color: #b8c8bf;
+  font-size: 12px;
 }
 
-.detail-list dd {
+.calculation-list dd {
   margin: 0;
-}
-
-.four-pillars dd {
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .date-events {
   display: grid;
   gap: 15px;
-  margin-top: 22px;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .event-group h3 {
@@ -459,7 +531,9 @@ h1 {
 }
 
 .rule-results {
-  margin-top: 24px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .rule-results h3 {
@@ -501,6 +575,24 @@ h1 {
   font-size: 11px;
 }
 
+.rule-result-heading {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.rule-result-heading em {
+  color: #b8c8bf;
+  font-size: 10px;
+  font-style: normal;
+}
+
+.rule-result.is-命中 .rule-result-heading em,
+.rule-result.is-配置错误 .rule-result-heading em {
+  color: #efb0a7;
+}
+
 .rule-result p {
   margin: 2px 0 0;
   color: #b8c8bf;
@@ -512,7 +604,7 @@ h1 {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  margin-top: 28px;
+  margin-top: 24px;
   padding: 14px;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.11);
@@ -565,38 +657,21 @@ footer p {
   }
 
   .calendar-layout {
+    grid-template-areas:
+      "detail"
+      "calendar"
+      "calculation";
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
   }
 
-  .detail-card {
-    display: grid;
-    grid-template-columns: minmax(130px, 0.7fr) minmax(220px, 1.3fr);
-    column-gap: 30px;
+  .calendar-card {
+    border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+    border-left: 0;
   }
 
-  .detail-card > .detail-kicker,
-  .detail-card > .selected-day-number,
-  .detail-card > h2,
-  .detail-card > .weekday {
-    grid-column: 1;
-  }
-
-  .detail-card > .time-controls,
-  .detail-card > .detail-rule,
-  .detail-card > .detail-list,
-  .detail-card > .date-events,
-  .detail-card > .calculation-note,
-  .detail-card > .rule-results,
-  .detail-card > .config-status {
-    grid-column: 2;
-  }
-
-  .time-controls {
-    margin-top: 0;
-  }
-
-  .detail-rule {
-    margin-top: 0;
+  .calculation-card {
+    border-top-color: rgba(255, 255, 255, 0.14);
   }
 }
 
@@ -662,12 +737,23 @@ footer p {
   }
 
   .detail-card {
-    display: block;
     padding: 30px 24px;
   }
 
+  .calculation-card {
+    padding: 26px 24px 30px;
+  }
+
+  .lunar-title {
+    font-size: clamp(36px, 12vw, 48px);
+  }
+
+  .pillar-core strong {
+    font-size: 17px;
+  }
+
   .detail-rule {
-    margin-top: 28px;
+    margin-top: 24px;
   }
 
   footer {
@@ -702,7 +788,8 @@ footer p {
     color: #181c19;
   }
 
-  .detail-card {
+  .detail-card,
+  .calculation-card {
     background: #21382f;
   }
 }

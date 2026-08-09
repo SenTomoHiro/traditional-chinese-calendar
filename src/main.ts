@@ -88,11 +88,14 @@ function 事件列表(标题: string, 事件: string[]): string {
 }
 
 function 规则标记(规则: 时辰规则判断): string {
-  const 状态文字 = 规则.状态 === "命中" ? "命中" : 规则.状态 === "无规则" ? "本月无规则" : 规则.状态;
+  const 状态文字 = 规则.状态 === "无规则" ? "本月无规则" : 规则.状态;
   return `
     <div class="rule-result is-${规则.状态}">
       <span aria-hidden="true"></span>
-      <div><strong>${规则.名称}</strong><p>${状态文字} · ${规则.说明}</p></div>
+      <div>
+        <div class="rule-result-heading"><strong>${规则.名称}</strong><em>${状态文字}</em></div>
+        <p>${规则.说明}</p>
+      </div>
     </div>`;
 }
 
@@ -139,7 +142,38 @@ function 渲染(): void {
         <button class="today-button" type="button" data-action="today">返回今天</button>
       </header>
 
-      <section class="calendar-layout" aria-label="公历月历与日期详情">
+      <section class="calendar-layout" aria-label="日期核心详情与公历月历">
+        <aside class="detail-card" aria-label="所选日期核心详情" aria-live="polite">
+          <div class="detail-accent" aria-hidden="true"></div>
+          <p class="detail-kicker">农历</p>
+          <h2 class="lunar-title">${历法结果.农历.显示}</h2>
+          <p class="solar-date">${格式化公历日期(所选)} · ${星期名称[所选.getDay()]}</p>
+
+          <section class="pillar-core" aria-label="四柱">
+            <span>四柱</span>
+            <strong>${四柱}</strong>
+          </section>
+
+          <section class="value-star-core" aria-label="值星">
+            <span>值星</span>
+            <strong>${历法结果.值星}日</strong>
+          </section>
+
+          ${
+            神圣纪念.length > 0 || 传统节日.length > 0
+              ? `<section class="date-events" aria-label="当日神圣纪念与传统节日">
+                  ${事件列表("神圣纪念", 神圣纪念)}
+                  ${事件列表("传统节日", 传统节日)}
+                </section>`
+              : ""
+          }
+
+          <section class="rule-results" aria-label="风水禁忌速查">
+            <h3>风水禁忌速查</h3>
+            ${时辰规则.map(规则标记).join("")}
+          </section>
+        </aside>
+
         <article class="calendar-card">
           <div class="calendar-toolbar">
             <div class="toolbar-group" aria-label="年份切换">
@@ -198,13 +232,8 @@ function 渲染(): void {
           </div>
         </article>
 
-        <aside class="detail-card" aria-label="所选日期详情" aria-live="polite">
-          <div class="detail-accent" aria-hidden="true"></div>
-          <p class="detail-kicker">所选北京时间日期</p>
-          <div class="selected-day-number">${String(所选.getDate()).padStart(2, "0")}</div>
-          <h2>${格式化公历日期(所选)}</h2>
-          <p class="weekday">${星期名称[所选.getDay()]}</p>
-
+        <section class="calculation-card" aria-label="时间、定位与计算依据">
+          <h2>时间与计算依据</h2>
           <div class="time-controls">
             <label>查询时间<input type="time" data-time-input value="${查询时间}" aria-label="查询时间"></label>
             <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
@@ -214,33 +243,15 @@ function 渲染(): void {
           </div>
 
           <div class="detail-rule"></div>
-          <dl class="detail-list">
+          <dl class="calculation-list">
             <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
             <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
             <div><dt>计算依据</dt><dd>${最终.计算依据}</dd></div>
             <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
-            <div class="four-pillars"><dt>四柱</dt><dd>${四柱}</dd></div>
-            <div><dt>农历</dt><dd>${历法结果.农历.显示}</dd></div>
-            <div><dt>闰月</dt><dd>${历法结果.农历.是否闰月 ? "是" : "否"}</dd></div>
             <div><dt>节气</dt><dd>${节气显示}</dd></div>
-            <div><dt>值星</dt><dd>${历法结果.值星}日</dd></div>
           </dl>
 
-          ${
-            传统节日.length > 0 || 神圣纪念.length > 0
-              ? `<section class="date-events" aria-label="当日节日与神圣纪念">
-                  ${事件列表("传统节日", 传统节日)}
-                  ${事件列表("神圣纪念", 神圣纪念)}
-                </section>`
-              : ""
-          }
-
           <p class="calculation-note">日柱以最终计算时间 00:00 换日；定位失败自动使用北京时间</p>
-
-          <section class="rule-results" aria-label="时辰规则判断">
-            <h3>现有时辰规则</h3>
-            ${时辰规则.map(规则标记).join("")}
-          </section>
 
           <div class="config-status${错误总数 > 0 ? " has-error" : ""}">
             <span class="status-dot" aria-hidden="true"></span>
@@ -249,7 +260,7 @@ function 渲染(): void {
               <p>已读取 ${配置结果.length} 个文件，共 ${规则总数} 条规则${错误总数 > 0 ? `，${错误总数} 条待修正` : ""}</p>
             </div>
           </div>
-        </aside>
+        </section>
       </section>
 
       <footer>
