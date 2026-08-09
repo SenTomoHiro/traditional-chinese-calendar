@@ -13,16 +13,21 @@ import { 创建月历日期信息 } from "./日历/月历信息";
 import { 获取浏览器定位 } from "./定位";
 import { 读取全部配置 } from "./规则/配置读取";
 import { 获取神圣纪念日 } from "./规则/神圣纪念日";
-import { 判断全部时辰规则, type 时辰规则判断 } from "./规则/时辰规则";
+import type { 时辰规则判断 } from "./规则/时辰规则";
 import {
   从时间戳读取北京时间,
-  格式化四柱,
   格式化日期时间,
   获取传统节日,
-  计算最终时间,
-  计算历法,
   创建北京时间,
 } from "./历法";
+import { 计算当前历时, type 时间依据 } from "./当前历时";
+import {
+  创建分钟实时更新器,
+  创建实时查询时间,
+  创建手动查询时间,
+  刷新实时查询时间,
+  type 查询时间状态,
+} from "./实时历时";
 import { 格式化时分 } from "./历法/时间";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
@@ -35,30 +40,61 @@ function 北京日期(时间 = 从时间戳读取北京时间()): Date {
   return new Date(时间.年, 时间.月 - 1, 时间.日);
 }
 
-let 今天 = 北京日期();
+const 初始北京时间 = 从时间戳读取北京时间();
+let 今天 = 北京日期(初始北京时间);
 let 状态: 日历状态 = 选择日期(
   { 年: 今天.getFullYear(), 月: 今天.getMonth(), 所选日期: 今天 },
   今天,
 );
-let 查询时间 = 格式化时分(从时间戳读取北京时间());
+let 时间查询: 查询时间状态 = 创建实时查询时间(初始北京时间);
+let 当前时间依据: 时间依据 = "北京时间";
+let 用户已选择时间依据 = false;
 let 当前经度: number | null = null;
 let 当前定位状态: 定位状态 = "未定位";
-let 定位说明 = "尚未定位，当前按北京时间计算";
+let 定位说明 = "尚未定位，当前使用北京时间";
 
 const 配置结果 = 读取全部配置();
 const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "神圣纪念日.txt");
 const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
 const 错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
 
-function 是当前北京时间日期(日期: Date): boolean {
-  今天 = 北京日期();
-  return 是同一天(日期, 今天);
+function 设置日期(日期: Date): void {
+  const 当前北京时间 = 从时间戳读取北京时间();
+  今天 = 北京日期(当前北京时间);
+  状态 = 选择日期(状态, 日期);
+  时间查询 = 是同一天(日期, 今天)
+    ? 创建实时查询时间(当前北京时间)
+    : 创建手动查询时间("12:00");
+  渲染();
 }
 
-function 设置日期(日期: Date): void {
-  状态 = 选择日期(状态, 日期);
-  查询时间 = 是当前北京时间日期(日期) ? 格式化时分(从时间戳读取北京时间()) : "12:00";
+async function 请求定位(成功后使用真太阳时: boolean, 记录用户选择 = false): Promise<boolean> {
+  if (当前定位状态 === "定位中") return false;
+  当前定位状态 = "定位中";
+  定位说明 = "正在获取本机位置…";
   渲染();
+
+  const 结果 = await 获取浏览器定位();
+  if (结果.成功) {
+    当前经度 = 结果.经度;
+    当前定位状态 = "成功";
+    if (成功后使用真太阳时) {
+      当前时间依据 = "真太阳时";
+      if (记录用户选择) 用户已选择时间依据 = true;
+    }
+    定位说明 = 当前时间依据 === "真太阳时"
+      ? "定位成功，当前使用真太阳时"
+      : "定位成功，当前使用北京时间";
+    渲染();
+    return true;
+  }
+
+  当前经度 = null;
+  当前时间依据 = "北京时间";
+  当前定位状态 = "失败";
+  定位说明 = "未取得定位，当前使用北京时间";
+  渲染();
+  return false;
 }
 
 function 格式化修正(分钟: number): string {
@@ -103,7 +139,7 @@ function 渲染(): void {
   const 月历格 = 创建月历格(状态.年, 状态.月);
   const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念配置);
   const 所选 = 状态.所选日期;
-  const [时文本, 分文本] = 查询时间.split(":");
+  const [时文本, 分文本] = 时间查询.时间.split(":");
   const 北京时间 = 创建北京时间(
     所选.getFullYear(),
     所选.getMonth() + 1,
@@ -112,24 +148,21 @@ function 渲染(): void {
     Number(分文本),
     0,
   );
-  const 最终 = 计算最终时间(北京时间, 当前经度);
-  const 历法结果 = 计算历法(最终.最终时间);
+  const 当前历时 = 计算当前历时(北京时间, 当前时间依据, 当前经度, 配置结果);
+  const { 最终, 历法结果, 四柱, 时辰规则, 真太阳时结果 } = 当前历时;
+  当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
   const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 历法结果.农历);
-  const 四柱 = 格式化四柱({
-    年柱: 历法结果.年柱,
-    月柱: 历法结果.月柱,
-    日柱: 历法结果.日柱,
-    时柱: 最终.时柱,
-  });
-  const 时辰规则 = 判断全部时辰规则(配置结果, 最终.日支, 最终.时支, 历法结果.农历.月);
   const 节气显示 = 历法结果.节气
     ? `${历法结果.节气.名称} · ${格式化时分(历法结果.节气)}`
     : "当日无节气";
-  const 真太阳时显示 = 最终.真太阳时
-    ? `${格式化日期时间(最终.真太阳时, true)}（修正 ${格式化修正(最终.总修正分钟 ?? 0)}）`
+  const 核心节气显示 = 历法结果.节气?.名称 ?? "—";
+  const 真太阳时显示 = 真太阳时结果
+    ? `${格式化日期时间(真太阳时结果.真太阳时, true)}（修正 ${格式化修正(真太阳时结果.总修正分钟)}）`
     : "未取得定位，暂不计算";
   const 最终日期提示 = `${最终.最终时间.年}年${最终.最终时间.月}月${最终.最终时间.日}日`;
+  const 时间模式说明 = 时间查询.模式 === "实时" ? "实时更新" : "手动查询";
+  const 切换目标 = 当前时间依据 === "北京时间" ? "真太阳时" : "北京时间";
 
   根节点.innerHTML = `
     <main class="page-shell">
@@ -146,17 +179,31 @@ function 渲染(): void {
         <aside class="detail-card" aria-label="所选日期核心详情" aria-live="polite">
           <div class="detail-accent" aria-hidden="true"></div>
           <p class="detail-kicker">农历</p>
-          <h2 class="lunar-title">${历法结果.农历.显示}</h2>
+          <div class="lunar-title-row">
+            <h2 class="lunar-title">${历法结果.农历.显示}</h2>
+            <button
+              class="time-basis-button"
+              type="button"
+              data-action="time-basis"
+              aria-label="当前使用${当前时间依据}，点击切换为${切换目标}"
+              ${当前定位状态 === "定位中" ? "disabled" : ""}
+            >${当前定位状态 === "定位中" ? "定位中…" : 当前时间依据}</button>
+          </div>
           <p class="solar-date">${格式化公历日期(所选)} · ${星期名称[所选.getDay()]}</p>
 
-          <section class="pillar-core" aria-label="四柱">
+          <section class="core-fact pillar-core" aria-label="四柱">
             <span>四柱</span>
             <strong>${四柱}</strong>
           </section>
 
-          <section class="value-star-core" aria-label="值星">
+          <section class="core-fact value-star-core" aria-label="值星">
             <span>值星</span>
             <strong>${历法结果.值星}日</strong>
+          </section>
+
+          <section class="core-fact solar-term-core" aria-label="节气">
+            <span>节气</span>
+            <strong>${核心节气显示}</strong>
           </section>
 
           ${
@@ -235,7 +282,7 @@ function 渲染(): void {
         <section class="calculation-card" aria-label="时间、定位与计算依据">
           <h2>时间与计算依据</h2>
           <div class="time-controls">
-            <label>查询时间<input type="time" data-time-input value="${查询时间}" aria-label="查询时间"></label>
+            <label>查询时间（${时间模式说明}）<input type="time" data-time-input value="${时间查询.时间}" aria-label="查询时间"></label>
             <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
               ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
             </button>
@@ -246,12 +293,12 @@ function 渲染(): void {
           <dl class="calculation-list">
             <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
             <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
-            <div><dt>计算依据</dt><dd>${最终.计算依据}</dd></div>
+            <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
             <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
             <div><dt>节气</dt><dd>${节气显示}</dd></div>
           </dl>
 
-          <p class="calculation-note">日柱以最终计算时间 00:00 换日；定位失败自动使用北京时间</p>
+          <p class="calculation-note">当前统一按${当前时间依据}计算；日柱以最终计算时间 00:00 换日</p>
 
           <div class="config-status${错误总数 > 0 ? " has-error" : ""}">
             <span class="status-dot" aria-hidden="true"></span>
@@ -276,10 +323,10 @@ function 更新显示年月(年: number, 月: number): void {
   设置日期(new Date(年, 月, 当月日期));
 }
 
-根节点.addEventListener("change", (事件) => {
+根节点.addEventListener("input", (事件) => {
   const 输入框 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-time-input]");
   if (!输入框?.value) return;
-  查询时间 = 输入框.value;
+  时间查询 = 创建手动查询时间(输入框.value);
   渲染();
 });
 
@@ -296,28 +343,32 @@ function 更新显示年月(年: number, 月: number): void {
   switch (目标.dataset.action) {
     case "today": {
       const 当前北京时间 = 从时间戳读取北京时间();
-      设置日期(北京日期(当前北京时间));
-      查询时间 = 格式化时分(当前北京时间);
+      今天 = 北京日期(当前北京时间);
+      状态 = 选择日期(状态, 今天);
+      时间查询 = 创建实时查询时间(当前北京时间);
       渲染();
       break;
     }
-    case "locate": {
-      当前经度 = null;
-      当前定位状态 = "定位中";
-      定位说明 = "正在获取本机位置…";
-      渲染();
-      const 结果 = await 获取浏览器定位();
-      if (结果.成功) {
-        当前经度 = 结果.经度;
+    case "time-basis": {
+      if (当前时间依据 === "真太阳时") {
+        当前时间依据 = "北京时间";
+        用户已选择时间依据 = true;
+        定位说明 = 当前经度 === null ? "当前使用北京时间" : "定位成功，当前使用北京时间";
+        渲染();
+      } else if (当前经度 !== null) {
+        当前时间依据 = "真太阳时";
+        用户已选择时间依据 = true;
         当前定位状态 = "成功";
-        定位说明 = "定位成功，已按真太阳时计算";
+        定位说明 = "定位成功，当前使用真太阳时";
+        渲染();
       } else {
-        当前定位状态 = "失败";
-        定位说明 = `定位${结果.原因}，已自动改用北京时间`;
+        await 请求定位(true, true);
       }
-      渲染();
       break;
     }
+    case "locate":
+      await 请求定位(当前时间依据 === "真太阳时" || !用户已选择时间依据);
+      break;
     case "previous-month": {
       const 目标年月 = 移动月份(状态.年, 状态.月, -1);
       更新显示年月(目标年月.年, 目标年月.月);
@@ -338,3 +389,24 @@ function 更新显示年月(年: number, 月: number): void {
 });
 
 渲染();
+
+const 分钟实时更新器 = 创建分钟实时更新器((当前毫秒) => {
+  const 原今天 = 今天;
+  const 所选原为今天 = 是同一天(状态.所选日期, 原今天);
+  const 当前北京时间 = 从时间戳读取北京时间(new Date(当前毫秒));
+  const 新今天 = 北京日期(当前北京时间);
+  const 日期已经变化 = !是同一天(原今天, 新今天);
+  今天 = 新今天;
+
+  if (时间查询.模式 === "实时" && 所选原为今天) {
+    状态 = 选择日期(状态, 新今天);
+    时间查询 = 刷新实时查询时间(时间查询, 当前北京时间);
+    渲染();
+  } else if (日期已经变化) {
+    渲染();
+  }
+});
+
+分钟实时更新器.启动();
+window.addEventListener("pagehide", () => 分钟实时更新器.停止());
+window.addEventListener("pageshow", () => 分钟实时更新器.启动());
