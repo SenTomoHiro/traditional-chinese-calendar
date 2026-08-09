@@ -18,6 +18,14 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("${核心节气显示}");
   });
 
+  it("普通日期的节气使用浅色无字而不是破折号", () => {
+    expect(页面源码).toContain('const 核心节气显示 = 历法结果.节气?.名称 ?? "无"');
+    expect(页面源码).toContain('class="is-empty"');
+    expect(页面源码).not.toContain('const 核心节气显示 = 历法结果.节气?.名称 ?? "—"');
+    expect(页面样式).toContain(".solar-term-core strong.is-empty");
+    expect(页面样式).toContain("color: #91a59a");
+  });
+
   it("农历标题右侧提供当前时间依据切换按钮", () => {
     const 标题位置 = 页面源码.indexOf('class="lunar-title"');
     const 按钮位置 = 页面源码.indexOf('class="time-basis-button"');
@@ -74,6 +82,26 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/"detail"\s+"calendar"\s+"calculation"/u);
   });
 
+  it("顶部标题和底部说明均已删除", () => {
+    expect(页面源码).not.toContain("TRADITIONAL CALENDAR");
+    expect(页面源码).not.toContain("传统历法日历</h1>");
+    expect(页面源码).not.toContain('class="brand-mark"');
+    expect(页面源码).not.toContain("<footer>");
+    expect(页面源码).not.toContain("日历信息 · 传统节日与神圣纪念");
+    expect(页面源码).not.toContain("定位坐标仅在当前页面内使用，不会上传或保存。");
+  });
+
+  it("返回今天位于月份标题右侧和月份切换按钮左侧", () => {
+    const 年份切换位置 = 页面源码.indexOf('aria-label="年份切换"');
+    const 月份标题位置 = 页面源码.indexOf('class="month-heading"');
+    const 返回今天位置 = 页面源码.indexOf('class="today-button"');
+    const 月份切换位置 = 页面源码.indexOf('aria-label="月份切换"');
+    expect(页面源码).toContain('class="month-center"');
+    expect(年份切换位置).toBeLessThan(月份标题位置);
+    expect(月份标题位置).toBeLessThan(返回今天位置);
+    expect(返回今天位置).toBeLessThan(月份切换位置);
+  });
+
   it("月历与详情都已接入节日和神圣纪念", () => {
     expect(页面源码).toContain("创建月历日期信息");
     expect(页面源码).toContain('事件列表("传统节日"');
@@ -93,5 +121,10 @@ describe("日期详情展示回归", () => {
   it("月历今天标识继续使用真实北京时间日期", () => {
     expect(页面源码).toContain("const 是今天 = 是同一天(当前日期, 今天)");
     expect(页面源码).not.toContain("const 是今天 = 是同一天(当前日期, 最终.最终时间)");
+  });
+
+  it("页面明确提示按当前时间依据的23点换日", () => {
+    expect(页面源码).toContain("日柱从子时开始的 23:00 换日");
+    expect(页面源码).not.toContain("日柱以最终计算时间 00:00 换日");
   });
 });

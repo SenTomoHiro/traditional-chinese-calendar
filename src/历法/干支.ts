@@ -1,5 +1,5 @@
 import { 获取指定节气, 获取节气月, type 月建 } from "./节气";
-import { 比较北京时间, 转为公历, type 北京时间 } from "./时间";
+import { 比较北京时间, 平移时间, 转为公历, type 北京时间 } from "./时间";
 
 export const 天干 = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] as const;
 export const 地支 = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"] as const;
@@ -32,9 +32,14 @@ export function 计算月柱(时间: 北京时间, 年柱 = 计算年柱(时间)
   return { 月柱: `${月干}${月建}`, 月建 };
 }
 
-/** 项目唯一的日柱入口；Exact2 明确采用 0:00 换日。 */
+/** 子时从 23:00 开始；日柱计算在此刻统一进入下一传统历法日。 */
+export function 获取日柱计算时间(时间: 北京时间): 北京时间 {
+  return 时间.时 >= 23 ? 平移时间(时间, 60 * 60) : 时间;
+}
+
+/** 项目唯一的日柱入口，其他模块不得自行重复处理换日边界。 */
 export function 计算日柱(时间: 北京时间): { 日柱: string; 日支: (typeof 地支)[number] } {
-  const 农历 = 转为公历(时间).getLunar();
+  const 农历 = 转为公历(获取日柱计算时间(时间)).getLunar();
   return {
     日柱: 农历.getDayInGanZhiExact2(),
     日支: 农历.getDayZhiExact2() as (typeof 地支)[number],

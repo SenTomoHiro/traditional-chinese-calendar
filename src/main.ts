@@ -156,25 +156,16 @@ function 渲染(): void {
   const 节气显示 = 历法结果.节气
     ? `${历法结果.节气.名称} · ${格式化时分(历法结果.节气)}`
     : "当日无节气";
-  const 核心节气显示 = 历法结果.节气?.名称 ?? "—";
+  const 核心节气显示 = 历法结果.节气?.名称 ?? "无";
   const 真太阳时显示 = 真太阳时结果
     ? `${格式化日期时间(真太阳时结果.真太阳时, true)}（修正 ${格式化修正(真太阳时结果.总修正分钟)}）`
     : "未取得定位，暂不计算";
-  const 最终日期提示 = `${最终.最终时间.年}年${最终.最终时间.月}月${最终.最终时间.日}日`;
+  const 最终日期提示 = `${最终.日柱计算时间.年}年${最终.日柱计算时间.月}月${最终.日柱计算时间.日}日`;
   const 时间模式说明 = 时间查询.模式 === "实时" ? "实时更新" : "手动查询";
   const 切换目标 = 当前时间依据 === "北京时间" ? "真太阳时" : "北京时间";
 
   根节点.innerHTML = `
     <main class="page-shell">
-      <header class="site-header">
-        <div class="brand-mark" aria-hidden="true">历</div>
-        <div>
-          <p class="eyebrow">TRADITIONAL CALENDAR</p>
-          <h1>传统历法日历</h1>
-        </div>
-        <button class="today-button" type="button" data-action="today">返回今天</button>
-      </header>
-
       <section class="calendar-layout" aria-label="日期核心详情与公历月历">
         <aside class="detail-card" aria-label="所选日期核心详情" aria-live="polite">
           <div class="detail-accent" aria-hidden="true"></div>
@@ -203,7 +194,7 @@ function 渲染(): void {
 
           <section class="core-fact solar-term-core" aria-label="节气">
             <span>节气</span>
-            <strong>${核心节气显示}</strong>
+            <strong${历法结果.节气 ? "" : ' class="is-empty"'}>${核心节气显示}</strong>
           </section>
 
           ${
@@ -227,10 +218,13 @@ function 渲染(): void {
               <button type="button" class="icon-button" data-action="previous-year" aria-label="上一年">−年</button>
               <button type="button" class="icon-button" data-action="next-year" aria-label="下一年">+年</button>
             </div>
-            <div class="month-heading" aria-live="polite">
-              <span>${状态.年}</span>
-              <strong>${String(状态.月 + 1).padStart(2, "0")}</strong>
-              <small>月</small>
+            <div class="month-center">
+              <div class="month-heading" aria-live="polite">
+                <span>${状态.年}</span>
+                <strong>${String(状态.月 + 1).padStart(2, "0")}</strong>
+                <small>月</small>
+              </div>
+              <button class="today-button" type="button" data-action="today">返回今天</button>
             </div>
             <div class="toolbar-group" aria-label="月份切换">
               <button type="button" class="icon-button" data-action="previous-month" aria-label="上个月">‹</button>
@@ -298,7 +292,7 @@ function 渲染(): void {
             <div><dt>节气</dt><dd>${节气显示}</dd></div>
           </dl>
 
-          <p class="calculation-note">当前统一按${当前时间依据}计算；日柱以最终计算时间 00:00 换日</p>
+          <p class="calculation-note">当前统一按${当前时间依据}计算；日柱从子时开始的 23:00 换日</p>
 
           <div class="config-status${错误总数 > 0 ? " has-error" : ""}">
             <span class="status-dot" aria-hidden="true"></span>
@@ -310,10 +304,6 @@ function 渲染(): void {
         </section>
       </section>
 
-      <footer>
-        <p>日历信息 · 传统节日与神圣纪念</p>
-        <p>定位坐标仅在当前页面内使用，不会上传或保存。</p>
-      </footer>
     </main>
   `;
 }
