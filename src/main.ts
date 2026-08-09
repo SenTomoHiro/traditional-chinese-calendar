@@ -9,7 +9,8 @@ import {
   选择日期,
   type 日历状态,
 } from "./日历/公历";
-import { 获取历法结果占位 } from "./历法";
+import { 计算日期详情 } from "./历法";
+import { 格式化时分 } from "./历法/时间";
 import { 读取全部配置 } from "./规则/配置读取";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
@@ -28,8 +29,11 @@ const 错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错
 
 function 渲染(): void {
   const 月历格 = 创建月历格(状态.年, 状态.月);
-  const 历法结果 = 获取历法结果占位();
   const 所选 = 状态.所选日期;
+  const 历法结果 = 计算日期详情(所选.getFullYear(), 所选.getMonth() + 1, 所选.getDate());
+  const 节气显示 = 历法结果.节气
+    ? `${历法结果.节气.名称} · ${格式化时分(历法结果.节气)}`
+    : "当日无节气";
 
   根节点.innerHTML = `
     <main class="page-shell">
@@ -98,13 +102,18 @@ function 渲染(): void {
 
           <div class="detail-rule"></div>
           <dl class="detail-list">
-            <div><dt>农历</dt><dd>${历法结果.农历 ?? "开发中"}</dd></div>
-            <div><dt>年柱</dt><dd>${历法结果.年柱 ?? "开发中"}</dd></div>
-            <div><dt>月柱</dt><dd>${历法结果.月柱 ?? "开发中"}</dd></div>
-            <div><dt>日柱</dt><dd>${历法结果.日柱 ?? "开发中"}</dd></div>
+            <div><dt>农历</dt><dd>${历法结果.农历.显示}</dd></div>
+            <div><dt>闰月</dt><dd>${历法结果.农历.是否闰月 ? "是" : "否"}</dd></div>
+            <div><dt>节气</dt><dd>${节气显示}</dd></div>
+            <div><dt>年柱</dt><dd>${历法结果.年柱}</dd></div>
+            <div><dt>月柱</dt><dd>${历法结果.月柱}</dd></div>
+            <div><dt>日柱</dt><dd>${历法结果.日柱}</dd></div>
+            <div><dt>月建</dt><dd>${历法结果.月建}月</dd></div>
             <div><dt>时柱</dt><dd>${历法结果.时柱 ?? "开发中"}</dd></div>
-            <div><dt>值星</dt><dd>${历法结果.值星 ?? "开发中"}</dd></div>
+            <div><dt>值星</dt><dd>${历法结果.值星}日</dd></div>
           </dl>
+
+          <p class="calculation-note">日期级结果按北京时间 12:00 计算</p>
 
           <div class="config-status${错误总数 > 0 ? " has-error" : ""}">
             <span class="status-dot" aria-hidden="true"></span>
@@ -117,8 +126,8 @@ function 渲染(): void {
       </section>
 
       <footer>
-        <p>第一阶段 · 公历基础版</p>
-        <p>复杂历法将在后续阶段接入，当前不提供推算结果。</p>
+        <p>第二阶段 · 核心历法版</p>
+        <p>时柱与真太阳时将在下一阶段接入。</p>
       </footer>
     </main>
   `;

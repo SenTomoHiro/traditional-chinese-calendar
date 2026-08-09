@@ -315,6 +315,14 @@ h1 {
   margin: 0;
 }
 
+.calculation-note {
+  margin: 18px 0 0;
+  color: #91a59a;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
 .config-status {
   display: flex;
   gap: 10px;
@@ -390,6 +398,7 @@ footer p {
 
   .detail-card > .detail-rule,
   .detail-card > .detail-list,
+  .detail-card > .calculation-note,
   .detail-card > .config-status {
     grid-column: 2;
   }
