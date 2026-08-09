@@ -101,7 +101,7 @@ h1 {
 
 .calendar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.9fr);
   overflow: hidden;
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
@@ -296,6 +296,67 @@ h1 {
   background: rgba(255, 255, 255, 0.16);
 }
 
+.time-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-top: 22px;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.time-controls label {
+  display: grid;
+  gap: 5px;
+  color: #b8c8bf;
+  font-size: 11px;
+}
+
+.time-controls input,
+.time-controls button {
+  min-height: 39px;
+  color: #fffaf3;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9px;
+}
+
+.time-controls input {
+  width: 100%;
+  padding: 7px 9px;
+  color-scheme: dark;
+}
+
+.time-controls button {
+  align-self: end;
+  padding: 7px 11px;
+  cursor: pointer;
+}
+
+.time-controls button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.time-controls button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.location-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b8c8bf;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.location-status.is-成功 {
+  color: #a8d4bb;
+}
+
+.location-status.is-失败 {
+  color: #e5b0a8;
+}
+
 .detail-list {
   margin: 0;
 }
@@ -321,6 +382,56 @@ h1 {
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 10px;
   letter-spacing: 0.04em;
+}
+
+.rule-results {
+  margin-top: 24px;
+}
+
+.rule-results h3 {
+  margin: 0 0 9px;
+  color: #d8a69d;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+
+.rule-result {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 9px;
+  align-items: start;
+  padding: 8px 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.rule-result > span {
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  background: #91c4a9;
+  border-radius: 50%;
+}
+
+.rule-result.is-命中 > span,
+.rule-result.is-配置错误 > span {
+  background: #e89a8e;
+  box-shadow: 0 0 0 4px rgba(232, 154, 142, 0.11);
+}
+
+.rule-result.is-无规则 > span {
+  background: #9aa79f;
+}
+
+.rule-result strong {
+  font-size: 11px;
+}
+
+.rule-result p {
+  margin: 2px 0 0;
+  color: #b8c8bf;
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .config-status {
@@ -396,11 +507,17 @@ footer p {
     grid-column: 1;
   }
 
+  .detail-card > .time-controls,
   .detail-card > .detail-rule,
   .detail-card > .detail-list,
   .detail-card > .calculation-note,
+  .detail-card > .rule-results,
   .detail-card > .config-status {
     grid-column: 2;
+  }
+
+  .time-controls {
+    margin-top: 0;
   }
 
   .detail-rule {

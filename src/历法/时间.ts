@@ -53,3 +53,38 @@ export function 是同一公历日(左: 北京时间, 右: 北京时间): boolea
 export function 格式化时分(时间: 北京时间): string {
   return `${String(时间.时).padStart(2, "0")}:${String(时间.分).padStart(2, "0")}`;
 }
+
+/** 从绝对时间读取 UTC+8 字段，不受浏览器或操作系统所在时区影响。 */
+export function 从时间戳读取北京时间(时间戳 = new Date()): 北京时间 {
+  const 中国标准时 = new Date(时间戳.getTime() + 8 * 60 * 60 * 1000);
+  return {
+    年: 中国标准时.getUTCFullYear(),
+    月: 中国标准时.getUTCMonth() + 1,
+    日: 中国标准时.getUTCDate(),
+    时: 中国标准时.getUTCHours(),
+    分: 中国标准时.getUTCMinutes(),
+    秒: 中国标准时.getUTCSeconds(),
+  };
+}
+
+/** 将无时区含义的历法字段平移指定秒数，并正确处理跨日、跨月和跨年。 */
+export function 平移时间(时间: 北京时间, 偏移秒: number): 北京时间 {
+  const 时间戳 = new Date(
+    Date.UTC(时间.年, 时间.月 - 1, 时间.日, 时间.时, 时间.分, 时间.秒) +
+      Math.round(偏移秒) * 1000,
+  );
+  return {
+    年: 时间戳.getUTCFullYear(),
+    月: 时间戳.getUTCMonth() + 1,
+    日: 时间戳.getUTCDate(),
+    时: 时间戳.getUTCHours(),
+    分: 时间戳.getUTCMinutes(),
+    秒: 时间戳.getUTCSeconds(),
+  };
+}
+
+export function 格式化日期时间(时间: 北京时间, 显示秒 = false): string {
+  const 日期 = `${时间.年}-${String(时间.月).padStart(2, "0")}-${String(时间.日).padStart(2, "0")}`;
+  const 时分 = 格式化时分(时间);
+  return `${日期} ${时分}${显示秒 ? `:${String(时间.秒).padStart(2, "0")}` : ""}`;
+}
