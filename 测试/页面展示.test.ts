@@ -23,7 +23,7 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('class="is-empty"');
     expect(页面源码).not.toContain('const 核心节气显示 = 历法结果.节气?.名称 ?? "—"');
     expect(页面样式).toContain(".solar-term-core strong.is-empty");
-    expect(页面样式).toContain("color: #91a59a");
+    expect(页面样式).toContain("color: var(--panel-muted)");
   });
 
   it("农历标题右侧提供当前时间依据切换按钮", () => {
@@ -94,12 +94,20 @@ describe("日期详情展示回归", () => {
   it("返回今天位于月份标题右侧和月份切换按钮左侧", () => {
     const 年份切换位置 = 页面源码.indexOf('aria-label="年份切换"');
     const 月份标题位置 = 页面源码.indexOf('class="month-heading"');
-    const 返回今天位置 = 页面源码.indexOf('class="today-button"');
+    const 返回今天位置 = 页面源码.indexOf('class="icon-button today-button"');
     const 月份切换位置 = 页面源码.indexOf('aria-label="月份切换"');
     expect(页面源码).toContain('class="month-center"');
     expect(年份切换位置).toBeLessThan(月份标题位置);
     expect(月份标题位置).toBeLessThan(返回今天位置);
     expect(返回今天位置).toBeLessThan(月份切换位置);
+  });
+
+  it("返回今天复用通用导航按钮样式并使用红金主题", () => {
+    expect(页面源码).toContain('class="icon-button today-button"');
+    expect(页面样式).toMatch(/\.today-button\s*\{[^}]*width:\s*auto;/u);
+    expect(页面样式).toContain("--gold:");
+    expect(页面样式).toContain("--panel:");
+    expect(页面样式).not.toContain("--green:");
   });
 
   it("月历与详情都已接入节日和神圣纪念", () => {

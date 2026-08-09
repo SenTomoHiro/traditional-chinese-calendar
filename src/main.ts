@@ -224,7 +224,7 @@ function 渲染(): void {
                 <strong>${String(状态.月 + 1).padStart(2, "0")}</strong>
                 <small>月</small>
               </div>
-              <button class="today-button" type="button" data-action="today">返回今天</button>
+              <button class="icon-button today-button" type="button" data-action="today">返回今天</button>
             </div>
             <div class="toolbar-group" aria-label="月份切换">
               <button type="button" class="icon-button" data-action="previous-month" aria-label="上个月">‹</button>

@@ -1,21 +1,28 @@
 :root {
   color-scheme: light dark;
   font-family: "Songti SC", "STSong", "Noto Serif CJK SC", Georgia, serif;
-  color: #252b27;
-  background: #e8e5dd;
+  color: #2d2117;
+  background: #24140f;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --page: #e8e5dd;
-  --surface: #f8f6f0;
-  --surface-strong: #fffefa;
-  --ink: #252b27;
-  --muted: #737872;
-  --line: #d8d4c9;
-  --accent: #a64436;
-  --accent-strong: #7f2f27;
-  --accent-soft: #efe0db;
-  --green: #345949;
-  --shadow: 0 24px 70px rgba(49, 44, 34, 0.12);
+  --page: #24140f;
+  --surface: #f1e6d0;
+  --surface-strong: #fff8e9;
+  --panel: #4a211b;
+  --panel-ink: #fff4dc;
+  --panel-muted: #d8c5a1;
+  --panel-line: rgba(218, 184, 111, 0.22);
+  --ink: #2d2117;
+  --muted: #746550;
+  --line: #c9b58d;
+  --gold: #b3893f;
+  --gold-strong: #896020;
+  --gold-soft: #ddc27f;
+  --accent: #9c3d31;
+  --accent-strong: #762820;
+  --accent-soft: #ead2bd;
+  --danger: #d97869;
+  --shadow: 0 24px 70px rgba(25, 12, 7, 0.3);
 }
 
 * {
@@ -24,12 +31,12 @@
 
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
   color: var(--ink);
   background:
-    radial-gradient(circle at 8% 10%, rgba(166, 68, 54, 0.08), transparent 28rem),
-    radial-gradient(circle at 88% 78%, rgba(52, 89, 73, 0.09), transparent 34rem),
+    radial-gradient(circle at 8% 10%, rgba(179, 137, 63, 0.15), transparent 28rem),
+    radial-gradient(circle at 88% 78%, rgba(128, 44, 34, 0.14), transparent 34rem),
     var(--page);
 }
 
@@ -38,7 +45,7 @@ button {
 }
 
 button:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline: 3px solid color-mix(in srgb, var(--gold) 62%, transparent);
   outline-offset: 3px;
 }
 
@@ -50,7 +57,7 @@ button:focus-visible {
 
 .detail-kicker {
   margin: 0 0 4px;
-  color: var(--accent);
+  color: var(--gold-strong);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 10px;
   font-weight: 700;
@@ -59,18 +66,8 @@ button:focus-visible {
 
 .today-button {
   flex: 0 0 auto;
-  padding: 8px 12px;
-  color: var(--accent-strong);
-  background: transparent;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: color 160ms ease, background 160ms ease;
-}
-
-.today-button:hover {
-  color: #fff;
-  background: var(--accent);
+  width: auto;
+  color: var(--gold-strong);
 }
 
 .calendar-layout {
@@ -129,8 +126,9 @@ button:focus-visible {
 }
 
 .icon-button:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--gold-strong);
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold-soft) 18%, transparent);
 }
 
 .month-heading {
@@ -148,6 +146,7 @@ button:focus-visible {
 }
 
 .month-heading > strong {
+  color: var(--gold-strong);
   font-family: Georgia, serif;
   font-size: clamp(38px, 5vw, 54px);
   font-weight: 500;
@@ -155,6 +154,7 @@ button:focus-visible {
 }
 
 .month-heading > small {
+  color: var(--accent-strong);
   font-size: 16px;
 }
 
@@ -173,7 +173,7 @@ button:focus-visible {
 
 .week-row span:first-child,
 .week-row span:last-child {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .days-grid {
@@ -238,7 +238,7 @@ button:focus-visible {
 }
 
 .day-button:hover {
-  background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
+  background: color-mix(in srgb, var(--gold-soft) 36%, transparent);
   transform: translateY(-1px);
 }
 
@@ -246,39 +246,39 @@ button:focus-visible {
   position: absolute;
   top: 5px;
   right: 6px;
-  color: var(--accent);
+  color: var(--gold-strong);
   font-family: inherit;
   font-size: 9px;
   font-weight: 700;
 }
 
 .day-button.is-selected {
-  color: #fffaf3;
+  color: var(--panel-ink);
   background: var(--accent);
-  box-shadow: 0 7px 16px rgba(127, 47, 39, 0.24);
+  box-shadow: 0 0 0 1px var(--gold), 0 7px 16px rgba(82, 25, 19, 0.28);
 }
 
 .day-button.is-selected .today-mark,
 .day-button.is-selected .lunar-day,
 .day-button.is-selected .day-event {
-  color: #fffaf3;
+  color: var(--panel-ink);
 }
 
 .detail-card {
   grid-area: detail;
   position: relative;
   padding: clamp(34px, 4vw, 48px) clamp(28px, 3.5vw, 42px);
-  color: #eef1ec;
-  background: #29463a;
+  color: var(--panel-ink);
+  background: var(--panel);
 }
 
 .calculation-card {
   position: relative;
   grid-area: calculation;
   padding: 26px clamp(28px, 3.5vw, 42px) clamp(34px, 4vw, 46px);
-  color: #eef1ec;
-  background: #29463a;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--panel-ink);
+  background: var(--panel);
+  border-top: 1px solid var(--panel-line);
 }
 
 .calculation-card::before {
@@ -299,7 +299,7 @@ button:focus-visible {
 }
 
 .detail-kicker {
-  color: #d8a69d;
+  color: var(--gold-soft);
 }
 
 .lunar-title-row {
@@ -313,7 +313,7 @@ button:focus-visible {
 .lunar-title {
   min-width: 0;
   margin: 0;
-  color: #fffaf3;
+  color: var(--panel-ink);
   font-size: clamp(38px, 4.3vw, 54px);
   font-weight: 550;
   line-height: 1.12;
@@ -324,9 +324,9 @@ button:focus-visible {
 .time-basis-button {
   flex: 0 0 auto;
   padding: 7px 11px;
-  color: #fffaf3;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: var(--panel-ink);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold-soft) 48%, transparent);
   border-radius: 999px;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 11px;
@@ -334,7 +334,7 @@ button:focus-visible {
 }
 
 .time-basis-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.16);
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
 }
 
 .time-basis-button:disabled {
@@ -344,7 +344,7 @@ button:focus-visible {
 
 .solar-date {
   margin: 8px 0 0;
-  color: #b8c8bf;
+  color: var(--panel-muted);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 12px;
   line-height: 1.6;
@@ -367,7 +367,7 @@ button:focus-visible {
 }
 
 .core-fact > span {
-  color: #d8a69d;
+  color: var(--gold-soft);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 10px;
   font-weight: 700;
@@ -376,7 +376,7 @@ button:focus-visible {
 
 .pillar-core strong {
   min-width: 0;
-  color: #fffaf3;
+  color: var(--panel-ink);
   font-size: clamp(13px, 1.5vw, 17px);
   font-weight: 500;
   line-height: 1.6;
@@ -385,20 +385,20 @@ button:focus-visible {
 
 .value-star-core strong,
 .solar-term-core strong {
-  color: #fffaf3;
+  color: var(--panel-ink);
   font-size: 20px;
   font-weight: 600;
 }
 
 .solar-term-core strong.is-empty {
-  color: #91a59a;
+  color: var(--panel-muted);
   font-weight: 500;
 }
 
 .detail-rule {
   height: 1px;
   margin: 30px 0 18px;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--panel-line);
 }
 
 .time-controls {
@@ -412,16 +412,16 @@ button:focus-visible {
 .time-controls label {
   display: grid;
   gap: 5px;
-  color: #b8c8bf;
+  color: var(--panel-muted);
   font-size: 11px;
 }
 
 .time-controls input,
 .time-controls button {
   min-height: 39px;
-  color: #fffaf3;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--panel-ink);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold-soft) 38%, transparent);
   border-radius: 9px;
 }
 
@@ -438,7 +438,7 @@ button:focus-visible {
 }
 
 .time-controls button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
 }
 
 .time-controls button:disabled {
@@ -449,22 +449,22 @@ button:focus-visible {
 .location-status {
   grid-column: 1 / -1;
   margin: 0;
-  color: #b8c8bf;
+  color: var(--panel-muted);
   font-size: 11px;
   line-height: 1.5;
 }
 
 .location-status.is-成功 {
-  color: #a8d4bb;
+  color: var(--gold-soft);
 }
 
 .location-status.is-失败 {
-  color: #e5b0a8;
+  color: var(--danger);
 }
 
 .calculation-card > h2 {
   margin: 0;
-  color: #d8a69d;
+  color: var(--gold-soft);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 12px;
   font-weight: 700;
@@ -483,7 +483,7 @@ button:focus-visible {
 }
 
 .calculation-list dt {
-  color: #b8c8bf;
+  color: var(--panel-muted);
   font-size: 12px;
 }
 
@@ -499,12 +499,12 @@ button:focus-visible {
   gap: 15px;
   margin-top: 26px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid var(--panel-line);
 }
 
 .event-group h3 {
   margin: 0 0 7px;
-  color: #d8a69d;
+  color: var(--gold-soft);
   font-size: 12px;
   letter-spacing: 0.06em;
 }
@@ -520,7 +520,7 @@ button:focus-visible {
 .event-group li {
   position: relative;
   padding-left: 12px;
-  color: #eef1ec;
+  color: var(--panel-ink);
   font-size: 12px;
   line-height: 1.55;
 }
@@ -532,13 +532,13 @@ button:focus-visible {
   width: 4px;
   height: 4px;
   content: "";
-  background: #91c4a9;
+  background: var(--gold-soft);
   border-radius: 50%;
 }
 
 .calculation-note {
   margin: 18px 0 0;
-  color: #91a59a;
+  color: var(--panel-muted);
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 10px;
   letter-spacing: 0.04em;
@@ -547,12 +547,12 @@ button:focus-visible {
 .rule-results {
   margin-top: 28px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid var(--panel-line);
 }
 
 .rule-results h3 {
   margin: 0 0 9px;
-  color: #d8a69d;
+  color: var(--gold-soft);
   font-size: 12px;
   font-weight: 650;
   letter-spacing: 0.08em;
@@ -571,18 +571,18 @@ button:focus-visible {
   width: 7px;
   height: 7px;
   margin-top: 5px;
-  background: #91c4a9;
+  background: var(--gold-soft);
   border-radius: 50%;
 }
 
 .rule-result.is-命中 > span,
 .rule-result.is-配置错误 > span {
-  background: #e89a8e;
-  box-shadow: 0 0 0 4px rgba(232, 154, 142, 0.11);
+  background: var(--danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
 .rule-result.is-无规则 > span {
-  background: #9aa79f;
+  background: var(--panel-muted);
 }
 
 .rule-result strong {
@@ -597,19 +597,19 @@ button:focus-visible {
 }
 
 .rule-result-heading em {
-  color: #b8c8bf;
+  color: var(--panel-muted);
   font-size: 10px;
   font-style: normal;
 }
 
 .rule-result.is-命中 .rule-result-heading em,
 .rule-result.is-配置错误 .rule-result-heading em {
-  color: #efb0a7;
+  color: var(--danger);
 }
 
 .rule-result p {
   margin: 2px 0 0;
-  color: #b8c8bf;
+  color: var(--panel-muted);
   font-size: 10px;
   line-height: 1.45;
 }
@@ -620,8 +620,8 @@ button:focus-visible {
   align-items: flex-start;
   margin-top: 24px;
   padding: 14px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: color-mix(in srgb, var(--gold) 9%, transparent);
+  border: 1px solid var(--panel-line);
   border-radius: 12px;
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
@@ -631,13 +631,13 @@ button:focus-visible {
   width: 8px;
   height: 8px;
   margin-top: 5px;
-  background: #91c4a9;
+  background: var(--gold-soft);
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(145, 196, 169, 0.12);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold-soft) 14%, transparent);
 }
 
 .config-status.has-error .status-dot {
-  background: #e1a096;
+  background: var(--danger);
 }
 
 .config-status strong {
@@ -646,7 +646,7 @@ button:focus-visible {
 
 .config-status p {
   margin: 3px 0 0;
-  color: #b8c8bf;
+  color: var(--panel-muted);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -672,16 +672,11 @@ button:focus-visible {
   }
 
   .calculation-card {
-    border-top-color: rgba(255, 255, 255, 0.14);
+    border-top-color: var(--panel-line);
   }
 }
 
 @media (max-width: 560px) {
-  .today-button {
-    padding: 7px 10px;
-    font-size: 11px;
-  }
-
   .calendar-card {
     padding: 20px 14px 24px;
   }
@@ -761,33 +756,35 @@ button:focus-visible {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --page: #151816;
-    --surface: #1e2420;
-    --surface-strong: #242b26;
-    --ink: #edf0ea;
-    --muted: #9aa39c;
-    --line: #3b443d;
-    --accent: #cf776a;
-    --accent-strong: #e29388;
-    --accent-soft: #4b302d;
-    --green: #345949;
+    --page: #120b08;
+    --surface: #1e1511;
+    --surface-strong: #2a1d16;
+    --panel: #371914;
+    --panel-ink: #f8ecd1;
+    --panel-muted: #c5b38f;
+    --panel-line: rgba(213, 176, 96, 0.22);
+    --ink: #eee1c5;
+    --muted: #aa9879;
+    --line: #4c3928;
+    --gold: #c5a052;
+    --gold-strong: #dfbf75;
+    --gold-soft: #d8bd7a;
+    --accent: #a84a3c;
+    --accent-strong: #d17566;
+    --accent-soft: #48231c;
+    --danger: #dc8172;
     --shadow: 0 26px 75px rgba(0, 0, 0, 0.35);
   }
 
   body {
     background:
-      radial-gradient(circle at 8% 10%, rgba(207, 119, 106, 0.08), transparent 28rem),
-      radial-gradient(circle at 88% 78%, rgba(68, 119, 95, 0.1), transparent 34rem),
+      radial-gradient(circle at 8% 10%, rgba(197, 160, 82, 0.11), transparent 28rem),
+      radial-gradient(circle at 88% 78%, rgba(132, 46, 36, 0.12), transparent 34rem),
       var(--page);
   }
 
   .day-button.is-selected {
-    color: #181c19;
-  }
-
-  .detail-card,
-  .calculation-card {
-    background: #21382f;
+    color: var(--panel-ink);
   }
 }
 
