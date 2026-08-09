@@ -195,13 +195,18 @@ h1 {
 
 .empty-day,
 .day-button {
-  min-height: 66px;
+  min-height: 88px;
 }
 
 .day-button {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 4px;
   color: var(--ink);
   background: transparent;
   border: 0;
@@ -212,25 +217,48 @@ h1 {
   transition: background 130ms ease, color 130ms ease, transform 130ms ease;
 }
 
+.solar-day {
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.lunar-day {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-event {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--accent-strong);
+  font-size: 9px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-event b {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
 .day-button:hover {
   background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
   transform: translateY(-1px);
 }
 
-.day-button.is-today::after {
+.day-button.is-today .today-mark {
   position: absolute;
-  bottom: 9px;
-  width: 4px;
-  height: 4px;
-  content: "";
-  background: var(--accent);
-  border-radius: 50%;
-}
-
-.day-button.is-today small {
-  position: absolute;
-  top: 7px;
-  right: 8px;
+  top: 5px;
+  right: 6px;
   color: var(--accent);
   font-family: inherit;
   font-size: 9px;
@@ -243,11 +271,9 @@ h1 {
   box-shadow: 0 7px 16px rgba(127, 47, 39, 0.24);
 }
 
-.day-button.is-selected::after {
-  background: #fffaf3;
-}
-
-.day-button.is-selected small {
+.day-button.is-selected .today-mark,
+.day-button.is-selected .lunar-day,
+.day-button.is-selected .day-event {
   color: #fffaf3;
 }
 
@@ -374,6 +400,54 @@ h1 {
 
 .detail-list dd {
   margin: 0;
+}
+
+.four-pillars dd {
+  line-height: 1.7;
+}
+
+.date-events {
+  display: grid;
+  gap: 15px;
+  margin-top: 22px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.event-group h3 {
+  margin: 0 0 7px;
+  color: #d8a69d;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.event-group ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-group li {
+  position: relative;
+  padding-left: 12px;
+  color: #eef1ec;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.event-group li::before {
+  position: absolute;
+  top: 0.67em;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  content: "";
+  background: #91c4a9;
+  border-radius: 50%;
 }
 
 .calculation-note {
@@ -510,6 +584,7 @@ footer p {
   .detail-card > .time-controls,
   .detail-card > .detail-rule,
   .detail-card > .detail-list,
+  .detail-card > .date-events,
   .detail-card > .calculation-note,
   .detail-card > .rule-results,
   .detail-card > .config-status {
@@ -565,11 +640,25 @@ footer p {
 
   .empty-day,
   .day-button {
-    min-height: 52px;
+    min-height: 70px;
   }
 
   .day-button {
+    gap: 2px;
+    padding: 5px 2px;
     border-radius: 12px;
+  }
+
+  .solar-day {
+    font-size: 14px;
+  }
+
+  .lunar-day {
+    font-size: 9px;
+  }
+
+  .day-event {
+    font-size: 8px;
   }
 
   .detail-card {

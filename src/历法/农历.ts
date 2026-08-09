@@ -26,3 +26,9 @@ export function 转换为农历(时间: 北京时间): 农历日期 {
     显示: `${月名}${日名}`,
   };
 }
+
+/** 直接读取 lunar-typescript 已维护的农历传统节日，不另建节日数据库。 */
+export function 获取传统节日(时间: 北京时间): string[] {
+  const 农历 = 转为公历(时间).getLunar();
+  return [...new Set([...农历.getFestivals(), ...农历.getOtherFestivals()])];
+}

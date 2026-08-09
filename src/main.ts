@@ -9,10 +9,20 @@ import {
   选择日期,
   type 日历状态,
 } from "./日历/公历";
+import { 创建月历日期信息 } from "./日历/月历信息";
 import { 获取浏览器定位 } from "./定位";
 import { 读取全部配置 } from "./规则/配置读取";
+import { 获取神圣纪念日 } from "./规则/神圣纪念日";
 import { 判断全部时辰规则, type 时辰规则判断 } from "./规则/时辰规则";
-import { 从时间戳读取北京时间, 格式化日期时间, 计算最终时间, 计算历法, 创建北京时间 } from "./历法";
+import {
+  从时间戳读取北京时间,
+  格式化四柱,
+  格式化日期时间,
+  获取传统节日,
+  计算最终时间,
+  计算历法,
+  创建北京时间,
+} from "./历法";
 import { 格式化时分 } from "./历法/时间";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
@@ -36,6 +46,7 @@ let 当前定位状态: 定位状态 = "未定位";
 let 定位说明 = "尚未定位，当前按北京时间计算";
 
 const 配置结果 = 读取全部配置();
+const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "神圣纪念日.txt");
 const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
 const 错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
 
@@ -57,6 +68,25 @@ function 格式化修正(分钟: number): string {
   return `${符号}${Math.floor(绝对秒数 / 60)}分${String(绝对秒数 % 60).padStart(2, "0")}秒`;
 }
 
+function 转义HTML(文本: string): string {
+  return 文本.replace(/[&<>"']/gu, (字符) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[字符] ?? 字符);
+}
+
+function 事件列表(标题: string, 事件: string[]): string {
+  if (事件.length === 0) return "";
+  return `
+    <div class="event-group">
+      <h3>${标题}</h3>
+      <ul>${事件.map((名称) => `<li>${转义HTML(名称)}</li>`).join("")}</ul>
+    </div>`;
+}
+
 function 规则标记(规则: 时辰规则判断): string {
   const 状态文字 = 规则.状态 === "命中" ? "命中" : 规则.状态 === "无规则" ? "本月无规则" : 规则.状态;
   return `
@@ -68,6 +98,7 @@ function 规则标记(规则: 时辰规则判断): string {
 
 function 渲染(): void {
   const 月历格 = 创建月历格(状态.年, 状态.月);
+  const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念配置);
   const 所选 = 状态.所选日期;
   const [时文本, 分文本] = 查询时间.split(":");
   const 北京时间 = 创建北京时间(
@@ -80,6 +111,14 @@ function 渲染(): void {
   );
   const 最终 = 计算最终时间(北京时间, 当前经度);
   const 历法结果 = 计算历法(最终.最终时间);
+  const 传统节日 = 获取传统节日(最终.最终时间);
+  const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 历法结果.农历);
+  const 四柱 = 格式化四柱({
+    年柱: 历法结果.年柱,
+    月柱: 历法结果.月柱,
+    日柱: 历法结果.日柱,
+    时柱: 最终.时柱,
+  });
   const 时辰规则 = 判断全部时辰规则(配置结果, 最终.日支, 最终.时支, 历法结果.农历.月);
   const 节气显示 = 历法结果.节气
     ? `${历法结果.节气.名称} · ${格式化时分(历法结果.节气)}`
@@ -127,20 +166,32 @@ function 渲染(): void {
               .map((日期) => {
                 if (日期 === null) return '<span class="empty-day" aria-hidden="true"></span>';
                 const 当前日期 = new Date(状态.年, 状态.月, 日期);
+                const 日期信息 = 月历信息[日期 - 1];
                 const 是今天 = 是同一天(当前日期, 今天);
                 const 已选择 = 是同一天(当前日期, 所选);
+                const 全部事件 = [...日期信息.传统节日, ...日期信息.神圣纪念];
+                const 事件提示 = 全部事件.length > 0 ? `，${全部事件.join("、")}` : "";
+                const 无障碍说明 = 转义HTML(
+                  `${格式化公历日期(当前日期)}，${星期名称[当前日期.getDay()]}，农历${日期信息.农历.显示}${事件提示}${是今天 ? "，今天" : ""}`,
+                );
                 return `
                   <button
                     type="button"
                     class="day-button${是今天 ? " is-today" : ""}${已选择 ? " is-selected" : ""}"
                     data-day="${日期}"
                     role="gridcell"
-                    aria-label="${格式化公历日期(当前日期)}，${星期名称[当前日期.getDay()]}${是今天 ? "，今天" : ""}"
+                    aria-label="${无障碍说明}"
                     ${是今天 ? 'aria-current="date"' : ""}
                     ${已选择 ? 'aria-selected="true"' : 'aria-selected="false"'}
                   >
-                    <span>${日期}</span>
-                    ${是今天 ? "<small>今</small>" : ""}
+                    <span class="solar-day">${日期}</span>
+                    <span class="lunar-day">${日期信息.农历摘要}</span>
+                    ${
+                      日期信息.事件摘要
+                        ? `<span class="day-event" title="${转义HTML(全部事件.join("、"))}">${转义HTML(日期信息.事件摘要)}${日期信息.其余事件数 > 0 ? `<b>+${日期信息.其余事件数}</b>` : ""}</span>`
+                        : ""
+                    }
+                    ${是今天 ? '<small class="today-mark">今</small>' : ""}
                   </button>`;
               })
               .join("")}
@@ -168,17 +219,21 @@ function 渲染(): void {
             <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
             <div><dt>计算依据</dt><dd>${最终.计算依据}</dd></div>
             <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
-            <div><dt>时辰</dt><dd>${最终.时支}时</dd></div>
-            <div><dt>时柱</dt><dd>${最终.时柱}</dd></div>
+            <div class="four-pillars"><dt>四柱</dt><dd>${四柱}</dd></div>
             <div><dt>农历</dt><dd>${历法结果.农历.显示}</dd></div>
             <div><dt>闰月</dt><dd>${历法结果.农历.是否闰月 ? "是" : "否"}</dd></div>
             <div><dt>节气</dt><dd>${节气显示}</dd></div>
-            <div><dt>年柱</dt><dd>${历法结果.年柱}</dd></div>
-            <div><dt>月柱</dt><dd>${历法结果.月柱}</dd></div>
-            <div><dt>日柱</dt><dd>${历法结果.日柱}</dd></div>
-            <div><dt>月建</dt><dd>${历法结果.月建}月</dd></div>
             <div><dt>值星</dt><dd>${历法结果.值星}日</dd></div>
           </dl>
+
+          ${
+            传统节日.length > 0 || 神圣纪念.length > 0
+              ? `<section class="date-events" aria-label="当日节日与神圣纪念">
+                  ${事件列表("传统节日", 传统节日)}
+                  ${事件列表("神圣纪念", 神圣纪念)}
+                </section>`
+              : ""
+          }
 
           <p class="calculation-note">日柱以最终计算时间 00:00 换日；定位失败自动使用北京时间</p>
 
@@ -198,7 +253,7 @@ function 渲染(): void {
       </section>
 
       <footer>
-        <p>第三阶段 · 真太阳时与时柱</p>
+        <p>日历信息 · 传统节日与神圣纪念</p>
         <p>定位坐标仅在当前页面内使用，不会上传或保存。</p>
       </footer>
     </main>
