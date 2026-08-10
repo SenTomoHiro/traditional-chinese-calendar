@@ -67,8 +67,11 @@ describe("日期详情展示回归", () => {
     expect(值星位置).toBeLessThan(节气位置);
   });
 
-  it("将三项既有时辰规则归入风水禁忌速查", () => {
-    expect(页面源码).toContain('<h3>风水禁忌速查</h3>');
+  it("将三项既有规则并入具体时辰详情且删除原独立模块", () => {
+    expect(页面源码).toContain('<section class="hour-rule-results" aria-label="风水禁忌速查">');
+    expect(页面源码).toContain('<h4>风水禁忌速查</h4>');
+    expect(页面源码).toContain("时段.风水禁忌.map(规则标记).join");
+    expect(页面源码).not.toContain('<section class="rule-results" aria-label="风水禁忌速查">');
     expect(当前历时源码).toContain("判断全部时辰规则");
     expect(页面源码).not.toContain("现有时辰规则");
   });
@@ -143,10 +146,10 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.day-event\s*\{[^}]*font-size:\s*8px;/u);
   });
 
-  it("神圣纪念与传统节日双栏、风水规则自适应多列", () => {
+  it("神圣纪念与传统节日双栏、详情内风水规则自适应多列", () => {
     expect(页面源码).toContain('class="date-events"');
     expect(页面源码).toContain('class="rule-results-grid"');
-    expect(页面源码).toContain("时辰规则.map(规则标记).join");
+    expect(页面源码).toContain("时段.风水禁忌.map(规则标记).join");
     expect(页面样式).toMatch(/\.date-events\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
     expect(页面样式).toContain("repeat(auto-fit, minmax(148px, 1fr))");
   });
@@ -185,10 +188,11 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("日柱从子时开始的 23:00 换日");
   });
 
-  it("十二时辰位于风水禁忌速查之后并使用响应式多列布局", () => {
+  it("十二时辰成为唯一外层模块并使用响应式多列布局", () => {
     const 风水位置 = 页面源码.indexOf('aria-label="风水禁忌速查"');
     const 时辰位置 = 页面源码.indexOf('class="hour-overview"');
-    expect(时辰位置).toBeGreaterThan(风水位置);
+    expect(时辰位置).toBeGreaterThan(-1);
+    expect(风水位置).toBeGreaterThan(-1);
     expect(页面源码).toContain('<h3>十二时辰</h3>');
     expect(页面源码).toContain("十二时辰.项目.map(时辰概览卡片)");
     expect(页面源码).toContain('class="hour-card${项目.当前 ? " is-current" : ""}${已手动选中 ? " is-selected" : ""}"');

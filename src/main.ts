@@ -236,6 +236,10 @@ function 时辰展开详情(时段: 时辰概览段 | undefined): string {
         ${时辰详情标签("时宜", 时段.详情.时宜, "good")}
         ${时辰详情标签("时忌", 时段.详情.时忌, "bad")}
       </dl>
+      <section class="hour-rule-results" aria-label="风水禁忌速查">
+        <h4>风水禁忌速查</h4>
+        <div class="rule-results-grid">${时段.风水禁忌.map(规则标记).join("")}</div>
+      </section>
       <small>依据：${时段.详情.依据}</small>
     </section>`;
 }
@@ -276,7 +280,7 @@ function 渲染(): void {
     0,
   );
   const 当前历时 = 计算当前历时(北京时间, 当前时间依据, 当前经度, 配置结果, 已解析时辰配置);
-  const { 最终, 历法结果, 四柱, 时辰规则, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
+  const { 最终, 历法结果, 四柱, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
   const 错误总数 = 基础配置错误总数 + 时辰配置错误.length;
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
@@ -336,11 +340,6 @@ function 渲染(): void {
                 ${日期事件栏.map((栏) => 事件列表(栏.标题, 栏.事件)).join("")}
               </section>`
             : ""}
-
-          <section class="rule-results" aria-label="风水禁忌速查">
-            <h3>风水禁忌速查</h3>
-            <div class="rule-results-grid">${时辰规则.map(规则标记).join("")}</div>
-          </section>
 
           <section class="hour-overview" aria-label="十二时辰">
             <h3>十二时辰</h3>

@@ -693,14 +693,12 @@ button:focus-visible {
   letter-spacing: 0.04em;
 }
 
-.rule-results,
 .hour-overview {
   margin-top: 20px;
   padding-top: 14px;
   border-top: 1px solid var(--panel-line);
 }
 
-.rule-results h3,
 .hour-overview h3 {
   margin: 0 0 9px;
   color: var(--gold-soft);
@@ -1022,6 +1020,20 @@ button:focus-visible {
   color: var(--panel-muted);
   background: transparent;
   border-color: transparent;
+}
+
+.hour-rule-results {
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid var(--panel-line);
+}
+
+.hour-rule-results h4 {
+  margin: 0 0 4px;
+  color: var(--gold-soft);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
 }
 
 .hour-detail > small {
