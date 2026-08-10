@@ -1,4 +1,5 @@
-import { 转为公历, type 北京时间 } from "./时间";
+import { 计算传统节日, type 传统节日结果 } from "../规则/传统节日";
+import { 平移时间, 转为公历, type 北京时间 } from "./时间";
 
 export interface 农历日期 {
   年: number;
@@ -27,8 +28,11 @@ export function 转换为农历(时间: 北京时间): 农历日期 {
   };
 }
 
-/** 直接读取 lunar-typescript 已维护的农历传统节日，不另建节日数据库。 */
+export function 获取传统节日分类(时间: 北京时间): 传统节日结果 {
+  return 计算传统节日(时间, 转换为农历(时间), 转换为农历(平移时间(时间, 86_400)));
+}
+
+/** 正式运行只读取本地中文配置与本地动态规则。 */
 export function 获取传统节日(时间: 北京时间): string[] {
-  const 农历 = 转为公历(时间).getLunar();
-  return [...new Set([...农历.getFestivals(), ...农历.getOtherFestivals()])];
+  return 获取传统节日分类(时间).全部;
 }

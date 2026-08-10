@@ -143,15 +143,14 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("定位坐标仅在当前页面内使用，不会上传或保存。");
   });
 
-  it("主日历保留年月日一体日期按钮并提供真实弹层", () => {
+  it("主日历直接使用原生年月日输入框且不再经过中间弹层", () => {
     expect(页面源码).toContain('class="calendar-date-control"');
-    expect(页面源码).toContain('type="date" data-calendar-date');
-    expect(页面源码).toContain('data-action="open-calendar-date"');
-    expect(页面源码).toContain('data-calendar-date-dialog');
-    expect(页面源码).toContain(".showModal()");
-    expect(页面源码).toContain('data-action="calendar-date-today"');
-    expect(页面源码).toContain('data-action="calendar-date-clear"');
-    expect(页面源码).toContain('const 主日期显示 = 主日期值.replaceAll("-", "/")');
+    expect(页面源码).toMatch(/class="calendar-date-control"[\s\S]*?type="date"[\s\S]*?data-calendar-date/u);
+    expect(页面源码).not.toContain('data-action="open-calendar-date"');
+    expect(页面源码).not.toContain('data-calendar-date-dialog');
+    expect(页面源码).not.toContain(".showModal()");
+    expect(页面源码).not.toContain('data-action="calendar-date-today"');
+    expect(页面源码).not.toContain('data-action="calendar-date-clear"');
     expect(页面源码).not.toContain('data-action="previous-day"');
     expect(页面源码).not.toContain('data-action="next-day"');
     expect(页面源码).not.toContain('data-action="today"');
@@ -166,20 +165,28 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("时间查询 = 创建实时查询时间(当前北京时间)");
   });
 
+  it("切换任意日期会清除手动时辰并跟随当前真实时分", () => {
+    const 设置日期处理 = 页面源码.match(/function 设置日期\(日期: Date\): void \{[\s\S]*?\n\}/u)?.[0] ?? "";
+    expect(设置日期处理).toContain("时间查询 = 创建实时查询时间(当前北京时间)");
+    expect(设置日期处理).toContain("手动查看时辰键 = null");
+    expect(设置日期处理).not.toContain("12:00");
+    expect(页面源码).toContain("刷新主日期实时时钟");
+  });
+
   it("一体日期使用宋体等高表格数字", () => {
     expect(页面样式).toMatch(/:root\s*\{[^}]*--serif-font:/u);
     expect(页面样式).toMatch(/\.lunar-title\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
-    expect(页面样式).toMatch(/\.calendar-date-control span\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
-    expect(页面样式).toMatch(/\.calendar-date-control span\s*\{[^}]*font-variant-numeric:\s*lining-nums tabular-nums/u);
-    expect(页面样式).toMatch(/\.calendar-date-control span\s*\{[^}]*font-feature-settings:\s*"lnum" 1, "tnum" 1/u);
-    expect(页面源码).toContain("${主日期显示}");
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*font-variant-numeric:\s*lining-nums tabular-nums/u);
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*font-feature-settings:\s*"lnum" 1, "tnum" 1/u);
+    expect(页面源码).toContain('value="${主日期值}"');
     expect(页面源码).not.toContain("digit-");
   });
 
   it("一体日期选择器在桌面与手机均保持居中且不横溢", () => {
     expect(页面样式).toMatch(/\.calendar-toolbar\s*\{[^}]*justify-content:\s*center/u);
-    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*min-width:\s*min\(100%, 280px\)/u);
-    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.calendar-date-control span\s*\{[^}]*font-size:/u);
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*width:\s*min\(100%, 300px\)/u);
+    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.calendar-date-control\s*\{[^}]*font-size:/u);
   });
 
   it("月历与详情都已接入节日和神圣纪念", () => {
@@ -314,7 +321,7 @@ describe("日期详情展示回归", () => {
     const 按钮处理 = 页面源码.match(/if \(目标\.dataset\.action === "current-hour"\) \{[\s\S]*?return;\n  \}/u)?.[0] ?? "";
     expect(按钮处理).toContain("手动查看时辰键 = 清除手动查看时辰()");
     expect(按钮处理).not.toContain("设置日期");
-    expect(按钮处理).not.toContain("时间查询");
+    expect(按钮处理).toContain("时间查询 = 创建实时查询时间(当前北京时间)");
   });
 
   it("双栏采用左宽右窄且移动端仍为单栏", () => {

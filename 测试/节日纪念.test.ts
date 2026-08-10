@@ -15,7 +15,7 @@ function 农历(月: number, 日: number, 月名: string, 日名: string, 是否
   return { 年: 2026, 月, 日, 月名, 日名, 是否闰月, 显示: `${月名}${日名}` };
 }
 
-describe("lunar-typescript 传统节日", () => {
+describe("本地传统节日", () => {
   it.each([
     [2024, 2, 10, "春节"],
     [2024, 2, 24, "元宵节"],

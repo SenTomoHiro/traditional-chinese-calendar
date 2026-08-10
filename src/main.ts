@@ -25,7 +25,6 @@ import {
   创建分钟实时更新器,
   创建实时查询时间,
   创建手动查询时间,
-  刷新实时查询时间,
   type 查询时间状态,
 } from "./实时历时";
 import { 格式化时分 } from "./历法/时间";
@@ -33,6 +32,7 @@ import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from
 import { 创建日期事件分栏 } from "./界面/详情布局";
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
+import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
 import { 解析北斗配置 } from "./规则/北斗";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
@@ -76,9 +76,7 @@ function 设置日期(日期: Date): void {
   const 当前北京时间 = 从时间戳读取北京时间();
   今天 = 北京日期(当前北京时间);
   状态 = 选择日期(状态, 日期);
-  时间查询 = 是同一天(日期, 今天)
-    ? 创建实时查询时间(当前北京时间)
-    : 创建手动查询时间("12:00");
+  时间查询 = 创建实时查询时间(当前北京时间);
   手动查看时辰键 = null;
   渲染();
 }
@@ -351,7 +349,6 @@ function 渲染(): void {
   const 全部时段 = 十二时辰.项目.flatMap((项目) => 项目.时段);
   const 查看时辰 = 选出查看时辰(全部时段, 手动查看时辰键);
   const 主日期值 = `${状态.年}-${String(状态.月 + 1).padStart(2, "0")}-${String(所选.getDate()).padStart(2, "0")}`;
-  const 主日期显示 = 主日期值.replaceAll("-", "/");
   const 每日宜忌显示 = 创建每日宜忌展示(历法结果.每日宜忌);
   if (手动查看时辰键 && 查看时辰?.键 !== 手动查看时辰键) 手动查看时辰键 = null;
 
@@ -419,21 +416,16 @@ function 渲染(): void {
         <div class="calendar-right">
           <article class="calendar-card">
           <div class="calendar-toolbar">
-            <button class="calendar-date-control" type="button" data-action="open-calendar-date" aria-haspopup="dialog">
-              <span>${主日期显示}</span>
-            </button>
-            <dialog class="calendar-date-dialog" data-calendar-date-dialog aria-label="选择主日历日期">
-              <form method="dialog">
-                <label>选择日期
-                  <input type="date" data-calendar-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${主日期值}">
-                </label>
-                <div class="calendar-date-dialog-actions">
-                  <button type="button" data-action="calendar-date-today">今天</button>
-                  <button type="button" data-action="calendar-date-clear">清除</button>
-                  <button type="button" data-action="calendar-date-close">完成</button>
-                </div>
-              </form>
-            </dialog>
+            <input
+              class="calendar-date-control"
+              type="date"
+              data-calendar-date
+              aria-label="选择主日历日期"
+              lang="zh-CN"
+              min="${八字支持范围.最小日期}"
+              max="${八字支持范围.最大日期}"
+              value="${主日期值}"
+            >
           </div>
 
           <div class="week-row" role="row">
@@ -580,21 +572,6 @@ function 渲染(): void {
     return;
   }
 
-  if (目标.dataset.action === "open-calendar-date") {
-    根节点.querySelector<HTMLDialogElement>("[data-calendar-date-dialog]")?.showModal();
-    return;
-  }
-
-  if (目标.dataset.action === "calendar-date-close") {
-    根节点.querySelector<HTMLDialogElement>("[data-calendar-date-dialog]")?.close();
-    return;
-  }
-
-  if (目标.dataset.action === "calendar-date-today" || 目标.dataset.action === "calendar-date-clear") {
-    回到今天实时模式();
-    return;
-  }
-
   const 时辰键 = 目标.dataset.hourKey;
   if (时辰键) {
     手动查看时辰键 = 更新手动查看键(时辰键, 目标.classList.contains("is-current"));
@@ -603,6 +580,9 @@ function 渲染(): void {
   }
 
   if (目标.dataset.action === "current-hour") {
+    const 当前北京时间 = 从时间戳读取北京时间();
+    今天 = 北京日期(当前北京时间);
+    时间查询 = 创建实时查询时间(当前北京时间);
     手动查看时辰键 = 清除手动查看时辰();
     渲染();
     return;
@@ -641,20 +621,12 @@ function 渲染(): void {
 渲染();
 
 const 分钟实时更新器 = 创建分钟实时更新器((当前毫秒) => {
-  const 原今天 = 今天;
-  const 所选原为今天 = 是同一天(状态.所选日期, 原今天);
   const 当前北京时间 = 从时间戳读取北京时间(new Date(当前毫秒));
-  const 新今天 = 北京日期(当前北京时间);
-  const 日期已经变化 = !是同一天(原今天, 新今天);
-  今天 = 新今天;
-
-  if (时间查询.模式 === "实时" && 所选原为今天) {
-    状态 = 选择日期(状态, 新今天);
-    时间查询 = 刷新实时查询时间(时间查询, 当前北京时间);
-    渲染();
-  } else if (日期已经变化) {
-    渲染();
-  }
+  const 刷新结果 = 刷新主日期实时时钟(状态.所选日期, 今天, 时间查询, 当前北京时间);
+  今天 = 刷新结果.今天;
+  if (!是同一天(状态.所选日期, 刷新结果.所选日期)) 状态 = 选择日期(状态, 刷新结果.所选日期);
+  时间查询 = 刷新结果.时间查询;
+  if (刷新结果.需要渲染) 渲染();
 });
 
 分钟实时更新器.启动();
