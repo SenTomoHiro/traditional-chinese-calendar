@@ -35,6 +35,7 @@ import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } f
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
 import { 格式化主日期值, 解析主日期值 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
+import type { 日级风水禁忌结果 } from "./规则/日级风水禁忌";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
@@ -206,6 +207,18 @@ function 规则标记(规则: 时辰规则判断): string {
     </div>`;
 }
 
+function 日级风水禁忌模块(结果: 日级风水禁忌结果): string {
+  const 明细 = 结果.命中.flatMap((规则) => [
+    `<div><strong>${规则.名称}</strong><span>${转义HTML(规则.说明)}</span></div>`,
+    ...(规则.方位 ? [`<div><strong>杀风水师方</strong><span>${转义HTML(规则.方位)}</span></div>`] : []),
+  ]);
+  return `
+    <section class="day-fengshui" aria-label="日期风水禁忌">
+      <h3>风水禁忌</h3>
+      ${明细.length > 0 ? `<div class="day-fengshui-list">${明细.join("")}</div>` : '<p class="is-empty">无</p>'}
+    </section>`;
+}
+
 function 时辰概览卡片(项目: 时辰概览项): string {
   const 已手动选中 = 项目.时段.some((时段) => 时段.键 === 手动查看时辰键);
   return `
@@ -312,7 +325,10 @@ function 时辰展开详情(时段: 时辰概览段 | undefined): string {
       </dl>
       ${现代时辰宜忌(时段)}
       <section class="hour-rule-results" aria-label="风水禁忌速查">
-        <h4>风水禁忌速查</h4>
+        <div class="hour-rule-heading">
+          <h4>风水禁忌速查</h4>
+          <p class="${时段.当日风水禁忌.当日状态 === "当日宜" ? "is-safe" : "is-warning"}">${时段.当日风水禁忌.当日状态}</p>
+        </div>
         <div class="rule-results-grid">${时段.风水禁忌.map(规则标记).join("")}</div>
       </section>
       <small>依据：${时段.详情.依据}</small>
@@ -362,7 +378,7 @@ function 渲染(): void {
     已解析时辰配置,
     北斗配置结果.配置,
   );
-  const { 最终, 历法结果, 四柱, 北斗, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
+  const { 最终, 历法结果, 四柱, 北斗, 日级风水禁忌, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
   const 错误总数 = 基础配置错误总数 + 时辰配置错误.length + 北斗配置结果.错误.length;
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
@@ -421,6 +437,8 @@ function 渲染(): void {
             ${日期信息项目("节气", [核心节气显示])}
             ${日期事件栏.map((栏) => 日期信息项目(栏.标题, 栏.事件)).join("")}
           </section>
+
+          ${日级风水禁忌模块(日级风水禁忌)}
 
           <section class="beidou-panel" aria-label="北斗">
             <h3>北斗</h3>

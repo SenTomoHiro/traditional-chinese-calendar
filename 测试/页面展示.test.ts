@@ -114,6 +114,19 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("现有时辰规则");
   });
 
+  it("日期详情显示六类日级风水命中且时辰速查汇总当日层级", () => {
+    expect(页面源码).toContain('class="day-fengshui" aria-label="日期风水禁忌"');
+    expect(页面源码).toContain("日级风水禁忌模块(日级风水禁忌)");
+    expect(页面源码).toContain("结果.命中.flatMap");
+    expect(页面源码).toContain("规则.方位");
+    expect(页面源码).toContain('class="hour-rule-heading"');
+    expect(页面源码).toContain("时段.当日风水禁忌.当日状态");
+    expect(页面源码).toContain('时段.当日风水禁忌.当日状态 === "当日宜"');
+    expect(页面样式).toMatch(/\.hour-rule-heading\s*\{[^}]*justify-content:\s*space-between/u);
+    expect(页面样式).toMatch(/\.hour-rule-heading p\s*\{[^}]*font-size:\s*10px;[^}]*text-align:\s*right/u);
+    expect(页面样式).toMatch(/\.hour-detail > header span,[\s\S]*?\.hour-detail > header p\s*\{[^}]*font-size:\s*10px/u);
+  });
+
   it("风水禁忌删除右侧重复状态并只强调命中的条件行", () => {
     expect(页面源码).toContain("<strong>${规则.名称}</strong>");
     expect(页面源码).toContain("<p>${规则.说明}</p>");
