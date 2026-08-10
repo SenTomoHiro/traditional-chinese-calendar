@@ -1416,9 +1416,13 @@ button:focus-visible {
   }
 
   .detail-card {
-    --detail-grid-columns: minmax(0, 0.72fr) minmax(0, 0.68fr) minmax(0, 1.6fr);
-    --detail-grid-column-gap: 10px;
+    --detail-grid-columns: minmax(96px, 1fr) minmax(68px, 0.9fr) minmax(0, 1.2fr);
+    --detail-grid-column-gap: 5px;
     padding: 30px 24px;
+  }
+
+  .almanac-core-item:first-child strong {
+    white-space: nowrap;
   }
 
   .calculation-card {

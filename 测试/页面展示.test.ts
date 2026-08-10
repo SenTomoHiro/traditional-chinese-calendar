@@ -337,15 +337,19 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.beidou-source\s*\{[^}]*margin:\s*7px 0 0;[^}]*overflow-wrap:\s*anywhere/u);
   });
 
-  it("手机三组信息共用窄窄宽列定义且桌面保持三等列", () => {
+  it("手机三组信息共用前两列保底且第三列弹性的列定义", () => {
     expect(页面样式).toMatch(/\.detail-card\s*\{[^}]*--detail-grid-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/u);
     for (const 选择器 of ["almanac-core-row", "calendar-info-grid", "beidou-grid"]) {
       expect(页面样式).toMatch(new RegExp(`\\.${选择器}\\s*\\{[^}]*grid-template-columns:\\s*var\\(--detail-grid-columns\\)`, "u"));
     }
     const 手机规则 = 页面样式.match(/@media \(max-width: 560px\) \{[\s\S]*?@media \(max-width: 350px\)/u)?.[0] ?? "";
-    expect(手机规则).toContain("--detail-grid-columns: minmax(0, 0.72fr) minmax(0, 0.68fr) minmax(0, 1.6fr)");
+    expect(手机规则).toContain("--detail-grid-columns: minmax(96px, 1fr) minmax(68px, 0.9fr) minmax(0, 1.2fr)");
+    expect(手机规则).toContain("--detail-grid-column-gap: 5px");
+    expect(手机规则).toMatch(/\.almanac-core-item:first-child strong\s*\{[^}]*white-space:\s*nowrap/u);
     expect(手机规则).not.toMatch(/\.beidou-grid\s*\{[^}]*repeat\(2/u);
     expect(页面样式).not.toMatch(/\.calendar-info-item:last-child\s*\{[^}]*grid-column/u);
+    expect(页面样式).toMatch(/\.calendar-info-values span\s*\{[^}]*color:/u);
+    expect(页面样式).toMatch(/\.beidou-item strong\s*\{[^}]*overflow-wrap:\s*anywhere/u);
   });
 
   it("左侧快捷按钮仅手机显示而右侧快捷按钮全端保留", () => {
