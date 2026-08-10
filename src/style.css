@@ -572,10 +572,6 @@ button:focus-visible {
   display: grid;
   gap: 3px;
   color: var(--gold-soft);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
 }
 
 .almanac-core-item.is-凶 strong {
@@ -752,11 +748,16 @@ button:focus-visible {
   gap: 3px;
 }
 
+.almanac-core-item strong,
 .calendar-info-values span {
-  color: var(--panel-ink);
   font-size: 12px;
+  font-weight: 400;
   line-height: 1.55;
   overflow-wrap: anywhere;
+}
+
+.calendar-info-values span {
+  color: var(--panel-ink);
 }
 
 .calendar-info-values span.is-empty {

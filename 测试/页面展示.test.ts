@@ -81,6 +81,19 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.almanac-core-item strong\s*\{[^}]*color:\s*var\(--gold-soft\)/u);
   });
 
+  it("核心三项与节气纪念节日共用完全相同的内容文字规格", () => {
+    const 共享内容规格 = 页面样式.match(/\.almanac-core-item strong,\s*\.calendar-info-values span\s*\{[^}]*\}/u)?.[0] ?? "";
+    expect(共享内容规格).toContain("font-size: 12px");
+    expect(共享内容规格).toContain("font-weight: 400");
+    expect(共享内容规格).toContain("line-height: 1.55");
+    expect(共享内容规格).toContain("overflow-wrap: anywhere");
+    expect(页面样式).toMatch(/\.almanac-core-item h3\s*\{[^}]*font-size:\s*10px/u);
+    expect(页面样式).toMatch(/\.calendar-info-item h3\s*\{[^}]*font-size:\s*10px/u);
+    expect(页面源码).toContain('结果.命中.map((规则) => 规则.展示文本)');
+    expect(页面源码).toContain('内容行.map((行) => `<span>${转义HTML(行)}</span>`)');
+    expect(共享内容规格).not.toMatch(/text-overflow|white-space:\s*nowrap|overflow:\s*hidden/u);
+  });
+
   it("日宜日忌紧接日吉凶并在全平台纵向使用整行", () => {
     const 日吉凶位置 = 页面源码.indexOf('class="almanac-core-row"');
     const 每日宜忌位置 = 页面源码.indexOf('class="day-actions"');
