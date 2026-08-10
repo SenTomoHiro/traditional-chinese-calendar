@@ -159,7 +159,7 @@ function 时辰概览卡片(项目: 时辰概览项): string {
 }
 
 function 时辰详情标签(标题: string, 内容: string[], 类型 = "normal"): string {
-  const 空提示 = 标题 === "日时关系" ? "无特殊关系" : 标题 === "时宜" || 标题 === "时忌" ? "暂无明确通用条目" : "无";
+  const 空提示 = 标题 === "日时关系" ? "无特殊关系" : 标题 === "时宜" ? "无明确宜" : 标题 === "时忌" ? "无明确忌" : "无";
   return `
     <div class="hour-detail-group is-${类型}">
       <dt>${标题}</dt>

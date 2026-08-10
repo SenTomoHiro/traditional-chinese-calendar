@@ -38,6 +38,14 @@ describe("详细时辰中文配置校验", () => {
     expect(结果.错误.some((错误) => 错误.信息.includes("未知条件"))).toBe(true);
   });
 
+  it("五不遇定局必须完整覆盖十日干", () => {
+    const 原配置 = readFileSync(resolve(process.cwd(), "配置", "时辰神煞.txt"), "utf8");
+    const 缺项配置 = 解析配置("时辰神煞.txt", 原配置.replace("、癸日己未时", ""));
+    const 结果 = 解析详细时辰配置([缺项配置, 读配置("时辰宜忌.txt")]);
+    expect(结果.配置).toBeNull();
+    expect(结果.错误.some((错误) => 错误.信息.includes("五不遇缺少癸日定局"))).toBe(true);
+  });
+
   it("来源核对文档覆盖每一项配置", () => {
     const 文档 = readFileSync(resolve(process.cwd(), "资料", "时辰宜忌来源核对.md"), "utf8");
     for (const 事项 of 详细配置?.用事 ?? []) {
@@ -77,7 +85,7 @@ describe("六十甲子日乘十二时支完整性质", () => {
       expect(十二结果.filter((结果) => 结果.吉神.includes("喜神")), `${日柱}喜神`).toHaveLength(1);
       expect(十二结果.some((结果) => 结果.吉神.includes("天官贵人")), `${日柱}天官贵人`).toBe(true);
       expect(十二结果.some((结果) => 结果.吉神.includes("福星贵人")), `${日柱}福星贵人`).toBe(true);
-      expect(十二结果.some((结果) => 结果.凶煞.includes("五不遇")), `${日柱}五不遇`).toBe(true);
+      expect(十二结果.filter((结果) => 结果.凶煞.includes("五不遇")), `${日柱}五不遇`).toHaveLength(1);
       const 路空数量 = 十二结果.filter((结果) => 结果.凶煞.includes("路空")).length;
       expect(路空数量, `${日柱}路空`).toBe(["戊", "癸"].includes(日柱[0]) ? 4 : 2);
 
@@ -93,15 +101,17 @@ describe("六十甲子日乘十二时支完整性质", () => {
     expect(详情("甲子", "卯").日时关系).toContain("日刑");
     expect(详情("甲子", "午")).toMatchObject({ 日时关系: ["日破"], 凶煞: expect.arrayContaining(["五不遇"]) });
     expect(详情("甲子", "未")).toMatchObject({ 日时关系: ["日害"], 吉神: expect.arrayContaining(["天乙贵人"]) });
+    expect(详情("甲子", "未").凶煞).not.toContain("五不遇");
     expect(详情("甲子", "申").凶煞).toContain("路空");
     expect(详情("甲子", "酉")).toMatchObject({ 吉神: expect.arrayContaining(["天官贵人"]), 凶煞: ["路空"] });
     expect(详情("甲子", "戌").凶煞).toContain("旬空");
     expect(详情("甲子", "亥").凶煞).toContain("旬空");
   });
 
-  it("日合、日建和日马只触发有直接依据的用事项", () => {
-    expect(详情("甲子", "丑").时宜).toEqual(expect.arrayContaining(["会亲友", "结婚姻", "嫁娶", "交易", "纳财"]));
-    expect(详情("甲子", "寅").时宜).toEqual(expect.arrayContaining(["出行", "移徙"]));
+  it("不把时辰关系误当成卷十一日级神煞，只保留明确的用时限制", () => {
+    expect(详情("甲子", "子").时宜).toEqual([]);
+    expect(详情("甲子", "丑").时宜).toEqual([]);
+    expect(详情("甲子", "寅").时宜).toEqual([]);
     expect(详情("甲子", "申").时忌).toContain("出行");
   });
 
@@ -112,12 +122,18 @@ describe("六十甲子日乘十二时支完整性质", () => {
     expect(结果.时宜).toEqual([]);
   });
 
-  it("宜忌同时命中时从宜中移除并留下内部冲突", () => {
-    const 结果 = 详情("戊子", "子");
-    expect(结果.日时关系).toContain("日建");
-    expect(结果.凶煞).toContain("路空");
-    expect(结果.时宜).not.toContain("出行");
-    expect(结果.时忌).toContain("出行");
-    expect(结果.冲突).toContain("出行");
+  it("宜忌同时命中但没有制化依据时不输出确定结论", () => {
+    expect(详细配置).not.toBeNull();
+    const 冲突配置 = {
+      ...详细配置!,
+      用事: [{ 名称: "测试事项", 宜: ["旬空"], 忌: ["旬空"] }],
+    };
+    const 时柱 = 计算时柱("甲子", "戌");
+    const 值神 = 计算时辰值神(吉凶配置, "子", "戌");
+    const 结果 = 计算详细时辰(冲突配置, "甲子", 时柱, 值神.值神, 值神.吉凶);
+    expect(结果.时宜).toEqual([]);
+    expect(结果.时忌).toEqual([]);
+    expect(结果.冲突).toEqual(["测试事项"]);
+    expect(结果.未判定用事).toContain("测试事项");
   });
 });

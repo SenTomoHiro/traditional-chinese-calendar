@@ -164,6 +164,9 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('时辰详情标签("凶煞"');
     expect(页面源码).toContain('时辰详情标签("时宜"');
     expect(页面源码).toContain('时辰详情标签("时忌"');
+    expect(页面源码).toContain('"无特殊关系"');
+    expect(页面源码).toContain('"无明确宜"');
+    expect(页面源码).toContain('"无明确忌"');
   });
 
   it("双栏采用左宽右窄且移动端仍为单栏", () => {
