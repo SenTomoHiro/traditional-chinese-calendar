@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { 格式化主日期值, 解析主日期值 } from "../src/界面/主日期输入";
+import { 格式化主日期值, 解析主日期值, 移动主日期 } from "../src/界面/主日期输入";
 
 const 最小日期 = "1900-01-01";
 const 最大日期 = "2100-12-31";
@@ -16,5 +16,12 @@ describe("主日期输入", () => {
 
   it("外部月格选择可稳定同步回日期输入", () => {
     expect(格式化主日期值(new Date(2027, 11, 25))).toBe("2027-12-25");
+  });
+
+  it("前一天和后一天正确跨月移动且服从日期范围", () => {
+    expect(移动主日期(new Date(2026, 7, 1), -1, 最小日期, 最大日期)).toEqual(new Date(2026, 6, 31));
+    expect(移动主日期(new Date(2026, 7, 31), 1, 最小日期, 最大日期)).toEqual(new Date(2026, 8, 1));
+    expect(移动主日期(new Date(1900, 0, 1), -1, 最小日期, 最大日期)).toBeNull();
+    expect(移动主日期(new Date(2100, 11, 31), 1, 最小日期, 最大日期)).toBeNull();
   });
 });

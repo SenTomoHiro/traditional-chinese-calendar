@@ -33,7 +33,7 @@ import { 创建日期事件分栏 } from "./界面/详情布局";
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
-import { 格式化主日期值, 解析主日期值 } from "./界面/主日期输入";
+import { 格式化主日期值, 解析主日期值, 移动主日期 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
 import { 创建浏览器主题控制器, 是主题偏好, type 主题偏好 } from "./界面/主题";
 import type { 日级风水禁忌结果 } from "./规则/日级风水禁忌";
@@ -93,6 +93,11 @@ function 设置日期(日期: Date): void {
   手动查看时辰键 = null;
   结束主日期编辑();
   渲染();
+}
+
+function 切换相邻主日期(偏移天数: -1 | 1): void {
+  const 日期 = 移动主日期(状态.所选日期, 偏移天数, 八字支持范围.最小日期, 八字支持范围.最大日期);
+  if (日期) 设置日期(日期);
 }
 
 function 回到今天实时模式(): void {
@@ -196,6 +201,34 @@ function 核心黄历项目(标题: "日吉凶" | "值日" | "风水禁忌", 内
     <div class="almanac-core-item is-${类型}">
       <h3>${标题}</h3>
       <strong>${内容行.map((行) => `<span>${转义HTML(行)}</span>`).join("")}</strong>
+    </div>`;
+}
+
+type 主日期控件位置 = "detail" | "calendar";
+
+function 主日期控件(值: string, 位置: 主日期控件位置): string {
+  const 是详情 = 位置 === "detail";
+  const 快捷按钮 = [
+    { action: "previous-day", label: "上一天", text: "‹" },
+    { action: "today", label: "返回今天", text: "今" },
+    { action: "next-day", label: "下一天", text: "›" },
+  ];
+  return `
+    <div class="main-date-navigation is-${位置}">
+      <input
+        class="calendar-date-control${是详情 ? " detail-date-control" : ""}"
+        type="date"
+        data-calendar-date
+        data-date-position="${位置}"
+        aria-label="${是详情 ? "左侧选择主日历日期" : "选择主日历日期"}"
+        lang="zh-CN"
+        min="${八字支持范围.最小日期}"
+        max="${八字支持范围.最大日期}"
+        value="${值}"
+      >
+      <div class="date-shortcuts" role="group" aria-label="${是详情 ? "左侧日期快捷操作" : "月历日期快捷操作"}">
+        ${快捷按钮.map((按钮) => `<button type="button" class="date-shortcut-button" data-action="${按钮.action}" aria-label="${按钮.label}" title="${按钮.label}">${按钮.text}</button>`).join("")}
+      </div>
     </div>`;
 }
 
@@ -447,7 +480,7 @@ function 渲染(): void {
               ${当前定位状态 === "定位中" ? "disabled" : ""}
             >${当前定位状态 === "定位中" ? "定位中…" : 当前时间依据}</button>
           </div>
-          <p class="solar-date">${格式化公历日期(所选)} · ${星期名称[所选.getDay()]}</p>
+          ${主日期控件(主日期值, "detail")}
 
           <section class="core-fact pillar-core" aria-label="四柱">
             <span>四柱</span>
@@ -496,16 +529,7 @@ function 渲染(): void {
         <div class="calendar-right">
           <article class="calendar-card">
           <div class="calendar-toolbar">
-            <input
-              class="calendar-date-control"
-              type="date"
-              data-calendar-date
-              aria-label="选择主日历日期"
-              lang="zh-CN"
-              min="${八字支持范围.最小日期}"
-              max="${八字支持范围.最大日期}"
-              value="${主日期值}"
-            >
+            ${主日期控件(主日期值, "calendar")}
           </div>
 
           <div class="week-row" role="row">
@@ -586,6 +610,9 @@ function 渲染(): void {
   if (主日期输入) {
     主日期草稿 = 主日期输入.value;
     主日期正在编辑 = true;
+    根节点.querySelectorAll<HTMLInputElement>("[data-calendar-date]").forEach((输入) => {
+      if (输入 !== 主日期输入) 输入.value = 主日期输入.value;
+    });
     return;
   }
   const 输入框 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-time-input]");
@@ -705,6 +732,15 @@ function 渲染(): void {
   }
 
   switch (目标.dataset.action) {
+    case "previous-day":
+      切换相邻主日期(-1);
+      break;
+    case "today":
+      回到今天实时模式();
+      break;
+    case "next-day":
+      切换相邻主日期(1);
+      break;
     case "time-basis": {
       if (当前时间依据 === "真太阳时") {
         当前时间依据 = "北京时间";

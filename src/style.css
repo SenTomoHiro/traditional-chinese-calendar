@@ -291,7 +291,29 @@ button:focus-visible {
   margin-bottom: 26px;
 }
 
+.main-date-navigation {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.main-date-navigation.is-calendar {
+  width: min(100%, 420px);
+  --date-button-color: var(--gold-strong);
+  --date-button-border: color-mix(in srgb, var(--gold) 40%, transparent);
+  --date-button-background: color-mix(in srgb, var(--gold-soft) 8%, transparent);
+}
+
+.main-date-navigation.is-detail {
+  margin-top: 8px;
+  --date-button-color: var(--gold-soft);
+  --date-button-border: var(--panel-line);
+  --date-button-background: color-mix(in srgb, var(--gold) 9%, transparent);
+}
+
 .calendar-date-control {
+  flex: 1 1 auto;
   width: min(100%, 300px);
   min-width: 0;
   min-height: 52px;
@@ -309,6 +331,56 @@ button:focus-visible {
   line-height: 1;
   text-align: center;
   color-scheme: inherit;
+}
+
+.detail-date-control {
+  flex: 0 1 180px;
+  width: min(100%, 180px);
+  max-width: 180px;
+  min-height: 32px;
+  padding: 5px 8px;
+  color: var(--panel-muted);
+  background: color-mix(in srgb, var(--gold) 5%, transparent);
+  border-color: var(--panel-line);
+  border-radius: 8px;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.date-shortcuts {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.main-date-navigation.is-detail .date-shortcuts {
+  display: none;
+}
+
+.date-shortcut-button {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--date-button-color);
+  background: var(--date-button-background);
+  border: 1px solid var(--date-button-border);
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.date-shortcut-button:hover {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  border-color: var(--gold);
 }
 
 .calendar-date-control::-webkit-calendar-picker-indicator {
@@ -434,6 +506,8 @@ button:focus-visible {
 .detail-card {
   grid-area: detail;
   position: relative;
+  --detail-grid-columns: repeat(3, minmax(0, 1fr));
+  --detail-grid-column-gap: 18px;
   padding: clamp(34px, 4vw, 48px) clamp(28px, 3.5vw, 42px);
   color: var(--panel-ink);
   background: var(--panel);
@@ -510,14 +584,6 @@ button:focus-visible {
   opacity: 0.7;
 }
 
-.solar-date {
-  margin: 8px 0 0;
-  color: var(--panel-muted);
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
 .core-fact {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -548,8 +614,8 @@ button:focus-visible {
 
 .almanac-core-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: var(--detail-grid-columns);
+  gap: var(--detail-grid-column-gap);
   margin-top: 14px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--panel-line);
@@ -723,8 +789,8 @@ button:focus-visible {
 
 .calendar-info-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px 18px;
+  grid-template-columns: var(--detail-grid-columns);
+  gap: 12px var(--detail-grid-column-gap);
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--panel-line);
@@ -779,8 +845,8 @@ button:focus-visible {
 
 .beidou-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: var(--detail-grid-columns);
+  gap: 12px var(--detail-grid-column-gap);
 }
 
 .beidou-item {
@@ -1310,6 +1376,17 @@ button:focus-visible {
     font-size: clamp(24px, 7vw, 30px);
   }
 
+  .main-date-navigation.is-detail .date-shortcuts {
+    display: flex;
+  }
+
+  .detail-date-control {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    font-size: 12px;
+  }
+
   .empty-day,
   .day-button {
     min-height: 82px;
@@ -1339,6 +1416,8 @@ button:focus-visible {
   }
 
   .detail-card {
+    --detail-grid-columns: minmax(0, 0.72fr) minmax(0, 0.68fr) minmax(0, 1.6fr);
+    --detail-grid-column-gap: 10px;
     padding: 30px 24px;
   }
 
@@ -1363,11 +1442,6 @@ button:focus-visible {
     gap: 8px;
   }
 
-  .almanac-core-row {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.65fr) minmax(0, 1.45fr);
-    gap: 10px;
-  }
-
   .pillar-core strong {
     font-size: clamp(12px, 3.4vw, 14px);
   }
@@ -1387,14 +1461,6 @@ button:focus-visible {
   .rule-results-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 3px 10px;
-  }
-
-  .beidou-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .beidou-item:last-child {
-    grid-column: 1 / -1;
   }
 
 }
@@ -1418,14 +1484,9 @@ button:focus-visible {
     grid-template-columns: 50px minmax(0, 1fr);
   }
 
-  .calendar-info-grid,
   .rule-results-grid,
   .bazi-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .calendar-info-item:last-child {
-    grid-column: 1 / -1;
   }
 }
 
