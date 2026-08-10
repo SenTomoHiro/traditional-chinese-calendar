@@ -2,12 +2,14 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { 创建月历日期信息, 格式化农历摘要, 生成月历事件展示 } from "../src/日历/月历信息";
-import { 解析配置 } from "../src/规则/配置读取";
+import { 解析北斗配置 } from "../src/规则/北斗";
+import { 读取全部配置, 解析配置 } from "../src/规则/配置读取";
 
 const 神圣纪念配置 = 解析配置(
   "神圣纪念日.txt",
   readFileSync(resolve(process.cwd(), "配置/神圣纪念日.txt"), "utf8"),
 );
+const 北斗配置 = 解析北斗配置(读取全部配置()).配置;
 
 describe("月历农历与事件摘要", () => {
   it("完整公历月份的每一天都有农历信息", () => {
@@ -39,6 +41,18 @@ describe("月历农历与事件摘要", () => {
     const 春节 = 创建月历日期信息(2024, 1, 神圣纪念配置).find((日期) => 日期.公历日 === 10);
     expect(春节?.显示事件[0]).toBe("春节");
     expect((春节?.显示事件.length ?? 0) + (春节?.其余事件数 ?? 0)).toBeGreaterThan(1);
+  });
+
+  it("月历只在实际命中斗降日时加入斗降事件", () => {
+    const 全年 = Array.from({ length: 12 }, (_, 月) => 创建月历日期信息(2026, 月, 神圣纪念配置, 北斗配置)).flat();
+    const 命中 = 全年.filter((日期) => 日期.斗降.length > 0);
+    const 未命中 = 全年.filter((日期) => 日期.斗降.length === 0);
+    expect(命中.length).toBeGreaterThan(0);
+    expect(未命中.length).toBeGreaterThan(0);
+    expect(命中.every((日期) => 日期.斗降.length === 1)).toBe(true);
+    expect(命中.every((日期) => 日期.斗降.includes("斗降"))).toBe(true);
+    expect(未命中.every((日期) => !日期.显示事件.includes("斗降"))).toBe(true);
+    expect(生成月历事件展示([], [], ["斗降"])).toEqual({ 显示事件: ["斗降"], 其余事件数: 0 });
   });
 
   it.each([

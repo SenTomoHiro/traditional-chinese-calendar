@@ -1,7 +1,6 @@
-import { Solar } from "lunar-typescript";
 import { describe, expect, it } from "vitest";
 import { 计算当前历时 } from "../src/当前历时";
-import { 创建北京时间, 计算日吉凶, 计算日期详情 } from "../src/历法";
+import { 创建北京时间, 解析日吉凶配置, 计算日吉凶, 计算日期详情 } from "../src/历法";
 import { 读取全部配置 } from "../src/规则/配置读取";
 
 const 时刻 = (年: number, 月: number, 日: number, 时 = 12, 分 = 0) => 创建北京时间(年, 月, 日, 时, 分);
@@ -9,15 +8,16 @@ const 吉神 = new Set(["青龙", "明堂", "金匮", "天德", "玉堂", "司�
 const 凶神 = new Set(["天刑", "朱雀", "白虎", "天牢", "玄武", "勾陈"]);
 
 describe("十二天神日吉凶", () => {
-  it("2026-08-09与lunar-typescript三个官方接口完全一致", () => {
-    const 官方农历 = Solar.fromYmdHms(2026, 8, 9, 12, 0, 0).getLunar();
+  it("2026-08-09按卷七月内天黄道规则自主计算", () => {
     const 结果 = 计算日吉凶(时刻(2026, 8, 9));
-    expect(结果).toEqual({
-      天神: 官方农历.getDayTianShen(),
-      类型: 官方农历.getDayTianShenType(),
-      吉凶: 官方农历.getDayTianShenLuck(),
-    });
     expect(结果).toEqual({ 天神: "朱雀", 类型: "黑道", 吉凶: "凶" });
+  });
+
+  it("中文配置完整覆盖十二节气月和十二天神", () => {
+    const 配置 = 解析日吉凶配置();
+    expect(Object.keys(配置.青龙起日)).toHaveLength(12);
+    expect(配置.值神).toHaveLength(12);
+    expect(配置.吉神.size).toBe(6);
   });
 
   it("连续十二日完整覆盖十二天神且六吉六凶分类正确", () => {

@@ -65,15 +65,6 @@ button:focus-visible {
   letter-spacing: 0.18em;
 }
 
-.today-button {
-  flex: 0 0 auto;
-  width: auto;
-  padding-right: 9px;
-  padding-left: 9px;
-  color: var(--gold-strong);
-  font-size: 11px;
-}
-
 .calendar-layout {
   display: grid;
   grid-template-areas:
@@ -220,47 +211,27 @@ button:focus-visible {
 }
 
 .calendar-toolbar {
-  display: grid;
-  gap: 12px;
+  display: flex;
+  justify-content: center;
   margin-bottom: 26px;
 }
 
-.period-navigation,
-.date-navigation {
-  display: grid;
+.calendar-date-control {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  margin: 0 auto;
-}
-
-.period-navigation {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(10px, 2vw, 20px);
-  width: min(100%, 400px);
-}
-
-.period-control {
-  display: grid;
-  grid-template-columns: 42px max-content 42px;
-  gap: 8px;
-  align-items: center;
-  width: max-content;
-}
-
-.year-control {
-  justify-self: start;
-}
-
-.month-control {
-  justify-self: end;
-}
-
-.date-navigation {
-  grid-template-columns: 38px minmax(0, 1fr) 38px;
-  gap: 8px;
-}
-
-.period-control strong {
+  justify-content: center;
+  min-width: min(100%, 280px);
+  min-height: 52px;
+  padding: 7px 18px;
   color: var(--gold-strong);
+  background: color-mix(in srgb, var(--gold-soft) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.calendar-date-control span {
   font-family: var(--serif-font);
   font-size: clamp(28px, 3.4vw, 40px);
   font-feature-settings: "lnum" 1, "tnum" 1;
@@ -271,25 +242,18 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.date-navigation {
-  width: min(100%, 160px);
-}
-
-.icon-button {
-  min-width: 42px;
-  height: 38px;
-  padding: 0 11px;
-  color: var(--ink);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+.calendar-date-control input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
+  opacity: 0;
 }
 
-.icon-button:hover {
-  color: var(--gold-strong);
-  border-color: var(--gold);
-  background: color-mix(in srgb, var(--gold-soft) 18%, transparent);
+.calendar-date-control:focus-within {
+  outline: 3px solid color-mix(in srgb, var(--gold) 48%, transparent);
+  outline-offset: 3px;
 }
 
 .week-row,
@@ -504,17 +468,6 @@ button:focus-visible {
   margin-top: 30px;
 }
 
-.calendar-meta-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 16px;
-}
-
-.calendar-meta-row .core-fact {
-  margin-top: 0;
-}
-
 .core-fact > span {
   color: var(--gold-soft);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -530,18 +483,6 @@ button:focus-visible {
   font-weight: 500;
   line-height: 1.6;
   white-space: nowrap;
-}
-
-.value-star-core strong,
-.solar-term-core strong {
-  color: var(--panel-ink);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.solar-term-core strong.is-empty {
-  color: var(--panel-muted);
-  font-weight: 500;
 }
 
 .day-fortune-core {
@@ -702,57 +643,92 @@ button:focus-visible {
   overflow-wrap: anywhere;
 }
 
-.date-events {
+.calendar-info-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 12px 18px;
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--panel-line);
 }
 
-.event-group {
+.calendar-info-item {
   min-width: 0;
 }
 
-.event-group h3 {
-  margin: 0 0 7px;
+.calendar-info-item h3 {
+  margin: 0 0 6px;
   color: var(--gold-soft);
-  font-size: 12px;
-  letter-spacing: 0.06em;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
 }
 
-.event-group ul {
+.calendar-info-values {
   display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: 3px;
 }
 
-.event-group li {
-  position: relative;
-  padding-left: 12px;
+.calendar-info-values span {
   color: var(--panel-ink);
   font-size: 12px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
-.event-empty {
-  margin: 0;
+.calendar-info-values span.is-empty {
   color: color-mix(in srgb, var(--panel-muted) 72%, transparent);
-  font-size: 11px;
 }
 
-.event-group li::before {
-  position: absolute;
-  top: 0.67em;
-  left: 0;
-  width: 4px;
-  height: 4px;
-  content: "";
-  background: var(--gold-soft);
-  border-radius: 50%;
+.beidou-panel {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--panel-line);
+}
+
+.beidou-panel > h3 {
+  margin: 0 0 8px;
+  color: var(--gold-soft);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.beidou-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.beidou-item {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.beidou-item > span {
+  color: var(--panel-muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+.beidou-item strong {
+  color: var(--panel-ink);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.beidou-item.is-hit strong {
+  color: var(--danger);
+}
+
+.beidou-item small {
+  color: var(--panel-muted);
+  font-size: 8px;
+  line-height: 1.45;
 }
 
 .calculation-note {
@@ -1173,32 +1149,11 @@ button:focus-visible {
   }
 
   .calendar-toolbar {
-    gap: 10px;
     margin-bottom: 20px;
   }
 
-  .period-navigation {
-    gap: 10px;
-  }
-
-  .period-control {
-    grid-template-columns: 34px max-content 34px;
-    gap: 5px;
-  }
-
-  .date-navigation {
-    grid-template-columns: 34px minmax(0, 1fr) 34px;
-    gap: 5px;
-  }
-
-  .period-control strong {
+  .calendar-date-control span {
     font-size: clamp(24px, 7vw, 30px);
-  }
-
-  .icon-button {
-    min-width: 34px;
-    height: 36px;
-    padding: 0 8px;
   }
 
   .empty-day,
@@ -1254,10 +1209,6 @@ button:focus-visible {
     gap: 8px;
   }
 
-  .calendar-meta-row {
-    gap: 10px;
-  }
-
   .pillar-core strong {
     font-size: clamp(12px, 3.4vw, 14px);
   }
@@ -1277,6 +1228,14 @@ button:focus-visible {
   .rule-results-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 3px 10px;
+  }
+
+  .beidou-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .beidou-item:last-child {
+    grid-column: 1 / -1;
   }
 
 }
@@ -1300,27 +1259,7 @@ button:focus-visible {
     grid-template-columns: 50px minmax(0, 1fr);
   }
 
-  .period-control {
-    grid-template-columns: 30px max-content 30px;
-    gap: 3px;
-  }
-
-  .date-navigation {
-    grid-template-columns: 30px minmax(0, 1fr) 30px;
-    gap: 3px;
-  }
-
-  .period-control strong {
-    font-size: 24px;
-  }
-
-  .icon-button {
-    min-width: 30px;
-    padding: 0 6px;
-  }
-
-  .date-events,
-  .calendar-meta-row,
+  .calendar-info-grid,
   .rule-results-grid,
   .bazi-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));

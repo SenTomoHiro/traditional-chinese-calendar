@@ -108,11 +108,12 @@ describe("六十甲子日乘十二时支完整性质", () => {
     expect(详情("甲子", "亥").凶煞).toContain("旬空");
   });
 
-  it("黄历宜忌与古籍神煞分层输出", () => {
-    const 结果 = 详情("甲子", "寅");
-    expect(结果.吉神).toEqual(expect.arrayContaining(["福星贵人", "喜神", "日禄", "日马"]));
-    expect(结果.时宜.length).toBeGreaterThan(0);
-    expect(结果.依据).toContain("lunar-typescript 1.8.6");
+  it("时辰宜忌保守读取自主古籍条件", () => {
+    const 结果 = 详情("甲子", "申");
+    expect(结果.凶煞).toContain("路空");
+    expect(结果.时忌).toContain("出行");
+    expect(结果.依据).toContain("项目中文配置");
+    expect(结果.依据).not.toContain("lunar-typescript");
   });
 
   it("五不遇和日破不擅自覆盖独立黄历数据", () => {

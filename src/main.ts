@@ -5,8 +5,6 @@ import {
   是同一天,
   星期名称,
   星期短名,
-  移动日期,
-  移动月份,
   选择日期,
   type 日历状态,
 } from "./日历/公历";
@@ -34,6 +32,7 @@ import { 格式化时分 } from "./历法/时间";
 import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
 import { 创建日期事件分栏 } from "./界面/详情布局";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
+import { 解析北斗配置 } from "./规则/北斗";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
@@ -67,6 +66,7 @@ let 八字定位说明 = "";
 
 const 配置结果 = 读取全部配置();
 const 已解析时辰配置 = 初始化时辰配置(配置结果);
+const 北斗配置结果 = 解析北斗配置(配置结果);
 const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "神圣纪念日.txt");
 const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
 const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
@@ -78,6 +78,15 @@ function 设置日期(日期: Date): void {
   时间查询 = 是同一天(日期, 今天)
     ? 创建实时查询时间(当前北京时间)
     : 创建手动查询时间("12:00");
+  手动查看时辰键 = null;
+  渲染();
+}
+
+function 回到今天实时模式(): void {
+  const 当前北京时间 = 从时间戳读取北京时间();
+  今天 = 北京日期(当前北京时间);
+  状态 = 选择日期(状态, 今天);
+  时间查询 = 创建实时查询时间(当前北京时间);
   手动查看时辰键 = null;
   渲染();
 }
@@ -128,13 +137,13 @@ function 转义HTML(文本: string): string {
   })[字符] ?? 字符);
 }
 
-function 事件列表(标题: string, 事件: string[]): string {
+function 日期信息项目(标题: string, 内容: string[]): string {
   return `
-    <div class="event-group">
+    <div class="calendar-info-item">
       <h3>${标题}</h3>
-      ${事件.length > 0
-        ? `<ul>${事件.map((名称) => `<li>${转义HTML(名称)}</li>`).join("")}</ul>`
-        : '<p class="event-empty">无</p>'}
+      <div class="calendar-info-values">${(内容.length > 0 ? 内容 : ["无"])
+        .map((名称) => `<span${名称 === "无" ? ' class="is-empty"' : ""}>${转义HTML(名称)}</span>`)
+        .join("")}</div>
     </div>`;
 }
 
@@ -276,7 +285,7 @@ async function 请求八字定位(): Promise<void> {
 
 function 渲染(): void {
   const 月历格 = 创建月历格(状态.年, 状态.月);
-  const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念配置);
+  const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念配置, 北斗配置结果.配置);
   const 所选 = 状态.所选日期;
   const [时文本, 分文本] = 时间查询.时间.split(":");
   const 北京时间 = 创建北京时间(
@@ -287,9 +296,16 @@ function 渲染(): void {
     Number(分文本),
     0,
   );
-  const 当前历时 = 计算当前历时(北京时间, 当前时间依据, 当前经度, 配置结果, 已解析时辰配置);
-  const { 最终, 历法结果, 四柱, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
-  const 错误总数 = 基础配置错误总数 + 时辰配置错误.length;
+  const 当前历时 = 计算当前历时(
+    北京时间,
+    当前时间依据,
+    当前经度,
+    配置结果,
+    已解析时辰配置,
+    北斗配置结果.配置,
+  );
+  const { 最终, 历法结果, 四柱, 北斗, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
+  const 错误总数 = 基础配置错误总数 + 时辰配置错误.length + 北斗配置结果.错误.length;
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
   const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 历法结果.农历);
@@ -306,6 +322,8 @@ function 渲染(): void {
   const 切换目标 = 当前时间依据 === "北京时间" ? "真太阳时" : "北京时间";
   const 全部时段 = 十二时辰.项目.flatMap((项目) => 项目.时段);
   const 查看时辰 = 选出查看时辰(全部时段, 手动查看时辰键);
+  const 主日期值 = `${状态.年}-${String(状态.月 + 1).padStart(2, "0")}-${String(所选.getDate()).padStart(2, "0")}`;
+  const 主日期显示 = 主日期值.replaceAll("-", "/");
   if (手动查看时辰键 && 查看时辰?.键 !== 手动查看时辰键) 手动查看时辰键 = null;
 
   根节点.innerHTML = `
@@ -331,18 +349,6 @@ function 渲染(): void {
             <strong>${四柱}</strong>
           </section>
 
-          <div class="calendar-meta-row">
-            <section class="core-fact value-star-core" aria-label="值星">
-              <span>值星</span>
-              <strong>${历法结果.值星}日</strong>
-            </section>
-
-            <section class="core-fact solar-term-core" aria-label="节气">
-              <span>节气</span>
-              <strong${历法结果.节气 ? "" : ' class="is-empty"'}>${核心节气显示}</strong>
-            </section>
-          </div>
-
           <section class="core-fact day-fortune-core is-${历法结果.日吉凶.吉凶}" aria-label="日吉凶">
             <span>日吉凶</span>
             <strong>${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}</strong>
@@ -353,11 +359,24 @@ function 渲染(): void {
             ${每日宜忌栏("日忌", 历法结果.每日宜忌.忌, "bad")}
           </section>
 
-          ${日期事件栏.length > 0
-            ? `<section class="date-events" aria-label="当日神圣纪念与传统节日">
-                ${日期事件栏.map((栏) => 事件列表(栏.标题, 栏.事件)).join("")}
-              </section>`
-            : ""}
+          <section class="calendar-info-grid" aria-label="值日节气神圣纪念与传统节日">
+            ${日期信息项目("值日", [`${历法结果.值星}日`])}
+            ${日期信息项目("节气", [核心节气显示])}
+            ${日期事件栏.map((栏) => 日期信息项目(栏.标题, 栏.事件)).join("")}
+          </section>
+
+          <section class="beidou-panel" aria-label="北斗">
+            <h3>北斗</h3>
+            <div class="beidou-grid">
+              <div class="beidou-item${北斗.斗降日.命中 ? " is-hit" : ""}">
+                <span>斗降日</span>
+                <strong>${北斗.斗降日.名称}</strong>
+                ${北斗.斗降日.命中 ? `<small>来源：${转义HTML(北斗.斗降日.来源显示)}</small>` : ""}
+              </div>
+              <div class="beidou-item"><span>本命下日</span><strong>${北斗.本命下日}</strong></div>
+              <div class="beidou-item"><span>本命星官</span><strong>${转义HTML(北斗.本命星官)}</strong></div>
+            </div>
+          </section>
 
           <section class="hour-overview" aria-label="十二时辰">
             <div class="hour-overview-heading">
@@ -372,23 +391,10 @@ function 渲染(): void {
         <div class="calendar-right">
           <article class="calendar-card">
           <div class="calendar-toolbar">
-            <div class="period-navigation">
-              <div class="period-control year-control" aria-label="年份切换">
-                <button type="button" class="icon-button" data-action="previous-year" aria-label="上一年">‹</button>
-                <strong>${状态.年}</strong>
-                <button type="button" class="icon-button" data-action="next-year" aria-label="下一年">›</button>
-              </div>
-              <div class="period-control month-control" aria-label="月份切换">
-                <button type="button" class="icon-button" data-action="previous-month" aria-label="上个月">‹</button>
-                <strong>${String(状态.月 + 1).padStart(2, "0")}</strong>
-                <button type="button" class="icon-button" data-action="next-month" aria-label="下个月">›</button>
-              </div>
-            </div>
-            <div class="date-navigation" aria-label="日期切换">
-              <button type="button" class="icon-button" data-action="previous-day" aria-label="上一日">‹</button>
-              <button class="icon-button today-button" type="button" data-action="today">今天</button>
-              <button type="button" class="icon-button" data-action="next-day" aria-label="下一日">›</button>
-            </div>
+            <label class="calendar-date-control">
+              <span aria-hidden="true">${主日期显示}</span>
+              <input type="date" data-calendar-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${主日期值}" aria-label="选择主日历日期">
+            </label>
           </div>
 
           <div class="week-row" role="row">
@@ -403,7 +409,7 @@ function 渲染(): void {
                 const 日期信息 = 月历信息[日期 - 1];
                 const 是今天 = 是同一天(当前日期, 今天);
                 const 已选择 = 是同一天(当前日期, 所选);
-                const 全部事件 = [...日期信息.传统节日, ...日期信息.神圣纪念];
+                const 全部事件 = [...日期信息.传统节日, ...日期信息.神圣纪念, ...日期信息.斗降];
                 const 事件提示 = 全部事件.length > 0 ? `，${全部事件.join("、")}` : "";
                 const 无障碍说明 = 转义HTML(
                   `${格式化公历日期(当前日期)}，${星期名称[当前日期.getDay()]}，农历${日期信息.农历.显示}${事件提示}${是今天 ? "，今天" : ""}`,
@@ -464,11 +470,6 @@ function 渲染(): void {
   `;
 }
 
-function 更新显示年月(年: number, 月: number): void {
-  const 当月日期 = Math.min(状态.所选日期.getDate(), new Date(年, 月 + 1, 0).getDate());
-  设置日期(new Date(年, 月, 当月日期));
-}
-
 根节点.addEventListener("input", (事件) => {
   const 输入框 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-time-input]");
   if (!输入框?.value) return;
@@ -479,7 +480,28 @@ function 更新显示年月(年: number, 月: number): void {
 
 根节点.addEventListener("change", (事件) => {
   const 目标 = 事件.target as HTMLInputElement | HTMLSelectElement;
-  if (目标.matches("[data-bazi-date]")) {
+  if (目标.matches("[data-calendar-date]")) {
+    if (!目标.value) {
+      回到今天实时模式();
+      return;
+    }
+    const 匹配 = 目标.value.match(/^(\d{4})-(\d{2})-(\d{2})$/u);
+    if (!匹配) {
+      回到今天实时模式();
+      return;
+    }
+    const [年, 月, 日] = [匹配[1], 匹配[2], 匹配[3]].map(Number);
+    const 日期 = new Date(年, 月 - 1, 日);
+    if (
+      日期.getFullYear() !== 年 || 日期.getMonth() !== 月 - 1 || 日期.getDate() !== 日 ||
+      目标.value < 八字支持范围.最小日期 || 目标.value > 八字支持范围.最大日期
+    ) {
+      回到今天实时模式();
+      return;
+    }
+    if (是同一天(日期, 北京日期())) 回到今天实时模式();
+    else 设置日期(日期);
+  } else if (目标.matches("[data-bazi-date]")) {
     八字日期 = 目标.value;
     更新八字结果区();
   } else if (目标.matches("[data-bazi-time]")) {
@@ -539,15 +561,6 @@ function 更新显示年月(年: number, 月: number): void {
   }
 
   switch (目标.dataset.action) {
-    case "today": {
-      const 当前北京时间 = 从时间戳读取北京时间();
-      今天 = 北京日期(当前北京时间);
-      状态 = 选择日期(状态, 今天);
-      时间查询 = 创建实时查询时间(当前北京时间);
-      手动查看时辰键 = null;
-      渲染();
-      break;
-    }
     case "time-basis": {
       if (当前时间依据 === "真太阳时") {
         当前时间依据 = "北京时间";
@@ -567,28 +580,6 @@ function 更新显示年月(年: number, 月: number): void {
     }
     case "locate":
       await 请求定位(当前时间依据 === "真太阳时" || !用户已选择时间依据);
-      break;
-    case "previous-month": {
-      const 目标年月 = 移动月份(状态.年, 状态.月, -1);
-      更新显示年月(目标年月.年, 目标年月.月);
-      break;
-    }
-    case "next-month": {
-      const 目标年月 = 移动月份(状态.年, 状态.月, 1);
-      更新显示年月(目标年月.年, 目标年月.月);
-      break;
-    }
-    case "previous-day":
-      设置日期(移动日期(状态.所选日期, -1));
-      break;
-    case "next-day":
-      设置日期(移动日期(状态.所选日期, 1));
-      break;
-    case "previous-year":
-      更新显示年月(状态.年 - 1, 状态.月);
-      break;
-    case "next-year":
-      更新显示年月(状态.年 + 1, 状态.月);
       break;
   }
 });

@@ -1,5 +1,5 @@
 import { 获取指定节气, 获取节气月, type 月建 } from "./节气";
-import { 比较北京时间, 转为公历, type 北京时间 } from "./时间";
+import { 比较北京时间, type 北京时间 } from "./时间";
 
 export const 天干 = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] as const;
 export const 地支 = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"] as const;
@@ -15,6 +15,9 @@ export interface 干支结果 {
 function 正模(值: number, 模: number): number {
   return ((值 % 模) + 模) % 模;
 }
+
+const 甲子日基准 = Date.UTC(2000, 0, 7);
+const 一日毫秒 = 86_400_000;
 
 export function 计算年柱(时间: 北京时间): string {
   const 立春 = 获取指定节气(时间.年, "立春");
@@ -39,10 +42,13 @@ export function 获取日柱计算时间(时间: 北京时间): 北京时间 {
 
 /** 项目唯一的日柱入口，其他模块不得自行重复处理换日边界。 */
 export function 计算日柱(时间: 北京时间): { 日柱: string; 日支: (typeof 地支)[number] } {
-  const 农历 = 转为公历(获取日柱计算时间(时间)).getLunar();
+  const 计算时间 = 获取日柱计算时间(时间);
+  const 日差 = Math.floor((Date.UTC(计算时间.年, 计算时间.月 - 1, 计算时间.日) - 甲子日基准) / 一日毫秒);
+  const 序号 = 正模(日差, 60);
+  const 日支 = 地支[序号 % 12];
   return {
-    日柱: 农历.getDayInGanZhiExact2(),
-    日支: 农历.getDayZhiExact2() as (typeof 地支)[number],
+    日柱: `${天干[序号 % 10]}${日支}`,
+    日支,
   };
 }
 

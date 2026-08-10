@@ -7,22 +7,21 @@ const 页面样式 = readFileSync(resolve(process.cwd(), "src/style.css"), "utf8
 const 当前历时源码 = readFileSync(resolve(process.cwd(), "src/当前历时.ts"), "utf8");
 
 describe("日期详情展示回归", () => {
-  it("以农历、四柱、值星和节气组成核心信息层级", () => {
+  it("以农历、四柱和四项常驻信息组成核心信息层级", () => {
     expect(页面源码).toContain('class="lunar-title"');
     expect(页面源码).toContain("${历法结果.农历.显示}");
     expect(页面源码).toContain('class="core-fact pillar-core"');
     expect(页面源码).toContain("${四柱}");
-    expect(页面源码).toContain('class="core-fact value-star-core"');
-    expect(页面源码).toContain("${历法结果.值星}日");
-    expect(页面源码).toContain('class="core-fact solar-term-core"');
-    expect(页面源码).toContain("${核心节气显示}");
+    expect(页面源码).toContain('class="calendar-info-grid"');
+    expect(页面源码).toContain('日期信息项目("值日", [`${历法结果.值星}日`])');
+    expect(页面源码).toContain('日期信息项目("节气", [核心节气显示])');
   });
 
   it("普通日期的节气使用浅色无字而不是破折号", () => {
     expect(页面源码).toContain('const 核心节气显示 = 历法结果.节气?.名称 ?? "无"');
-    expect(页面源码).toContain('class="is-empty"');
+    expect(页面源码).toContain('名称 === "无" ? \' class="is-empty"\' : ""');
     expect(页面源码).not.toContain('const 核心节气显示 = 历法结果.节气?.名称 ?? "—"');
-    expect(页面样式).toContain(".solar-term-core strong.is-empty");
+    expect(页面样式).toContain(".calendar-info-values span.is-empty");
     expect(页面样式).toContain("color: var(--panel-muted)");
   });
 
@@ -53,25 +52,26 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toContain("white-space: nowrap");
   });
 
-  it("值星和节气合并为同一行且视觉层级一致", () => {
-    expect(页面样式).toContain(".core-fact {");
-    expect(页面样式).toContain("grid-template-columns: max-content minmax(0, 1fr)");
-    expect(页面源码).toContain('class="calendar-meta-row"');
-    expect(页面样式).toMatch(/\.calendar-meta-row\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
+  it("值日、节气、神圣纪念和传统节日同属两列常驻模块", () => {
+    expect(页面样式).toMatch(/\.calendar-info-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
     const 四柱位置 = 页面源码.indexOf('class="core-fact pillar-core"');
-    const 合并行位置 = 页面源码.indexOf('class="calendar-meta-row"');
-    const 值星位置 = 页面源码.indexOf('class="core-fact value-star-core"');
-    const 节气位置 = 页面源码.indexOf('class="core-fact solar-term-core"');
-    expect(四柱位置).toBeLessThan(合并行位置);
-    expect(合并行位置).toBeLessThan(值星位置);
+    const 合并模块位置 = 页面源码.indexOf('class="calendar-info-grid"');
+    const 值星位置 = 页面源码.indexOf('日期信息项目("值日"');
+    const 节气位置 = 页面源码.indexOf('日期信息项目("节气"');
+    const 节庆位置 = 页面源码.indexOf("日期事件栏.map");
+    expect(四柱位置).toBeLessThan(合并模块位置);
+    expect(合并模块位置).toBeLessThan(值星位置);
     expect(值星位置).toBeLessThan(节气位置);
+    expect(节气位置).toBeLessThan(节庆位置);
+    expect(页面源码.match(/日期信息项目\("值日"/gu)).toHaveLength(1);
+    expect(页面源码.match(/日期信息项目\("节气"/gu)).toHaveLength(1);
   });
 
-  it("日吉凶紧接值星节气并独立显示十二天神黄黑道", () => {
-    const 元信息位置 = 页面源码.indexOf('class="calendar-meta-row"');
+  it("日吉凶位于四项信息模块之前并独立显示十二天神黄黑道", () => {
+    const 四柱位置 = 页面源码.indexOf('class="core-fact pillar-core"');
     const 日吉凶位置 = 页面源码.indexOf('class="core-fact day-fortune-core');
-    const 日期事件位置 = 页面源码.indexOf('class="date-events"');
-    expect(日吉凶位置).toBeGreaterThan(元信息位置);
+    const 日期事件位置 = 页面源码.indexOf('class="calendar-info-grid"');
+    expect(日吉凶位置).toBeGreaterThan(四柱位置);
     expect(日吉凶位置).toBeLessThan(日期事件位置);
     expect(页面源码).toContain('aria-label="日吉凶"');
     expect(页面源码).toContain("${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}");
@@ -82,7 +82,7 @@ describe("日期详情展示回归", () => {
   it("日宜日忌紧接日吉凶并完整呈现两列标签", () => {
     const 日吉凶位置 = 页面源码.indexOf('class="core-fact day-fortune-core');
     const 每日宜忌位置 = 页面源码.indexOf('class="day-actions"');
-    const 日期事件位置 = 页面源码.indexOf('class="date-events"');
+    const 日期事件位置 = 页面源码.indexOf('class="calendar-info-grid"');
     expect(日吉凶位置).toBeLessThan(每日宜忌位置);
     expect(每日宜忌位置).toBeLessThan(日期事件位置);
     expect(页面源码).toContain('aria-label="日宜与日忌"');
@@ -142,53 +142,38 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("定位坐标仅在当前页面内使用，不会上传或保存。");
   });
 
-  it("年月导航与日期导航统一为两行", () => {
-    const 年份切换位置 = 页面源码.indexOf('class="period-control year-control" aria-label="年份切换"');
-    const 月份切换位置 = 页面源码.indexOf('class="period-control month-control" aria-label="月份切换"');
-    const 日期切换位置 = 页面源码.indexOf('class="date-navigation"');
-    const 返回今天位置 = 页面源码.indexOf('class="icon-button today-button"');
-    expect(页面源码).toContain('class="period-navigation"');
-    expect(年份切换位置).toBeLessThan(月份切换位置);
-    expect(月份切换位置).toBeLessThan(日期切换位置);
-    expect(日期切换位置).toBeLessThan(返回今天位置);
-    expect(页面源码).toContain('data-action="previous-day"');
-    expect(页面源码).toContain('data-action="next-day"');
-    expect(页面源码).not.toContain("−年");
-    expect(页面源码).not.toContain("+年");
-    expect(页面源码).toContain('${String(状态.月 + 1).padStart(2, "0")}</strong>');
-    expect(页面源码).not.toContain('${String(状态.月 + 1).padStart(2, "0")}月</strong>');
-    expect(页面源码).toContain('data-action="today">今天</button>');
-    expect(页面源码).not.toContain('data-action="today">返回今天</button>');
+  it("主日历只保留一个年月日一体日期选择器", () => {
+    expect(页面源码).toContain('class="calendar-date-control"');
+    expect(页面源码).toContain('type="date" data-calendar-date');
+    expect(页面源码).toContain('const 主日期显示 = 主日期值.replaceAll("-", "/")');
+    expect(页面源码).not.toContain('data-action="previous-day"');
+    expect(页面源码).not.toContain('data-action="next-day"');
+    expect(页面源码).not.toContain('data-action="today"');
+    expect(页面源码).not.toContain('class="period-navigation"');
   });
 
-  it("今天按钮复用通用导航样式并保持紧凑", () => {
-    expect(页面源码).toContain('class="icon-button today-button"');
-    expect(页面样式).toMatch(/\.today-button\s*\{[^}]*width:\s*auto;/u);
-    expect(页面样式).toMatch(/\.today-button\s*\{[^}]*font-size:\s*11px;/u);
-    expect(页面样式).toContain("--gold:");
-    expect(页面样式).toContain("--panel:");
-    expect(页面样式).not.toContain("--green:");
+  it("清空或选回今天会恢复实时模式", () => {
+    const 日期处理 = 页面源码.match(/if \(目标\.matches\("\[data-calendar-date\]"\)\) \{[\s\S]*?\n  \} else if/u)?.[0] ?? "";
+    expect(日期处理).toContain("if (!目标.value)");
+    expect(日期处理).toContain("回到今天实时模式()");
+    expect(日期处理).toContain("是同一天(日期, 北京日期())");
+    expect(页面源码).toContain("时间查询 = 创建实时查询时间(当前北京时间)");
   });
 
-  it("年月纯数字统一使用等高表格数字且没有单位数字补丁", () => {
+  it("一体日期使用宋体等高表格数字", () => {
     expect(页面样式).toMatch(/:root\s*\{[^}]*--serif-font:/u);
     expect(页面样式).toMatch(/\.lunar-title\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
-    expect(页面样式).toMatch(/\.period-control strong\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
-    expect(页面样式).toMatch(/\.period-control strong\s*\{[^}]*font-variant-numeric:\s*lining-nums tabular-nums/u);
-    expect(页面样式).toMatch(/\.period-control strong\s*\{[^}]*font-feature-settings:\s*"lnum" 1, "tnum" 1/u);
-    expect(页面源码).toContain("<strong>${状态.年}</strong>");
-    expect(页面源码).toContain('${String(状态.月 + 1).padStart(2, "0")}</strong>');
+    expect(页面样式).toMatch(/\.calendar-date-control span\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
+    expect(页面样式).toMatch(/\.calendar-date-control span\s*\{[^}]*font-variant-numeric:\s*lining-nums tabular-nums/u);
+    expect(页面样式).toMatch(/\.calendar-date-control span\s*\{[^}]*font-feature-settings:\s*"lnum" 1, "tnum" 1/u);
+    expect(页面源码).toContain("${主日期显示}");
     expect(页面源码).not.toContain("digit-");
   });
 
-  it("年月导航共用组内规则且月份组整体右对齐", () => {
-    expect(页面源码).toContain('class="period-control year-control"');
-    expect(页面源码).toContain('class="period-control month-control"');
-    expect(页面样式).toMatch(/\.period-control\s*\{[^}]*grid-template-columns:\s*42px max-content 42px;[^}]*gap:\s*8px;/u);
-    expect(页面样式).toMatch(/\.year-control\s*\{[^}]*justify-self:\s*start;/u);
-    expect(页面样式).toMatch(/\.month-control\s*\{[^}]*justify-self:\s*end;/u);
-    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.period-control\s*\{[^}]*grid-template-columns:\s*34px max-content 34px;[^}]*gap:\s*5px;/u);
-    expect(页面样式).toMatch(/@media \(max-width: 350px\)[\s\S]*?\.period-control\s*\{[^}]*grid-template-columns:\s*30px max-content 30px;[^}]*gap:\s*3px;/u);
+  it("一体日期选择器在桌面与手机均保持居中且不横溢", () => {
+    expect(页面样式).toMatch(/\.calendar-toolbar\s*\{[^}]*justify-content:\s*center/u);
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*min-width:\s*min\(100%, 280px\)/u);
+    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.calendar-date-control span\s*\{[^}]*font-size:/u);
   });
 
   it("月历与详情都已接入节日和神圣纪念", () => {
@@ -206,12 +191,24 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.day-event\s*\{[^}]*font-size:\s*8px;/u);
   });
 
-  it("神圣纪念与传统节日双栏、详情内风水规则自适应多列", () => {
-    expect(页面源码).toContain('class="date-events"');
+  it("四项信息双栏、详情内风水规则自适应多列", () => {
+    expect(页面源码).toContain('class="calendar-info-grid"');
     expect(页面源码).toContain('class="rule-results-grid"');
     expect(页面源码).toContain("时段.风水禁忌.map(规则标记).join");
-    expect(页面样式).toMatch(/\.date-events\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
+    expect(页面样式).toMatch(/\.calendar-info-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
     expect(页面样式).toContain("repeat(auto-fit, minmax(148px, 1fr))");
+  });
+
+  it("北斗三类信息位于四项信息模块之后、十二时辰之前", () => {
+    const 信息位置 = 页面源码.indexOf('class="calendar-info-grid"');
+    const 北斗位置 = 页面源码.indexOf('class="beidou-panel"');
+    const 时辰位置 = 页面源码.indexOf('class="hour-overview"');
+    expect(信息位置).toBeLessThan(北斗位置);
+    expect(北斗位置).toBeLessThan(时辰位置);
+    expect(页面源码).toContain("北斗.斗降日.来源显示");
+    expect(页面源码).toContain("${北斗.本命下日}");
+    expect(页面源码).toContain("${转义HTML(北斗.本命星官)}");
+    expect(页面样式).toMatch(/\.beidou-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,/u);
   });
 
   it("生辰八字查询位于月历下方并与主日历状态分离", () => {
