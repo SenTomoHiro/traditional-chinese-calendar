@@ -3,6 +3,7 @@ import { 转换为农历, type 农历日期 } from "./农历";
 import { 获取当日节气, type 节气时刻, type 月建 } from "./节气";
 import { 创建北京时间, type 北京时间 } from "./时间";
 import { 计算值星, type 值星 } from "./值星";
+import { 计算日吉凶, type 日吉凶结果 } from "./日吉凶";
 
 export interface 历法结果 {
   农历: 农历日期;
@@ -12,6 +13,7 @@ export interface 历法结果 {
   日柱: string;
   月建: 月建;
   值星: 值星;
+  日吉凶: 日吉凶结果;
   时柱: string | null;
   计算时刻: 北京时间;
 }
@@ -34,6 +36,7 @@ export function 计算历法(计算时刻: 北京时间): 历法结果 {
     日柱: 干支.日柱,
     月建: 干支.月建,
     值星: 计算值星(干支.月建, 干支.日支),
+    日吉凶: 计算日吉凶(计算时刻),
     时柱: null,
     计算时刻,
   };
@@ -46,5 +49,7 @@ export { 获取日柱计算时间, 计算年柱, 计算月柱, 计算日柱 } fr
 export { 获取传统节日, 转换为农历 } from "./农历";
 export { 格式化四柱 } from "./四柱显示";
 export { 计算值星 } from "./值星";
+export { 计算日吉凶 } from "./日吉凶";
+export type { 日吉凶结果, 日天神, 黄黑道, 日吉凶 } from "./日吉凶";
 export { 计算均时差分钟, 计算最终时间, 计算时支, 计算时柱, 计算真太阳时, 计算经度修正分钟 } from "./真太阳时";
 export { 创建十二时辰概览, 反求北京时间 } from "./十二时辰";

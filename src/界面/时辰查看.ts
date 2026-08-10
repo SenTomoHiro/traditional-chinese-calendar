@@ -17,3 +17,8 @@ export function 选出查看时辰<T extends 可查看时辰>(
 export function 更新手动查看键(时辰键: string, 是当前时辰: boolean): string | null {
   return 是当前时辰 ? null : 时辰键;
 }
+
+/** 标题按钮只解除手动固定，不改变所选日期或查询时间。 */
+export function 清除手动查看时辰(): null {
+  return null;
+}

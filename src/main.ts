@@ -33,7 +33,7 @@ import {
 import { 格式化时分 } from "./历法/时间";
 import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
 import { 创建日期事件分栏 } from "./界面/详情布局";
-import { 更新手动查看键, 选出查看时辰 } from "./界面/时辰查看";
+import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
@@ -334,6 +334,11 @@ function 渲染(): void {
             </section>
           </div>
 
+          <section class="core-fact day-fortune-core is-${历法结果.日吉凶.吉凶}" aria-label="日吉凶">
+            <span>日吉凶</span>
+            <strong>${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}</strong>
+          </section>
+
           ${日期事件栏.length > 0
             ? `<section class="date-events" aria-label="当日神圣纪念与传统节日">
                 ${日期事件栏.map((栏) => 事件列表(栏.标题, 栏.事件)).join("")}
@@ -341,7 +346,10 @@ function 渲染(): void {
             : ""}
 
           <section class="hour-overview" aria-label="十二时辰">
-            <h3>十二时辰</h3>
+            <div class="hour-overview-heading">
+              <h3>十二时辰</h3>
+              <button type="button" class="current-hour-button" data-action="current-hour">当前时辰</button>
+            </div>
             ${时辰展开详情(查看时辰)}
             <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
           </section>
@@ -500,6 +508,12 @@ function 更新显示年月(年: number, 月: number): void {
   const 时辰键 = 目标.dataset.hourKey;
   if (时辰键) {
     手动查看时辰键 = 更新手动查看键(时辰键, 目标.classList.contains("is-current"));
+    渲染();
+    return;
+  }
+
+  if (目标.dataset.action === "current-hour") {
+    手动查看时辰键 = 清除手动查看时辰();
     渲染();
     return;
   }

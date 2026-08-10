@@ -33,6 +33,7 @@ describe("2026-08-09 固定回归案例", () => {
     expect(结果.日柱).toBe("乙卯");
     expect(结果.月建).toBe("申");
     expect(结果.值星).toBe("危");
+    expect(结果.日吉凶).toEqual({ 天神: "朱雀", 类型: "黑道", 吉凶: "凶" });
     expect(结果.时柱).toBeNull();
   });
 });
