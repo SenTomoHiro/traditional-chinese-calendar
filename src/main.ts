@@ -36,6 +36,7 @@ import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
 import { 格式化主日期值, 解析主日期值 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
 import { 创建浏览器主题控制器, 是主题偏好, type 主题偏好 } from "./界面/主题";
+import type { 日级风水禁忌结果 } from "./规则/日级风水禁忌";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
@@ -189,12 +190,28 @@ function 每日宜忌栏(标题: "日宜" | "日忌", 内容: string[], 类型: 
     </div>`;
 }
 
-function 核心黄历项目(标题: "日吉凶" | "值日" | "风水禁忌", 内容: string, 类型 = "normal"): string {
+function 核心黄历项目(标题: "日吉凶" | "值日" | "风水禁忌", 内容: string | string[], 类型 = "normal"): string {
+  const 内容行 = Array.isArray(内容) ? 内容 : [内容];
   return `
     <div class="almanac-core-item is-${类型}">
       <h3>${标题}</h3>
-      <strong>${转义HTML(内容)}</strong>
+      <strong>${内容行.map((行) => `<span>${转义HTML(行)}</span>`).join("")}</strong>
     </div>`;
+}
+
+function 日级风水展示行(结果: 日级风水禁忌结果, 无命中文案: "无" | "当日宜"): string[] {
+  if (结果.当日状态 === "规则配置异常") return [结果.当日状态];
+  if (结果.命中.length > 0) return 结果.命中.map((规则) => 规则.展示文本);
+  return [无命中文案];
+}
+
+function 时辰详情依据(依据: string): string {
+  const 古籍依据 = 依据.replace(/；项目中文配置保守用时结论$/u, "");
+  return `
+    <footer class="hour-detail-source" aria-label="时辰详情依据">
+      <strong>时辰详情依据：</strong>
+      <span>${转义HTML(古籍依据)}；风水禁忌另据项目中文风水规则配置。</span>
+    </footer>`;
 }
 
 const 主题选项: ReadonlyArray<{ 值: 主题偏好; 标签: string }> = [
@@ -321,6 +338,7 @@ function 八字查询卡片(): string {
 
 function 时辰展开详情(时段: 时辰概览段 | undefined): string {
   if (!时段) return "";
+  const 当日风水展示 = 日级风水展示行(时段.当日风水禁忌, "当日宜");
   return `
     <section class="hour-detail" aria-label="${时段.名称}详细时辰信息">
       <header>
@@ -337,11 +355,11 @@ function 时辰展开详情(时段: 时辰概览段 | undefined): string {
       <section class="hour-rule-results" aria-label="风水禁忌速查">
         <div class="hour-rule-heading">
           <h4>风水禁忌速查</h4>
-          <p class="${时段.当日风水禁忌.当日状态 === "当日宜" ? "is-safe" : "is-warning"}">${时段.当日风水禁忌.当日状态}</p>
+          <p class="${时段.当日风水禁忌.当日状态 === "当日宜" ? "is-safe" : "is-warning"}">${当日风水展示.map((行) => `<span>${转义HTML(行)}</span>`).join("")}</p>
         </div>
         <div class="rule-results-grid">${时段.风水禁忌.map(规则标记).join("")}</div>
       </section>
-      <small>依据：${时段.详情.依据}</small>
+      ${时辰详情依据(时段.详情.依据)}
     </section>`;
 }
 
@@ -439,7 +457,7 @@ function 渲染(): void {
           <section class="almanac-core-row" aria-label="日吉凶值日与风水禁忌">
             ${核心黄历项目("日吉凶", `${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}`, 历法结果.日吉凶.吉凶)}
             ${核心黄历项目("值日", `${历法结果.值星}日`)}
-            ${核心黄历项目("风水禁忌", 日级风水禁忌.命中.length > 0 ? 日级风水禁忌.当日状态 : "无", 日级风水禁忌.命中.length > 0 ? "凶" : "normal")}
+            ${核心黄历项目("风水禁忌", 日级风水展示行(日级风水禁忌, "无"), 日级风水禁忌.命中.length > 0 ? "凶" : "normal")}
           </section>
 
           <section class="day-actions" aria-label="日宜与日忌">

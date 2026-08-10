@@ -120,14 +120,14 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("日级风水禁忌模块");
     expect(页面样式).not.toContain(".day-fengshui");
     expect(页面源码).toContain('aria-label="日吉凶值日与风水禁忌"');
-    expect(页面源码).toContain('核心黄历项目("风水禁忌", 日级风水禁忌.命中.length > 0 ? 日级风水禁忌.当日状态 : "无"');
-    expect(页面源码).toContain("时段.当日风水禁忌.当日状态");
+    expect(页面源码).toContain('核心黄历项目("风水禁忌", 日级风水展示行(日级风水禁忌, "无")');
+    expect(页面源码).toContain('日级风水展示行(时段.当日风水禁忌, "当日宜")');
     expect(页面源码).not.toContain("日犯月忌");
     expect(页面样式).toMatch(/\.almanac-core-row\s*\{[^}]*grid-template-columns:\s*repeat\(3,/u);
     expect(页面源码).toContain('class="hour-rule-heading"');
     expect(页面源码).toContain("时段.当日风水禁忌.当日状态");
     expect(页面源码).toContain('时段.当日风水禁忌.当日状态 === "当日宜"');
-    expect(页面样式).toMatch(/\.hour-rule-heading\s*\{[^}]*justify-content:\s*space-between/u);
+    expect(页面样式).toMatch(/\.hour-rule-heading\s*\{[^}]*grid-template-columns:\s*max-content minmax\(0, 1fr\)/u);
     expect(页面样式).toMatch(/\.hour-rule-heading p\s*\{[^}]*font-size:\s*10px;[^}]*text-align:\s*right/u);
     expect(页面样式).toMatch(/\.hour-detail > header span,[\s\S]*?\.hour-detail > header p\s*\{[^}]*font-size:\s*10px/u);
   });
@@ -147,6 +147,24 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("<p>${规则.说明}</p>");
     expect(页面样式).toMatch(/\.rule-result\.is-命中 p\s*\{[^}]*color:\s*var\(--danger\)/u);
     expect(页面样式).toMatch(/\.rule-result p\s*\{[^}]*color:\s*var\(--panel-muted\)/u);
+  });
+
+  it("日期详情与时辰右侧复用同一日级风水详细结果", () => {
+    const 展示函数 = 页面源码.match(/function 日级风水展示行[\s\S]*?\n\}/u)?.[0] ?? "";
+    expect(展示函数).toContain("结果.命中.map((规则) => 规则.展示文本)");
+    expect(页面源码).toContain('日级风水展示行(日级风水禁忌, "无")');
+    expect(页面源码).toContain('日级风水展示行(时段.当日风水禁忌, "当日宜")');
+    expect(页面源码).not.toContain("日犯月忌");
+  });
+
+  it("古籍依据是整个时辰详情的总脚注并明确区分风水配置", () => {
+    expect(页面源码).toContain('class="hour-detail-source" aria-label="时辰详情依据"');
+    expect(页面源码).toContain("时辰详情依据：");
+    expect(页面源码).toContain("风水禁忌另据项目中文风水规则配置。");
+    expect(页面源码).toMatch(/<section class="hour-rule-results"[\s\S]*?<\/section>\s*\$\{时辰详情依据\(时段\.详情\.依据\)\}/u);
+    expect(页面源码).toContain("时段.详情.现代来源");
+    expect(页面样式).toMatch(/\.hour-detail-source\s*\{[^}]*width:\s*100%[^}]*border-top:/u);
+    expect(页面样式).not.toContain(".hour-detail > small");
   });
 
   it("顶部提供浅色自动深色三状态主题且切换不重算页面状态", () => {
