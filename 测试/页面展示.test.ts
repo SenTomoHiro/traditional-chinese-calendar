@@ -290,6 +290,15 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('标题 === "日时关系" ? "无特殊关系" : "无"');
   });
 
+  it("现代时宜时忌标签按内容高度顶部排列且不会被等高双栏拉伸", () => {
+    expect(页面样式).toMatch(/\.modern-hour-actions \.hour-detail-group dd\s*\{[^}]*align-content:\s*flex-start;[^}]*align-items:\s*flex-start;/u);
+    const 标签规则 = 页面样式.match(/\.hour-detail-group dd span,\s*\.hour-detail-group dd em\s*\{([^}]*)\}/u)?.[1] ?? "";
+    expect(标签规则).not.toMatch(/height:\s*100%/u);
+    expect(标签规则).not.toMatch(/flex-grow:\s*1/u);
+    expect(页面源码).toContain('时辰详情标签("时宜", 时段.详情.现代时宜');
+    expect(页面源码).toContain('时辰详情标签("时忌", 时段.详情.现代时忌');
+  });
+
   it("十二时辰标题右侧提供恢复当前查询时辰按钮", () => {
     const 标题行位置 = 页面源码.indexOf('class="hour-overview-heading"');
     const 标题位置 = 页面源码.indexOf("<h3>十二时辰</h3>");

@@ -1138,6 +1138,11 @@ button:focus-visible {
   grid-template-columns: 36px minmax(0, 1fr);
 }
 
+.modern-hour-actions .hour-detail-group dd {
+  align-content: flex-start;
+  align-items: flex-start;
+}
+
 .modern-hour-actions > small {
   display: block;
   margin-top: 8px;
