@@ -67,7 +67,10 @@ button:focus-visible {
 .today-button {
   flex: 0 0 auto;
   width: auto;
+  padding-right: 9px;
+  padding-left: 9px;
   color: var(--gold-strong);
+  font-size: 11px;
 }
 
 .calendar-layout {
@@ -93,7 +96,7 @@ button:focus-visible {
 }
 
 .calendar-card {
-  padding: clamp(22px, 4vw, 48px);
+  padding: clamp(20px, 3vw, 36px) clamp(14px, 2.5vw, 30px);
 }
 
 .bazi-card {
@@ -230,8 +233,8 @@ button:focus-visible {
 
 .period-navigation {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(14px, 4vw, 34px);
-  width: min(100%, 410px);
+  gap: clamp(10px, 2vw, 20px);
+  width: min(100%, 400px);
 }
 
 .period-control,
@@ -248,7 +251,7 @@ button:focus-visible {
 .period-control strong {
   color: var(--gold-strong);
   font-family: Georgia, serif;
-  font-size: clamp(32px, 4.3vw, 48px);
+  font-size: clamp(28px, 3.4vw, 40px);
   font-weight: 500;
   line-height: 1;
   text-align: center;
@@ -256,7 +259,7 @@ button:focus-visible {
 }
 
 .date-navigation {
-  width: min(100%, 250px);
+  width: min(100%, 160px);
 }
 
 .icon-button {
@@ -295,7 +298,7 @@ button:focus-visible {
 }
 
 .days-grid {
-  gap: 5px;
+  gap: 2px;
 }
 
 .empty-day,
@@ -311,7 +314,7 @@ button:focus-visible {
   align-items: center;
   gap: 3px;
   min-width: 0;
-  padding: 7px 4px;
+  padding: 7px 0;
   color: var(--ink);
   background: transparent;
   border: 0;
@@ -350,8 +353,8 @@ button:focus-visible {
   max-width: 100%;
   overflow: hidden;
   color: var(--accent-strong);
-  font-size: 9px;
-  line-height: 1.15;
+  font-size: 8px;
+  line-height: 1.12;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -790,6 +793,11 @@ button:focus-visible {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+.hour-card.is-selected {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 78%, var(--gold-soft));
+}
+
 .hour-card > header {
   display: flex;
   gap: 5px;
@@ -831,7 +839,7 @@ button:focus-visible {
   background: color-mix(in srgb, var(--gold) 12%, transparent);
 }
 
-.hour-segment.is-expanded {
+.hour-segment.is-selected {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
   border-color: color-mix(in srgb, var(--accent) 76%, var(--gold-soft));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-soft) 25%, transparent);
@@ -908,6 +916,11 @@ button:focus-visible {
   border: 1px solid color-mix(in srgb, var(--gold-soft) 40%, var(--panel-line));
   border-radius: 12px;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.hour-overview > .hour-detail {
+  margin-top: 0;
+  margin-bottom: 12px;
 }
 
 .hour-detail > header {
@@ -1057,7 +1070,10 @@ button:focus-visible {
 }
 
 @media (max-width: 560px) {
-  .calendar-card,
+  .calendar-card {
+    padding: 20px 8px 24px;
+  }
+
   .bazi-card {
     padding: 20px 14px 24px;
   }
@@ -1078,7 +1094,7 @@ button:focus-visible {
   }
 
   .period-control strong {
-    font-size: clamp(26px, 8vw, 34px);
+    font-size: clamp(24px, 7vw, 30px);
   }
 
   .icon-button {
@@ -1094,8 +1110,12 @@ button:focus-visible {
 
   .day-button {
     gap: 2px;
-    padding: 5px 2px;
+    padding: 5px 0;
     border-radius: 12px;
+  }
+
+  .days-grid {
+    gap: 1px;
   }
 
   .solar-day {
@@ -1107,7 +1127,8 @@ button:focus-visible {
   }
 
   .day-event {
-    font-size: 7px;
+    font-size: 6.5px;
+    letter-spacing: -0.02em;
   }
 
   .detail-card {
@@ -1171,6 +1192,10 @@ button:focus-visible {
 
   .hour-card {
     padding: 6px;
+  }
+
+  .day-event {
+    font-size: 6px;
   }
 
   .hour-detail-group {

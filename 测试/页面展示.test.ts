@@ -113,11 +113,16 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('data-action="next-day"');
     expect(页面源码).not.toContain("−年");
     expect(页面源码).not.toContain("+年");
+    expect(页面源码).toContain('${String(状态.月 + 1).padStart(2, "0")}</strong>');
+    expect(页面源码).not.toContain('${String(状态.月 + 1).padStart(2, "0")}月</strong>');
+    expect(页面源码).toContain('data-action="today">今天</button>');
+    expect(页面源码).not.toContain('data-action="today">返回今天</button>');
   });
 
-  it("返回今天复用通用导航按钮样式并使用红金主题", () => {
+  it("今天按钮复用通用导航样式并保持紧凑", () => {
     expect(页面源码).toContain('class="icon-button today-button"');
     expect(页面样式).toMatch(/\.today-button\s*\{[^}]*width:\s*auto;/u);
+    expect(页面样式).toMatch(/\.today-button\s*\{[^}]*font-size:\s*11px;/u);
     expect(页面样式).toContain("--gold:");
     expect(页面样式).toContain("--panel:");
     expect(页面样式).not.toContain("--green:");
@@ -134,6 +139,8 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("日期信息.显示事件.map");
     expect(页面源码).toContain("另${日期信息.其余事件数}项");
     expect(页面样式).toContain("grid-template-rows: repeat(3, 1.15em)");
+    expect(页面样式).toMatch(/\.days-grid\s*\{[^}]*gap:\s*2px;/u);
+    expect(页面样式).toMatch(/\.day-event\s*\{[^}]*font-size:\s*8px;/u);
   });
 
   it("神圣纪念与传统节日双栏、风水规则自适应多列", () => {
@@ -153,6 +160,9 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('data-bazi-time');
     expect(页面源码).toContain('data-bazi-longitude');
     expect(页面源码).toContain('data-action="bazi-locate"');
+    expect(页面源码).toContain('data-bazi-output');
+    expect(页面源码).toContain("结果容器.innerHTML = 生成八字结果区()");
+    expect(页面源码).toContain("更新八字结果区()");
   });
 
   it("实时更新、手动暂停、返回今天与卸载清理均已接入", () => {
@@ -181,7 +191,7 @@ describe("日期详情展示回归", () => {
     expect(时辰位置).toBeGreaterThan(风水位置);
     expect(页面源码).toContain('<h3>十二时辰</h3>');
     expect(页面源码).toContain("十二时辰.项目.map(时辰概览卡片)");
-    expect(页面源码).toContain('class="hour-card${项目.当前 ? " is-current" : ""}"');
+    expect(页面源码).toContain('class="hour-card${项目.当前 ? " is-current" : ""}${已手动选中 ? " is-selected" : ""}"');
     expect(页面源码).toContain("${时段.时间范围}");
     expect(页面源码).toContain("${时段.时柱}时");
     expect(页面源码).toContain("${时段.值神}");
@@ -190,14 +200,18 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
   });
 
-  it("十二时辰支持单项展开且详情留在模块内部", () => {
+  it("十二时辰详情默认常驻于概览之前且不可收起", () => {
     const 网格位置 = 页面源码.indexOf('class="hour-grid"');
-    const 详情位置 = 页面源码.indexOf("${时辰展开详情(展开时辰)}");
+    const 详情位置 = 页面源码.indexOf("${时辰展开详情(查看时辰)}");
     expect(页面源码).toContain('data-hour-key="${时段.键}"');
-    expect(页面源码).toContain('aria-expanded="${展开时辰键 === 时段.键}"');
-    expect(页面源码).toContain("展开时辰键 = 展开时辰键 === 时辰键 ? null : 时辰键");
+    expect(页面源码).toContain('aria-pressed="${手动查看时辰键 === 时段.键}"');
+    expect(页面源码).not.toContain("点击收起");
+    expect(页面源码).not.toContain("展开时辰键 === 时辰键 ? null");
     expect(页面源码).toContain('class="hour-detail"');
-    expect(详情位置).toBeGreaterThan(网格位置);
+    expect(详情位置).toBeGreaterThan(-1);
+    expect(详情位置).toBeLessThan(网格位置);
+    expect(页面源码).toContain("选出查看时辰(全部时段, 手动查看时辰键)");
+    expect(页面源码).toContain('class="hour-card${项目.当前 ? " is-current" : ""}${已手动选中 ? " is-selected" : ""}"');
     expect(页面源码).toContain('时辰详情标签("日时关系"');
     expect(页面源码).toContain('时辰详情标签("吉神"');
     expect(页面源码).toContain('时辰详情标签("凶煞"');

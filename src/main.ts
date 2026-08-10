@@ -33,6 +33,7 @@ import {
 import { 格式化时分 } from "./历法/时间";
 import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
 import { 创建日期事件分栏 } from "./界面/详情布局";
+import { 更新手动查看键, 选出查看时辰 } from "./界面/时辰查看";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
@@ -56,7 +57,7 @@ let 用户已选择时间依据 = false;
 let 当前经度: number | null = null;
 let 当前定位状态: 定位状态 = "未定位";
 let 定位说明 = "尚未定位，当前使用北京时间";
-let 展开时辰键: string | null = null;
+let 手动查看时辰键: string | null = null;
 let 八字日期 = `${初始北京时间.年}-${String(初始北京时间.月).padStart(2, "0")}-${String(初始北京时间.日).padStart(2, "0")}`;
 let 八字时间 = 格式化时分(初始北京时间);
 let 八字时间依据: 时间依据 = "北京时间";
@@ -77,6 +78,7 @@ function 设置日期(日期: Date): void {
   时间查询 = 是同一天(日期, 今天)
     ? 创建实时查询时间(当前北京时间)
     : 创建手动查询时间("12:00");
+  手动查看时辰键 = null;
   渲染();
 }
 
@@ -149,17 +151,18 @@ function 规则标记(规则: 时辰规则判断): string {
 }
 
 function 时辰概览卡片(项目: 时辰概览项): string {
+  const 已手动选中 = 项目.时段.some((时段) => 时段.键 === 手动查看时辰键);
   return `
-    <article class="hour-card${项目.当前 ? " is-current" : ""}" aria-label="${项目.名称}${项目.当前 ? "，当前时辰" : ""}">
-      <header><strong>${项目.名称}</strong>${项目.当前 ? "<span>当前</span>" : ""}</header>
+    <article class="hour-card${项目.当前 ? " is-current" : ""}${已手动选中 ? " is-selected" : ""}" aria-label="${项目.名称}${项目.当前 ? "，当前时辰" : ""}${已手动选中 ? "，已选中查看" : ""}">
+      <header><strong>${项目.名称}</strong>${项目.当前 || 已手动选中 ? `<span>${项目.当前 ? "当前" : ""}${项目.当前 && 已手动选中 ? " · " : ""}${已手动选中 ? "已选" : ""}</span>` : ""}</header>
       <div class="hour-segments">
         ${项目.时段.map((时段) => `
           <button
             type="button"
-            class="hour-segment${时段.当前 ? " is-current" : ""}${展开时辰键 === 时段.键 ? " is-expanded" : ""}"
+            class="hour-segment${时段.当前 ? " is-current" : ""}${手动查看时辰键 === 时段.键 ? " is-selected" : ""}"
             data-hour-key="${时段.键}"
-            aria-expanded="${展开时辰键 === 时段.键}"
-            aria-label="${时段.名称}，${时段.时间范围}，${时段.时柱}时，${时段.值神}${时段.吉凶}，点击${展开时辰键 === 时段.键 ? "收起" : "查看详情"}"
+            aria-pressed="${手动查看时辰键 === 时段.键}"
+            aria-label="${时段.名称}，${时段.时间范围}，${时段.时柱}时，${时段.值神}${时段.吉凶}，点击查看详情"
           >
             <div class="hour-time">${项目.时段.length > 1 ? `<span>${时段.名称}</span>` : ""}<time>${时段.时间范围}</time></div>
             <div class="hour-meta"><strong>${时段.时柱}时</strong><span>${时段.值神}</span><em class="is-${时段.吉凶}">${时段.吉凶}</em></div>
@@ -177,20 +180,27 @@ function 时辰详情标签(标题: string, 内容: string[], 类型 = "normal")
     </div>`;
 }
 
-function 八字查询卡片(): string {
+function 生成八字结果区(): string {
   const 经度数值 = 八字经度文本.trim() === "" ? null : Number(八字经度文本);
   const 有效经度 = 经度数值 !== null && Number.isFinite(经度数值) && 经度数值 >= -180 && 经度数值 <= 180
     ? 经度数值
     : null;
   const 查询结果 = 查询生辰八字(八字日期, 八字时间, 八字时间依据, 有效经度);
-  const 结果区 = 查询结果.成功
+  return 查询结果.成功
     ? `<div class="bazi-result" aria-live="polite">
         <p class="bazi-pillars">${查询结果.结果.四柱}</p>
         <p class="bazi-line"><span>八字</span><strong>${查询结果.结果.八字}</strong></p>
         <ul>${生辰八字时间说明(查询结果.结果).map((说明) => `<li>${转义HTML(说明)}</li>`).join("")}</ul>
       </div>`
     : `<p class="bazi-message" aria-live="polite">${转义HTML(查询结果.提示)}</p>`;
+}
 
+function 更新八字结果区(): void {
+  const 结果容器 = 根节点.querySelector<HTMLElement>("[data-bazi-output]");
+  if (结果容器) 结果容器.innerHTML = 生成八字结果区();
+}
+
+function 八字查询卡片(): string {
   return `
     <section class="bazi-card" aria-label="生辰八字查询">
       <header><h2>生辰八字查询</h2><p>只查询年月日时四柱</p></header>
@@ -207,7 +217,7 @@ function 八字查询卡片(): string {
         ` : ""}
       </div>
       ${八字定位说明 ? `<p class="bazi-location-note">${转义HTML(八字定位说明)}</p>` : ""}
-      ${结果区}
+      <div class="bazi-output" data-bazi-output>${生成八字结果区()}</div>
     </section>`;
 }
 
@@ -283,8 +293,8 @@ function 渲染(): void {
   const 时间模式说明 = 时间查询.模式 === "实时" ? "实时更新" : "手动查询";
   const 切换目标 = 当前时间依据 === "北京时间" ? "真太阳时" : "北京时间";
   const 全部时段 = 十二时辰.项目.flatMap((项目) => 项目.时段);
-  const 展开时辰 = 全部时段.find((时段) => 时段.键 === 展开时辰键);
-  if (展开时辰键 && !展开时辰) 展开时辰键 = null;
+  const 查看时辰 = 选出查看时辰(全部时段, 手动查看时辰键);
+  if (手动查看时辰键 && 查看时辰?.键 !== 手动查看时辰键) 手动查看时辰键 = null;
 
   根节点.innerHTML = `
     <main class="page-shell">
@@ -334,8 +344,8 @@ function 渲染(): void {
 
           <section class="hour-overview" aria-label="十二时辰">
             <h3>十二时辰</h3>
+            ${时辰展开详情(查看时辰)}
             <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
-            ${时辰展开详情(展开时辰)}
           </section>
         </aside>
 
@@ -350,13 +360,13 @@ function 渲染(): void {
               </div>
               <div class="period-control" aria-label="月份切换">
                 <button type="button" class="icon-button" data-action="previous-month" aria-label="上个月">‹</button>
-                <strong>${String(状态.月 + 1).padStart(2, "0")}月</strong>
+                <strong>${String(状态.月 + 1).padStart(2, "0")}</strong>
                 <button type="button" class="icon-button" data-action="next-month" aria-label="下个月">›</button>
               </div>
             </div>
             <div class="date-navigation" aria-label="日期切换">
               <button type="button" class="icon-button" data-action="previous-day" aria-label="上一日">‹</button>
-              <button class="icon-button today-button" type="button" data-action="today">返回今天</button>
+              <button class="icon-button today-button" type="button" data-action="today">今天</button>
               <button type="button" class="icon-button" data-action="next-day" aria-label="下一日">›</button>
             </div>
           </div>
@@ -443,31 +453,41 @@ function 更新显示年月(年: number, 月: number): void {
   const 输入框 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-time-input]");
   if (!输入框?.value) return;
   时间查询 = 创建手动查询时间(输入框.value);
+  手动查看时辰键 = null;
   渲染();
 });
 
 根节点.addEventListener("change", (事件) => {
   const 目标 = 事件.target as HTMLInputElement | HTMLSelectElement;
-  if (目标.matches("[data-bazi-date]")) 八字日期 = 目标.value;
-  else if (目标.matches("[data-bazi-time]")) 八字时间 = 目标.value;
-  else if (目标.matches("[data-bazi-basis]")) {
+  if (目标.matches("[data-bazi-date]")) {
+    八字日期 = 目标.value;
+    更新八字结果区();
+  } else if (目标.matches("[data-bazi-time]")) {
+    八字时间 = 目标.value;
+    更新八字结果区();
+  } else if (目标.matches("[data-bazi-basis]")) {
     八字时间依据 = 目标.value === "真太阳时" ? "真太阳时" : "北京时间";
     八字定位说明 = "";
+    渲染();
   } else if (目标.matches("[data-bazi-longitude]")) {
     八字经度文本 = 目标.value;
     八字定位说明 = "";
+    更新八字结果区();
   } else return;
-  渲染();
 });
 
 根节点.addEventListener("input", (事件) => {
   const 目标 = 事件.target as HTMLInputElement;
-  if (目标.matches("[data-bazi-longitude]")) 八字经度文本 = 目标.value;
+  if (目标.matches("[data-bazi-date]")) 八字日期 = 目标.value;
+  else if (目标.matches("[data-bazi-time]")) 八字时间 = 目标.value;
+  else if (目标.matches("[data-bazi-longitude]")) 八字经度文本 = 目标.value;
+  else return;
+  更新八字结果区();
 });
 
 根节点.addEventListener("focusout", (事件) => {
   const 目标 = 事件.target as HTMLInputElement;
-  if (目标.matches("[data-bazi-longitude]")) 渲染();
+  if (目标.matches("[data-bazi-longitude]")) 更新八字结果区();
 });
 
 根节点.addEventListener("click", async (事件) => {
@@ -481,7 +501,7 @@ function 更新显示年月(年: number, 月: number): void {
 
   const 时辰键 = 目标.dataset.hourKey;
   if (时辰键) {
-    展开时辰键 = 展开时辰键 === 时辰键 ? null : 时辰键;
+    手动查看时辰键 = 更新手动查看键(时辰键, 目标.classList.contains("is-current"));
     渲染();
     return;
   }
@@ -498,6 +518,7 @@ function 更新显示年月(年: number, 月: number): void {
       今天 = 北京日期(当前北京时间);
       状态 = 选择日期(状态, 今天);
       时间查询 = 创建实时查询时间(当前北京时间);
+      手动查看时辰键 = null;
       渲染();
       break;
     }
