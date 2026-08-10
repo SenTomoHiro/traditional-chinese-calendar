@@ -237,9 +237,13 @@ describe("日期详情展示回归", () => {
     expect(信息位置).toBeLessThan(北斗位置);
     expect(北斗位置).toBeLessThan(时辰位置);
     expect(页面源码).toContain("北斗.斗降日.来源显示");
+    expect(页面源码).toContain('class="beidou-source"');
+    expect(页面源码).not.toContain("两书同载");
+    expect(页面源码.indexOf('class="beidou-source"')).toBeGreaterThan(页面源码.indexOf('class="beidou-grid"'));
     expect(页面源码).toContain("${北斗.本命下日}");
     expect(页面源码).toContain("${转义HTML(北斗.本命星官)}");
     expect(页面样式).toMatch(/\.beidou-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,/u);
+    expect(页面样式).toMatch(/\.beidou-source\s*\{[^}]*margin:\s*7px 0 0;[^}]*overflow-wrap:\s*anywhere/u);
   });
 
   it("生辰八字查询位于月历下方并与主日历状态分离", () => {
@@ -326,7 +330,7 @@ describe("日期详情展示回归", () => {
 
   it("现代时宜时忌在全平台纵向使用整行且来源说明仍在下方", () => {
     expect(页面样式).toMatch(/\.modern-hour-actions-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
-    expect(页面样式).toMatch(/\.modern-hour-actions \.hour-detail-group \+ \.hour-detail-group\s*\{[^}]*border-top:/u);
+    expect(页面样式).not.toMatch(/\.modern-hour-actions \.hour-detail-group \+ \.hour-detail-group\s*\{[^}]*border-(?:top|bottom):/u);
     const 网格位置 = 页面源码.indexOf('class="modern-hour-actions-grid"');
     const 来源位置 = 页面源码.indexOf("${时段.详情.现代来源}");
     expect(网格位置).toBeLessThan(来源位置);

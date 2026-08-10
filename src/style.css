@@ -762,10 +762,12 @@ button:focus-visible {
   color: var(--danger);
 }
 
-.beidou-item small {
+.beidou-source {
+  margin: 7px 0 0;
   color: var(--panel-muted);
   font-size: 8px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .calculation-note {
@@ -1111,11 +1113,6 @@ button:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-}
-
-.modern-hour-actions .hour-detail-group + .hour-detail-group {
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, var(--panel-line) 72%, transparent);
 }
 
 .modern-hour-actions .hour-detail-group {

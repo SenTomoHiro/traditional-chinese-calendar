@@ -428,11 +428,11 @@ function 渲染(): void {
               <div class="beidou-item${北斗.斗降日.命中 ? " is-hit" : ""}">
                 <span>斗降日</span>
                 <strong>${北斗.斗降日.名称}</strong>
-                ${北斗.斗降日.命中 ? `<small>来源：${转义HTML(北斗.斗降日.来源显示)}</small>` : ""}
               </div>
               <div class="beidou-item"><span>本命下日</span><strong>${北斗.本命下日}</strong></div>
               <div class="beidou-item"><span>本命星官</span><strong>${转义HTML(北斗.本命星官)}</strong></div>
             </div>
+            ${北斗.斗降日.命中 ? `<p class="beidou-source">来源：${转义HTML(北斗.斗降日.来源显示)}</p>` : ""}
           </section>
 
           <section class="hour-overview" aria-label="十二时辰">

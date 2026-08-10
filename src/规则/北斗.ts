@@ -155,7 +155,7 @@ export function 计算北斗(配置: 北斗配置 | null, 农历: 农历日期, 
     依据.push({ 来源: 真经注来源, 规则: `${日柱}日` });
   }
   const 来源 = [...new Set(依据.map((条目) => 条目.来源))];
-  const 来源显示 = 来源.length === 2 ? "两书同载" : 来源[0] ?? "";
+  const 来源显示 = 来源.join("、");
   const 日支 = 日柱[1] as (typeof 地支)[number];
   return {
     斗降日: {
