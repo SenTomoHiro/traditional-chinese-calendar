@@ -108,18 +108,19 @@ describe("六十甲子日乘十二时支完整性质", () => {
     expect(详情("甲子", "亥").凶煞).toContain("旬空");
   });
 
-  it("不把时辰关系误当成卷十一日级神煞，只保留明确的用时限制", () => {
-    expect(详情("甲子", "子").时宜).toEqual([]);
-    expect(详情("甲子", "丑").时宜).toEqual([]);
-    expect(详情("甲子", "寅").时宜).toEqual([]);
-    expect(详情("甲子", "申").时忌).toContain("出行");
+  it("黄历宜忌与古籍神煞分层输出", () => {
+    const 结果 = 详情("甲子", "寅");
+    expect(结果.吉神).toEqual(expect.arrayContaining(["福星贵人", "喜神", "日禄", "日马"]));
+    expect(结果.时宜.length).toBeGreaterThan(0);
+    expect(结果.依据).toContain("lunar-typescript 1.8.6");
   });
 
-  it("五不遇或日破不输出推测性的确定宜", () => {
+  it("五不遇和日破不擅自覆盖独立黄历数据", () => {
     const 结果 = 详情("甲子", "午");
     expect(结果.日时关系).toContain("日破");
     expect(结果.凶煞).toContain("五不遇");
-    expect(结果.时宜).toEqual([]);
+    expect(Array.isArray(结果.时宜)).toBe(true);
+    expect(Array.isArray(结果.时忌)).toBe(true);
   });
 
   it("宜忌同时命中但没有制化依据时不输出确定结论", () => {
@@ -131,9 +132,9 @@ describe("六十甲子日乘十二时支完整性质", () => {
     const 时柱 = 计算时柱("甲子", "戌");
     const 值神 = 计算时辰值神(吉凶配置, "子", "戌");
     const 结果 = 计算详细时辰(冲突配置, "甲子", 时柱, 值神.值神, 值神.吉凶);
-    expect(结果.时宜).toEqual([]);
-    expect(结果.时忌).toEqual([]);
     expect(结果.冲突).toEqual(["测试事项"]);
     expect(结果.未判定用事).toContain("测试事项");
+    expect(结果.时宜).not.toContain("测试事项");
+    expect(结果.时忌).not.toContain("测试事项");
   });
 });

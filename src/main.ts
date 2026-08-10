@@ -5,6 +5,7 @@ import {
   是同一天,
   星期名称,
   星期短名,
+  移动日期,
   移动月份,
   选择日期,
   type 日历状态,
@@ -30,6 +31,8 @@ import {
   type 查询时间状态,
 } from "./实时历时";
 import { 格式化时分 } from "./历法/时间";
+import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
+import { 创建日期事件分栏 } from "./界面/详情布局";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
@@ -54,6 +57,12 @@ let 当前经度: number | null = null;
 let 当前定位状态: 定位状态 = "未定位";
 let 定位说明 = "尚未定位，当前使用北京时间";
 let 展开时辰键: string | null = null;
+let 八字日期 = `${初始北京时间.年}-${String(初始北京时间.月).padStart(2, "0")}-${String(初始北京时间.日).padStart(2, "0")}`;
+let 八字时间 = 格式化时分(初始北京时间);
+let 八字时间依据: 时间依据 = "北京时间";
+let 八字经度文本 = "";
+let 八字定位中 = false;
+let 八字定位说明 = "";
 
 const 配置结果 = 读取全部配置();
 const 已解析时辰配置 = 初始化时辰配置(配置结果);
@@ -118,11 +127,12 @@ function 转义HTML(文本: string): string {
 }
 
 function 事件列表(标题: string, 事件: string[]): string {
-  if (事件.length === 0) return "";
   return `
     <div class="event-group">
       <h3>${标题}</h3>
-      <ul>${事件.map((名称) => `<li>${转义HTML(名称)}</li>`).join("")}</ul>
+      ${事件.length > 0
+        ? `<ul>${事件.map((名称) => `<li>${转义HTML(名称)}</li>`).join("")}</ul>`
+        : '<p class="event-empty">无</p>'}
     </div>`;
 }
 
@@ -159,12 +169,46 @@ function 时辰概览卡片(项目: 时辰概览项): string {
 }
 
 function 时辰详情标签(标题: string, 内容: string[], 类型 = "normal"): string {
-  const 空提示 = 标题 === "日时关系" ? "无特殊关系" : 标题 === "时宜" ? "无明确宜" : 标题 === "时忌" ? "无明确忌" : "无";
+  const 空提示 = 标题 === "日时关系" ? "无特殊关系" : "无";
   return `
     <div class="hour-detail-group is-${类型}">
       <dt>${标题}</dt>
       <dd>${内容.length > 0 ? 内容.map((条目) => `<span>${转义HTML(条目)}</span>`).join("") : `<em>${空提示}</em>`}</dd>
     </div>`;
+}
+
+function 八字查询卡片(): string {
+  const 经度数值 = 八字经度文本.trim() === "" ? null : Number(八字经度文本);
+  const 有效经度 = 经度数值 !== null && Number.isFinite(经度数值) && 经度数值 >= -180 && 经度数值 <= 180
+    ? 经度数值
+    : null;
+  const 查询结果 = 查询生辰八字(八字日期, 八字时间, 八字时间依据, 有效经度);
+  const 结果区 = 查询结果.成功
+    ? `<div class="bazi-result" aria-live="polite">
+        <p class="bazi-pillars">${查询结果.结果.四柱}</p>
+        <p class="bazi-line"><span>八字</span><strong>${查询结果.结果.八字}</strong></p>
+        <ul>${生辰八字时间说明(查询结果.结果).map((说明) => `<li>${转义HTML(说明)}</li>`).join("")}</ul>
+      </div>`
+    : `<p class="bazi-message" aria-live="polite">${转义HTML(查询结果.提示)}</p>`;
+
+  return `
+    <section class="bazi-card" aria-label="生辰八字查询">
+      <header><h2>生辰八字查询</h2><p>只查询年月日时四柱</p></header>
+      <div class="bazi-form">
+        <label>日期<input type="date" data-bazi-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${八字日期}"></label>
+        <label>时间<input type="time" data-bazi-time value="${八字时间}"></label>
+        <label>计算依据<select data-bazi-basis>
+          <option value="北京时间"${八字时间依据 === "北京时间" ? " selected" : ""}>北京时间</option>
+          <option value="真太阳时"${八字时间依据 === "真太阳时" ? " selected" : ""}>真太阳时</option>
+        </select></label>
+        ${八字时间依据 === "真太阳时" ? `
+          <label>出生地经度<input type="number" data-bazi-longitude min="-180" max="180" step="0.01" inputmode="decimal" placeholder="例如 116.40" value="${转义HTML(八字经度文本)}"></label>
+          <button type="button" class="bazi-locate" data-action="bazi-locate" ${八字定位中 ? "disabled" : ""}>${八字定位中 ? "定位中…" : "使用当前定位"}</button>
+        ` : ""}
+      </div>
+      ${八字定位说明 ? `<p class="bazi-location-note">${转义HTML(八字定位说明)}</p>` : ""}
+      ${结果区}
+    </section>`;
 }
 
 function 时辰展开详情(时段: 时辰概览段 | undefined): string {
@@ -186,6 +230,28 @@ function 时辰展开详情(时段: 时辰概览段 | undefined): string {
     </section>`;
 }
 
+async function 请求八字定位(): Promise<void> {
+  if (八字定位中) return;
+  if (当前经度 !== null) {
+    八字经度文本 = 当前经度.toFixed(2);
+    八字定位说明 = "已使用当前设备经度";
+    渲染();
+    return;
+  }
+  八字定位中 = true;
+  八字定位说明 = "正在获取当前位置…";
+  渲染();
+  const 结果 = await 获取浏览器定位();
+  八字定位中 = false;
+  if (结果.成功) {
+    八字经度文本 = 结果.经度.toFixed(2);
+    八字定位说明 = "定位成功，已填入当前设备经度";
+  } else {
+    八字定位说明 = "未取得定位，请手工输入出生地经度";
+  }
+  渲染();
+}
+
 function 渲染(): void {
   const 月历格 = 创建月历格(状态.年, 状态.月);
   const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念配置);
@@ -205,6 +271,7 @@ function 渲染(): void {
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
   const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 历法结果.农历);
+  const 日期事件栏 = 创建日期事件分栏(神圣纪念, 传统节日);
   const 节气显示 = 历法结果.节气
     ? `${历法结果.节气.名称} · ${格式化时分(历法结果.节气)}`
     : "当日无节气";
@@ -242,28 +309,27 @@ function 渲染(): void {
             <strong>${四柱}</strong>
           </section>
 
-          <section class="core-fact value-star-core" aria-label="值星">
-            <span>值星</span>
-            <strong>${历法结果.值星}日</strong>
-          </section>
+          <div class="calendar-meta-row">
+            <section class="core-fact value-star-core" aria-label="值星">
+              <span>值星</span>
+              <strong>${历法结果.值星}日</strong>
+            </section>
 
-          <section class="core-fact solar-term-core" aria-label="节气">
-            <span>节气</span>
-            <strong${历法结果.节气 ? "" : ' class="is-empty"'}>${核心节气显示}</strong>
-          </section>
+            <section class="core-fact solar-term-core" aria-label="节气">
+              <span>节气</span>
+              <strong${历法结果.节气 ? "" : ' class="is-empty"'}>${核心节气显示}</strong>
+            </section>
+          </div>
 
-          ${
-            神圣纪念.length > 0 || 传统节日.length > 0
-              ? `<section class="date-events" aria-label="当日神圣纪念与传统节日">
-                  ${事件列表("神圣纪念", 神圣纪念)}
-                  ${事件列表("传统节日", 传统节日)}
-                </section>`
-              : ""
-          }
+          ${日期事件栏.length > 0
+            ? `<section class="date-events" aria-label="当日神圣纪念与传统节日">
+                ${日期事件栏.map((栏) => 事件列表(栏.标题, 栏.事件)).join("")}
+              </section>`
+            : ""}
 
           <section class="rule-results" aria-label="风水禁忌速查">
             <h3>风水禁忌速查</h3>
-            ${时辰规则.map(规则标记).join("")}
+            <div class="rule-results-grid">${时辰规则.map(规则标记).join("")}</div>
           </section>
 
           <section class="hour-overview" aria-label="十二时辰">
@@ -273,23 +339,25 @@ function 渲染(): void {
           </section>
         </aside>
 
-        <article class="calendar-card">
+        <div class="calendar-right">
+          <article class="calendar-card">
           <div class="calendar-toolbar">
-            <div class="toolbar-group" aria-label="年份切换">
-              <button type="button" class="icon-button" data-action="previous-year" aria-label="上一年">−年</button>
-              <button type="button" class="icon-button" data-action="next-year" aria-label="下一年">+年</button>
-            </div>
-            <div class="month-center">
-              <div class="month-heading" aria-live="polite">
-                <span>${状态.年}</span>
-                <strong>${String(状态.月 + 1).padStart(2, "0")}</strong>
-                <small>月</small>
+            <div class="period-navigation">
+              <div class="period-control" aria-label="年份切换">
+                <button type="button" class="icon-button" data-action="previous-year" aria-label="上一年">‹</button>
+                <strong>${状态.年}</strong>
+                <button type="button" class="icon-button" data-action="next-year" aria-label="下一年">›</button>
               </div>
-              <button class="icon-button today-button" type="button" data-action="today">返回今天</button>
+              <div class="period-control" aria-label="月份切换">
+                <button type="button" class="icon-button" data-action="previous-month" aria-label="上个月">‹</button>
+                <strong>${String(状态.月 + 1).padStart(2, "0")}月</strong>
+                <button type="button" class="icon-button" data-action="next-month" aria-label="下个月">›</button>
+              </div>
             </div>
-            <div class="toolbar-group" aria-label="月份切换">
-              <button type="button" class="icon-button" data-action="previous-month" aria-label="上个月">‹</button>
-              <button type="button" class="icon-button" data-action="next-month" aria-label="下个月">›</button>
+            <div class="date-navigation" aria-label="日期切换">
+              <button type="button" class="icon-button" data-action="previous-day" aria-label="上一日">‹</button>
+              <button class="icon-button today-button" type="button" data-action="today">返回今天</button>
+              <button type="button" class="icon-button" data-action="next-day" aria-label="下一日">›</button>
             </div>
           </div>
 
@@ -322,17 +390,18 @@ function 渲染(): void {
                   >
                     <span class="solar-day">${日期}</span>
                     <span class="lunar-day">${日期信息.农历摘要}</span>
-                    ${
-                      日期信息.事件摘要
-                        ? `<span class="day-event" title="${转义HTML(全部事件.join("、"))}">${转义HTML(日期信息.事件摘要)}${日期信息.其余事件数 > 0 ? `<b>+${日期信息.其余事件数}</b>` : ""}</span>`
-                        : ""
-                    }
+                    <span class="day-events" title="${转义HTML(全部事件.join("、"))}">
+                      ${日期信息.显示事件.map((名称) => `<span class="day-event">${转义HTML(名称)}</span>`).join("")}
+                      ${日期信息.其余事件数 > 0 ? `<span class="day-event day-event-more">另${日期信息.其余事件数}项</span>` : ""}
+                    </span>
                     ${是今天 ? '<small class="today-mark">今</small>' : ""}
                   </button>`;
               })
               .join("")}
           </div>
-        </article>
+          </article>
+          ${八字查询卡片()}
+        </div>
 
         <section class="calculation-card" aria-label="时间与计算依据">
           <div class="time-controls">
@@ -377,9 +446,38 @@ function 更新显示年月(年: number, 月: number): void {
   渲染();
 });
 
+根节点.addEventListener("change", (事件) => {
+  const 目标 = 事件.target as HTMLInputElement | HTMLSelectElement;
+  if (目标.matches("[data-bazi-date]")) 八字日期 = 目标.value;
+  else if (目标.matches("[data-bazi-time]")) 八字时间 = 目标.value;
+  else if (目标.matches("[data-bazi-basis]")) {
+    八字时间依据 = 目标.value === "真太阳时" ? "真太阳时" : "北京时间";
+    八字定位说明 = "";
+  } else if (目标.matches("[data-bazi-longitude]")) {
+    八字经度文本 = 目标.value;
+    八字定位说明 = "";
+  } else return;
+  渲染();
+});
+
+根节点.addEventListener("input", (事件) => {
+  const 目标 = 事件.target as HTMLInputElement;
+  if (目标.matches("[data-bazi-longitude]")) 八字经度文本 = 目标.value;
+});
+
+根节点.addEventListener("focusout", (事件) => {
+  const 目标 = 事件.target as HTMLInputElement;
+  if (目标.matches("[data-bazi-longitude]")) 渲染();
+});
+
 根节点.addEventListener("click", async (事件) => {
   const 目标 = (事件.target as HTMLElement).closest<HTMLButtonElement>("button");
   if (!目标) return;
+
+  if (目标.dataset.action === "bazi-locate") {
+    await 请求八字定位();
+    return;
+  }
 
   const 时辰键 = 目标.dataset.hourKey;
   if (时辰键) {
@@ -433,6 +531,12 @@ function 更新显示年月(年: number, 月: number): void {
       更新显示年月(目标年月.年, 目标年月.月);
       break;
     }
+    case "previous-day":
+      设置日期(移动日期(状态.所选日期, -1));
+      break;
+    case "next-day":
+      设置日期(移动日期(状态.所选日期, 1));
+      break;
     case "previous-year":
       更新显示年月(状态.年 - 1, 状态.月);
       break;

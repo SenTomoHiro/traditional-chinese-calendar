@@ -32,6 +32,10 @@ export function 移动月份(年: number, 月: number, 偏移: number): 年月 {
   return { 年: 日期.getFullYear(), 月: 日期.getMonth() };
 }
 
+export function 移动日期(日期: Date, 偏移天数: number): Date {
+  return new Date(日期.getFullYear(), 日期.getMonth(), 日期.getDate() + 偏移天数);
+}
+
 export function 创建月历格(年: number, 月: number): Array<number | null> {
   const 首日位置 = 获取某月首日星期(年, 月);
   const 天数 = 获取某月天数(年, 月);

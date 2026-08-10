@@ -10,12 +10,18 @@ export interface 月历日期信息 {
   农历摘要: string;
   传统节日: string[];
   神圣纪念: string[];
-  事件摘要: string | null;
+  显示事件: string[];
   其余事件数: number;
 }
 
 export function 格式化农历摘要(农历: 农历日期): string {
   return 农历.日 === 1 ? 农历.月名 : 农历.日名;
+}
+
+export function 生成月历事件展示(传统节日: string[], 神圣纪念: string[]): { 显示事件: string[]; 其余事件数: number } {
+  const 全部事件 = [...传统节日, ...神圣纪念];
+  const 显示事件 = 全部事件.length <= 3 ? 全部事件 : 全部事件.slice(0, 2);
+  return { 显示事件, 其余事件数: Math.max(0, 全部事件.length - 显示事件.length) };
 }
 
 export function 创建月历日期信息(
@@ -29,15 +35,14 @@ export function 创建月历日期信息(
     const 农历 = 转换为农历(时间);
     const 传统节日 = 获取传统节日(时间);
     const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 农历);
-    const 全部事件 = [...传统节日, ...神圣纪念];
+    const 事件展示 = 生成月历事件展示(传统节日, 神圣纪念);
     return {
       公历日,
       农历,
       农历摘要: 格式化农历摘要(农历),
       传统节日,
       神圣纪念,
-      事件摘要: 全部事件[0] ?? null,
-      其余事件数: Math.max(0, 全部事件.length - 1),
+      ...事件展示,
     };
   });
 }
