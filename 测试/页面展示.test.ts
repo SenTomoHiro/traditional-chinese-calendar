@@ -75,7 +75,7 @@ describe("日期详情展示回归", () => {
     expect(日吉凶位置).toBeGreaterThan(四柱位置);
     expect(日吉凶位置).toBeLessThan(日期事件位置);
     expect(页面源码).toContain("${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}");
-    expect(页面源码).toContain('aria-label="日吉凶与值日"');
+    expect(页面源码).toContain('aria-label="日吉凶值日与风水禁忌"');
     expect(页面样式).toMatch(/\.almanac-core-item\.is-凶 strong\s*\{[^}]*color:\s*var\(--danger\)/u);
     expect(页面样式).toMatch(/\.almanac-core-item strong\s*\{[^}]*color:\s*var\(--gold-soft\)/u);
   });
@@ -114,11 +114,13 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("现有时辰规则");
   });
 
-  it("日期详情显示六类日级风水命中且时辰速查汇总当日层级", () => {
-    expect(页面源码).toContain('class="day-fengshui" aria-label="日期风水禁忌"');
-    expect(页面源码).toContain("日级风水禁忌模块(日级风水禁忌)");
-    expect(页面源码).toContain("结果.命中.flatMap");
-    expect(页面源码).toContain("规则.方位");
+  it("日级风水汇总并入日吉凶值日核心行且时辰复用同一结果", () => {
+    expect(页面源码).not.toContain('class="day-fengshui"');
+    expect(页面源码).not.toContain("日级风水禁忌模块");
+    expect(页面样式).not.toContain(".day-fengshui");
+    expect(页面源码).toContain('aria-label="日吉凶值日与风水禁忌"');
+    expect(页面源码).toContain('核心黄历项目("风水禁忌", 日级风水禁忌.命中.length > 0 ? 日级风水禁忌.当日状态 : "无"');
+    expect(页面样式).toMatch(/\.almanac-core-row\s*\{[^}]*grid-template-columns:\s*repeat\(3,/u);
     expect(页面源码).toContain('class="hour-rule-heading"');
     expect(页面源码).toContain("时段.当日风水禁忌.当日状态");
     expect(页面源码).toContain('时段.当日风水禁忌.当日状态 === "当日宜"');

@@ -506,7 +506,7 @@ button:focus-visible {
 
 .almanac-core-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
   margin-top: 14px;
   padding-bottom: 14px;
@@ -531,6 +531,7 @@ button:focus-visible {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .almanac-core-item.is-凶 strong {
@@ -716,50 +717,6 @@ button:focus-visible {
 
 .calendar-info-values span.is-empty {
   color: color-mix(in srgb, var(--panel-muted) 72%, transparent);
-}
-
-.day-fengshui {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--panel-line);
-}
-
-.day-fengshui > h3 {
-  margin: 0 0 8px;
-  color: var(--gold-soft);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-}
-
-.day-fengshui > p {
-  margin: 0;
-  color: color-mix(in srgb, var(--panel-muted) 72%, transparent);
-  font-size: 11px;
-}
-
-.day-fengshui-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 7px 16px;
-}
-
-.day-fengshui-list > div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.day-fengshui-list strong {
-  color: var(--panel-ink);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.day-fengshui-list span {
-  color: var(--danger);
-  font-size: 10px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
 }
 
 .beidou-panel {

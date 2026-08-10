@@ -35,7 +35,6 @@ import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } f
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
 import { 格式化主日期值, 解析主日期值 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
-import type { 日级风水禁忌结果 } from "./规则/日级风水禁忌";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
@@ -188,7 +187,7 @@ function 每日宜忌栏(标题: "日宜" | "日忌", 内容: string[], 类型: 
     </div>`;
 }
 
-function 核心黄历项目(标题: "日吉凶" | "值日", 内容: string, 类型 = "normal"): string {
+function 核心黄历项目(标题: "日吉凶" | "值日" | "风水禁忌", 内容: string, 类型 = "normal"): string {
   return `
     <div class="almanac-core-item is-${类型}">
       <h3>${标题}</h3>
@@ -205,18 +204,6 @@ function 规则标记(规则: 时辰规则判断): string {
         <p>${规则.说明}</p>
       </div>
     </div>`;
-}
-
-function 日级风水禁忌模块(结果: 日级风水禁忌结果): string {
-  const 明细 = 结果.命中.flatMap((规则) => [
-    `<div><strong>${规则.名称}</strong><span>${转义HTML(规则.说明)}</span></div>`,
-    ...(规则.方位 ? [`<div><strong>杀风水师方</strong><span>${转义HTML(规则.方位)}</span></div>`] : []),
-  ]);
-  return `
-    <section class="day-fengshui" aria-label="日期风水禁忌">
-      <h3>风水禁忌</h3>
-      ${明细.length > 0 ? `<div class="day-fengshui-list">${明细.join("")}</div>` : '<p class="is-empty">无</p>'}
-    </section>`;
 }
 
 function 时辰概览卡片(项目: 时辰概览项): string {
@@ -423,9 +410,10 @@ function 渲染(): void {
             <strong>${四柱}</strong>
           </section>
 
-          <section class="almanac-core-row" aria-label="日吉凶与值日">
+          <section class="almanac-core-row" aria-label="日吉凶值日与风水禁忌">
             ${核心黄历项目("日吉凶", `${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}`, 历法结果.日吉凶.吉凶)}
             ${核心黄历项目("值日", `${历法结果.值星}日`)}
+            ${核心黄历项目("风水禁忌", 日级风水禁忌.命中.length > 0 ? 日级风水禁忌.当日状态 : "无", 日级风水禁忌.命中.length > 0 ? "凶" : "normal")}
           </section>
 
           <section class="day-actions" aria-label="日宜与日忌">
@@ -437,8 +425,6 @@ function 渲染(): void {
             ${日期信息项目("节气", [核心节气显示])}
             ${日期事件栏.map((栏) => 日期信息项目(栏.标题, 栏.事件)).join("")}
           </section>
-
-          ${日级风水禁忌模块(日级风水禁忌)}
 
           <section class="beidou-panel" aria-label="北斗">
             <h3>北斗</h3>
