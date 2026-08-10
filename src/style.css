@@ -745,29 +745,15 @@ button:focus-visible {
   font-size: 11px;
 }
 
-.rule-result-heading {
-  display: flex;
-  gap: 8px;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.rule-result-heading em {
-  color: var(--panel-muted);
-  font-size: 10px;
-  font-style: normal;
-}
-
-.rule-result.is-命中 .rule-result-heading em,
-.rule-result.is-配置错误 .rule-result-heading em {
-  color: var(--danger);
-}
-
 .rule-result p {
   margin: 2px 0 0;
   color: var(--panel-muted);
   font-size: 10px;
   line-height: 1.45;
+}
+
+.rule-result.is-命中 p {
+  color: var(--danger);
 }
 
 .hour-grid {

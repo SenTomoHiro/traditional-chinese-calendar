@@ -76,6 +76,17 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("现有时辰规则");
   });
 
+  it("风水禁忌删除右侧重复状态并只强调命中的条件行", () => {
+    expect(页面源码).toContain("<strong>${规则.名称}</strong>");
+    expect(页面源码).toContain("<p>${规则.说明}</p>");
+    expect(页面源码).not.toContain("const 状态文字");
+    expect(页面源码).not.toContain("<em>${状态文字}</em>");
+    expect(页面样式).not.toContain(".rule-result-heading");
+    expect(页面样式).toMatch(/\.rule-result p\s*\{[^}]*color:\s*var\(--panel-muted\)/u);
+    expect(页面样式).toMatch(/\.rule-result\.is-命中 p\s*\{[^}]*color:\s*var\(--danger\)/u);
+    expect(页面样式).not.toContain(".rule-result.is-未命中 p");
+  });
+
   it("移动端源码顺序为核心详情、右栏工具、辅助计算", () => {
     const 详情位置 = 页面源码.indexOf('<aside class="detail-card"');
     const 右栏位置 = 页面源码.indexOf('<div class="calendar-right"');

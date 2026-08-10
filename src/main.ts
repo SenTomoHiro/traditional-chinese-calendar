@@ -139,12 +139,11 @@ function 事件列表(标题: string, 事件: string[]): string {
 }
 
 function 规则标记(规则: 时辰规则判断): string {
-  const 状态文字 = 规则.状态 === "无规则" ? "本月无规则" : 规则.状态;
   return `
     <div class="rule-result is-${规则.状态}">
       <span aria-hidden="true"></span>
       <div>
-        <div class="rule-result-heading"><strong>${规则.名称}</strong><em>${状态文字}</em></div>
+        <strong>${规则.名称}</strong>
         <p>${规则.说明}</p>
       </div>
     </div>`;
