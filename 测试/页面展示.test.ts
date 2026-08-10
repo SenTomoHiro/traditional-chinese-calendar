@@ -79,6 +79,22 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.day-fortune-core strong\s*\{[^}]*color:\s*var\(--gold-soft\)/u);
   });
 
+  it("日宜日忌紧接日吉凶并完整呈现两列标签", () => {
+    const 日吉凶位置 = 页面源码.indexOf('class="core-fact day-fortune-core');
+    const 每日宜忌位置 = 页面源码.indexOf('class="day-actions"');
+    const 日期事件位置 = 页面源码.indexOf('class="date-events"');
+    expect(日吉凶位置).toBeLessThan(每日宜忌位置);
+    expect(每日宜忌位置).toBeLessThan(日期事件位置);
+    expect(页面源码).toContain('aria-label="日宜与日忌"');
+    expect(页面源码).toContain('每日宜忌栏("日宜", 历法结果.每日宜忌.宜, "good")');
+    expect(页面源码).toContain('每日宜忌栏("日忌", 历法结果.每日宜忌.忌, "bad")');
+    expect(页面源码).toContain('const 显示内容 = 内容.length > 0 ? 内容 : ["无"]');
+    expect(页面源码).toContain('显示内容.map');
+    expect(页面源码).not.toContain('显示内容.slice');
+    expect(页面样式).toMatch(/\.day-actions\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
+    expect(页面样式).toContain(".day-action-group.is-bad .day-action-tags span");
+  });
+
   it("将三项既有规则并入具体时辰详情且删除原独立模块", () => {
     expect(页面源码).toContain('<section class="hour-rule-results" aria-label="风水禁忌速查">');
     expect(页面源码).toContain('<h4>风水禁忌速查</h4>');
@@ -127,8 +143,8 @@ describe("日期详情展示回归", () => {
   });
 
   it("年月导航与日期导航统一为两行", () => {
-    const 年份切换位置 = 页面源码.indexOf('class="period-control" aria-label="年份切换"');
-    const 月份切换位置 = 页面源码.indexOf('class="period-control" aria-label="月份切换"');
+    const 年份切换位置 = 页面源码.indexOf('class="period-control year-control" aria-label="年份切换"');
+    const 月份切换位置 = 页面源码.indexOf('class="period-control month-control" aria-label="月份切换"');
     const 日期切换位置 = 页面源码.indexOf('class="date-navigation"');
     const 返回今天位置 = 页面源码.indexOf('class="icon-button today-button"');
     expect(页面源码).toContain('class="period-navigation"');
@@ -155,12 +171,24 @@ describe("日期详情展示回归", () => {
   });
 
   it("年月纯数字统一使用等高表格数字且没有单位数字补丁", () => {
-    expect(页面样式).toMatch(/\.period-control strong\s*\{[^}]*font-family:\s*ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont/u);
+    expect(页面样式).toMatch(/:root\s*\{[^}]*--serif-font:/u);
+    expect(页面样式).toMatch(/\.lunar-title\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
+    expect(页面样式).toMatch(/\.period-control strong\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
     expect(页面样式).toMatch(/\.period-control strong\s*\{[^}]*font-variant-numeric:\s*lining-nums tabular-nums/u);
     expect(页面样式).toMatch(/\.period-control strong\s*\{[^}]*font-feature-settings:\s*"lnum" 1, "tnum" 1/u);
     expect(页面源码).toContain("<strong>${状态.年}</strong>");
     expect(页面源码).toContain('${String(状态.月 + 1).padStart(2, "0")}</strong>');
     expect(页面源码).not.toContain("digit-");
+  });
+
+  it("年月导航共用组内规则且月份组整体右对齐", () => {
+    expect(页面源码).toContain('class="period-control year-control"');
+    expect(页面源码).toContain('class="period-control month-control"');
+    expect(页面样式).toMatch(/\.period-control\s*\{[^}]*grid-template-columns:\s*42px max-content 42px;[^}]*gap:\s*8px;/u);
+    expect(页面样式).toMatch(/\.year-control\s*\{[^}]*justify-self:\s*start;/u);
+    expect(页面样式).toMatch(/\.month-control\s*\{[^}]*justify-self:\s*end;/u);
+    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.period-control\s*\{[^}]*grid-template-columns:\s*34px max-content 34px;[^}]*gap:\s*5px;/u);
+    expect(页面样式).toMatch(/@media \(max-width: 350px\)[\s\S]*?\.period-control\s*\{[^}]*grid-template-columns:\s*30px max-content 30px;[^}]*gap:\s*3px;/u);
   });
 
   it("月历与详情都已接入节日和神圣纪念", () => {

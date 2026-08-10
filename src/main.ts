@@ -138,6 +138,15 @@ function 事件列表(标题: string, 事件: string[]): string {
     </div>`;
 }
 
+function 每日宜忌栏(标题: "日宜" | "日忌", 内容: string[], 类型: "good" | "bad"): string {
+  const 显示内容 = 内容.length > 0 ? 内容 : ["无"];
+  return `
+    <div class="day-action-group is-${类型}">
+      <h3>${标题}</h3>
+      <div class="day-action-tags">${显示内容.map((条目) => `<span>${转义HTML(条目)}</span>`).join("")}</div>
+    </div>`;
+}
+
 function 规则标记(规则: 时辰规则判断): string {
   return `
     <div class="rule-result is-${规则.状态}">
@@ -339,6 +348,11 @@ function 渲染(): void {
             <strong>${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}</strong>
           </section>
 
+          <section class="day-actions" aria-label="日宜与日忌">
+            ${每日宜忌栏("日宜", 历法结果.每日宜忌.宜, "good")}
+            ${每日宜忌栏("日忌", 历法结果.每日宜忌.忌, "bad")}
+          </section>
+
           ${日期事件栏.length > 0
             ? `<section class="date-events" aria-label="当日神圣纪念与传统节日">
                 ${日期事件栏.map((栏) => 事件列表(栏.标题, 栏.事件)).join("")}
@@ -359,12 +373,12 @@ function 渲染(): void {
           <article class="calendar-card">
           <div class="calendar-toolbar">
             <div class="period-navigation">
-              <div class="period-control" aria-label="年份切换">
+              <div class="period-control year-control" aria-label="年份切换">
                 <button type="button" class="icon-button" data-action="previous-year" aria-label="上一年">‹</button>
                 <strong>${状态.年}</strong>
                 <button type="button" class="icon-button" data-action="next-year" aria-label="下一年">›</button>
               </div>
-              <div class="period-control" aria-label="月份切换">
+              <div class="period-control month-control" aria-label="月份切换">
                 <button type="button" class="icon-button" data-action="previous-month" aria-label="上个月">‹</button>
                 <strong>${String(状态.月 + 1).padStart(2, "0")}</strong>
                 <button type="button" class="icon-button" data-action="next-month" aria-label="下个月">›</button>
