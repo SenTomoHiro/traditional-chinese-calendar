@@ -14,13 +14,16 @@ export interface 每日宜忌结果 {
   忌: string[];
   冲突: string[];
   命中条件: string[];
+  支持事项数: number;
+  诸事不宜: boolean;
+  诸事皆宜: boolean;
 }
 
 const 月级条件名称 = ["月建", "月破", "月厌", "月刑", "月害", "劫煞", "灾煞", "月煞"] as const;
 type 月级条件 = (typeof 月级条件名称)[number];
 type 地支名 = (typeof 地支)[number];
 
-interface 日宜忌配置 {
+export interface 日宜忌配置 {
   月级条件: Record<月建, Record<月级条件, 地支名>>;
   用事: 用事宜忌规则[];
 }
@@ -113,7 +116,16 @@ export function 计算每日宜忌(时间: 北京时间, 配置 = 默认配置):
     else if (宜命中) 宜.push(事项.名称);
     else if (忌命中) 忌.push(事项.名称);
   }
-  return { 宜, 忌, 冲突, 命中条件: [...命中条件] };
+  const 支持事项数 = 配置.用事.length;
+  return {
+    宜,
+    忌,
+    冲突,
+    命中条件: [...命中条件],
+    支持事项数,
+    诸事不宜: 宜.length === 0 && 忌.length === 支持事项数,
+    诸事皆宜: 忌.length === 0 && 宜.length === 支持事项数,
+  };
 }
 
 export { 解析日宜忌配置 };

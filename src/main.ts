@@ -31,6 +31,7 @@ import {
 import { 格式化时分 } from "./历法/时间";
 import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
 import { 创建日期事件分栏 } from "./界面/详情布局";
+import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 解析北斗配置 } from "./规则/北斗";
 
@@ -156,6 +157,14 @@ function 每日宜忌栏(标题: "日宜" | "日忌", 内容: string[], 类型: 
     </div>`;
 }
 
+function 核心黄历项目(标题: "日吉凶" | "值日", 内容: string, 类型 = "normal"): string {
+  return `
+    <div class="almanac-core-item is-${类型}">
+      <h3>${标题}</h3>
+      <strong>${转义HTML(内容)}</strong>
+    </div>`;
+}
+
 function 规则标记(规则: 时辰规则判断): string {
   return `
     <div class="rule-result is-${规则.状态}">
@@ -195,6 +204,25 @@ function 时辰详情标签(标题: string, 内容: string[], 类型 = "normal")
       <dt>${标题}</dt>
       <dd>${内容.length > 0 ? 内容.map((条目) => `<span>${转义HTML(条目)}</span>`).join("") : `<em>${空提示}</em>`}</dd>
     </div>`;
+}
+
+function 古籍用事结论(时段: 时辰概览段): string {
+  const 结论 = [
+    ...时段.详情.时宜.map((事项) => `宜${事项}`),
+    ...时段.详情.时忌.map((事项) => `忌${事项}`),
+  ];
+  return 时辰详情标签("古籍用事", 结论, 时段.详情.时忌.length > 0 ? "bad" : "normal");
+}
+
+function 现代时辰宜忌(时段: 时辰概览段): string {
+  return `
+    <section class="modern-hour-actions" aria-label="现代时辰宜忌">
+      <div class="modern-hour-actions-grid">
+        ${时辰详情标签("时宜", 时段.详情.现代时宜, "good")}
+        ${时辰详情标签("时忌", 时段.详情.现代时忌, "bad")}
+      </div>
+      <small>${时段.详情.现代来源}</small>
+    </section>`;
 }
 
 function 生成八字结果区(): string {
@@ -250,9 +278,9 @@ function 时辰展开详情(时段: 时辰概览段 | undefined): string {
         ${时辰详情标签("日时关系", 时段.详情.日时关系)}
         ${时辰详情标签("吉神", 时段.详情.吉神, "good")}
         ${时辰详情标签("凶煞", 时段.详情.凶煞, "bad")}
-        ${时辰详情标签("时宜", 时段.详情.时宜, "good")}
-        ${时辰详情标签("时忌", 时段.详情.时忌, "bad")}
+        ${古籍用事结论(时段)}
       </dl>
+      ${现代时辰宜忌(时段)}
       <section class="hour-rule-results" aria-label="风水禁忌速查">
         <h4>风水禁忌速查</h4>
         <div class="rule-results-grid">${时段.风水禁忌.map(规则标记).join("")}</div>
@@ -324,6 +352,7 @@ function 渲染(): void {
   const 查看时辰 = 选出查看时辰(全部时段, 手动查看时辰键);
   const 主日期值 = `${状态.年}-${String(状态.月 + 1).padStart(2, "0")}-${String(所选.getDate()).padStart(2, "0")}`;
   const 主日期显示 = 主日期值.replaceAll("-", "/");
+  const 每日宜忌显示 = 创建每日宜忌展示(历法结果.每日宜忌);
   if (手动查看时辰键 && 查看时辰?.键 !== 手动查看时辰键) 手动查看时辰键 = null;
 
   根节点.innerHTML = `
@@ -349,18 +378,17 @@ function 渲染(): void {
             <strong>${四柱}</strong>
           </section>
 
-          <section class="core-fact day-fortune-core is-${历法结果.日吉凶.吉凶}" aria-label="日吉凶">
-            <span>日吉凶</span>
-            <strong>${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}</strong>
+          <section class="almanac-core-row" aria-label="日吉凶与值日">
+            ${核心黄历项目("日吉凶", `${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}`, 历法结果.日吉凶.吉凶)}
+            ${核心黄历项目("值日", `${历法结果.值星}日`)}
           </section>
 
           <section class="day-actions" aria-label="日宜与日忌">
-            ${每日宜忌栏("日宜", 历法结果.每日宜忌.宜, "good")}
-            ${每日宜忌栏("日忌", 历法结果.每日宜忌.忌, "bad")}
+            ${每日宜忌栏("日宜", 每日宜忌显示.日宜, "good")}
+            ${每日宜忌栏("日忌", 每日宜忌显示.日忌, "bad")}
           </section>
 
-          <section class="calendar-info-grid" aria-label="值日节气神圣纪念与传统节日">
-            ${日期信息项目("值日", [`${历法结果.值星}日`])}
+          <section class="calendar-info-grid" aria-label="节气神圣纪念与传统节日">
             ${日期信息项目("节气", [核心节气显示])}
             ${日期事件栏.map((栏) => 日期信息项目(栏.标题, 栏.事件)).join("")}
           </section>
@@ -391,10 +419,21 @@ function 渲染(): void {
         <div class="calendar-right">
           <article class="calendar-card">
           <div class="calendar-toolbar">
-            <label class="calendar-date-control">
-              <span aria-hidden="true">${主日期显示}</span>
-              <input type="date" data-calendar-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${主日期值}" aria-label="选择主日历日期">
-            </label>
+            <button class="calendar-date-control" type="button" data-action="open-calendar-date" aria-haspopup="dialog">
+              <span>${主日期显示}</span>
+            </button>
+            <dialog class="calendar-date-dialog" data-calendar-date-dialog aria-label="选择主日历日期">
+              <form method="dialog">
+                <label>选择日期
+                  <input type="date" data-calendar-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${主日期值}">
+                </label>
+                <div class="calendar-date-dialog-actions">
+                  <button type="button" data-action="calendar-date-today">今天</button>
+                  <button type="button" data-action="calendar-date-clear">清除</button>
+                  <button type="button" data-action="calendar-date-close">完成</button>
+                </div>
+              </form>
+            </dialog>
           </div>
 
           <div class="week-row" role="row">
@@ -538,6 +577,21 @@ function 渲染(): void {
 
   if (目标.dataset.action === "bazi-locate") {
     await 请求八字定位();
+    return;
+  }
+
+  if (目标.dataset.action === "open-calendar-date") {
+    根节点.querySelector<HTMLDialogElement>("[data-calendar-date-dialog]")?.showModal();
+    return;
+  }
+
+  if (目标.dataset.action === "calendar-date-close") {
+    根节点.querySelector<HTMLDialogElement>("[data-calendar-date-dialog]")?.close();
+    return;
+  }
+
+  if (目标.dataset.action === "calendar-date-today" || 目标.dataset.action === "calendar-date-clear") {
+    回到今天实时模式();
     return;
   }
 

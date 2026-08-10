@@ -12,6 +12,7 @@ import {
   计算每日宜忌,
 } from "../src/历法";
 import { 读取全部配置 } from "../src/规则/配置读取";
+import { 创建每日宜忌展示 } from "../src/界面/每日宜忌展示";
 
 const 时刻 = (年: number, 月: number, 日: number, 时 = 12, 分 = 0) => 创建北京时间(年, 月, 日, 时, 分);
 
@@ -53,6 +54,27 @@ describe("自主每日宜忌", () => {
   it("每日宜忌与日吉凶独立，不以简单加减分互相覆盖", () => {
     expect(计算日吉凶(时刻(2026, 8, 9))).toEqual({ 天神: "朱雀", 类型: "黑道", 吉凶: "凶" });
     expect(计算每日宜忌(时刻(2026, 8, 9)).宜.length).toBeGreaterThan(0);
+  });
+
+  it("2026-08-13并非完整全忌，不能仅因日宜为空显示诸事不宜", () => {
+    const 结果 = 计算每日宜忌(时刻(2026, 8, 13));
+    expect(结果).toMatchObject({ 支持事项数: 60, 诸事不宜: false, 诸事皆宜: false });
+    expect(结果.宜).toEqual([]);
+    expect(结果.忌.length).toBeLessThan(结果.支持事项数);
+    expect(创建每日宜忌展示(结果).日忌).toEqual(结果.忌);
+  });
+
+  it("展示层只在明确全忌或全宜时压缩，且不改写底层数组", () => {
+    const 全忌 = { 宜: [] as string[], 忌: ["事项甲", "事项乙"], 诸事不宜: true, 诸事皆宜: false };
+    const 全宜 = { 宜: ["事项甲", "事项乙"], 忌: [] as string[], 诸事不宜: false, 诸事皆宜: true };
+    const 部分忌 = { 宜: [] as string[], 忌: ["事项甲"], 诸事不宜: false, 诸事皆宜: false };
+    const 部分宜 = { 宜: ["事项甲"], 忌: [] as string[], 诸事不宜: false, 诸事皆宜: false };
+    expect(创建每日宜忌展示(全忌)).toEqual({ 日宜: [], 日忌: ["诸事不宜"] });
+    expect(创建每日宜忌展示(全宜)).toEqual({ 日宜: ["诸事皆宜"], 日忌: [] });
+    expect(创建每日宜忌展示(部分忌)).toEqual({ 日宜: [], 日忌: ["事项甲"] });
+    expect(创建每日宜忌展示(部分宜)).toEqual({ 日宜: ["事项甲"], 日忌: [] });
+    expect(全忌.忌).toEqual(["事项甲", "事项乙"]);
+    expect(全宜.宜).toEqual(["事项甲", "事项乙"]);
   });
 
   it.each(["立春", "惊蛰", "清明", "立夏", "芒种", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒"] as const)(

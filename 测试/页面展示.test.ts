@@ -7,13 +7,13 @@ const 页面样式 = readFileSync(resolve(process.cwd(), "src/style.css"), "utf8
 const 当前历时源码 = readFileSync(resolve(process.cwd(), "src/当前历时.ts"), "utf8");
 
 describe("日期详情展示回归", () => {
-  it("以农历、四柱和四项常驻信息组成核心信息层级", () => {
+  it("以农历、四柱和核心黄历信息组成详情层级", () => {
     expect(页面源码).toContain('class="lunar-title"');
     expect(页面源码).toContain("${历法结果.农历.显示}");
     expect(页面源码).toContain('class="core-fact pillar-core"');
     expect(页面源码).toContain("${四柱}");
     expect(页面源码).toContain('class="calendar-info-grid"');
-    expect(页面源码).toContain('日期信息项目("值日", [`${历法结果.值星}日`])');
+    expect(页面源码).toContain('核心黄历项目("值日", `${历法结果.值星}日`)');
     expect(页面源码).toContain('日期信息项目("节气", [核心节气显示])');
   });
 
@@ -52,42 +52,43 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toContain("white-space: nowrap");
   });
 
-  it("值日、节气、神圣纪念和传统节日同属两列常驻模块", () => {
-    expect(页面样式).toMatch(/\.calendar-info-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
+  it("值日移入核心行且节气、神圣纪念和传统节日组成三列常驻模块", () => {
+    expect(页面样式).toMatch(/\.calendar-info-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,/u);
     const 四柱位置 = 页面源码.indexOf('class="core-fact pillar-core"');
     const 合并模块位置 = 页面源码.indexOf('class="calendar-info-grid"');
-    const 值星位置 = 页面源码.indexOf('日期信息项目("值日"');
+    const 值星位置 = 页面源码.indexOf('核心黄历项目("值日"');
     const 节气位置 = 页面源码.indexOf('日期信息项目("节气"');
     const 节庆位置 = 页面源码.indexOf("日期事件栏.map");
     expect(四柱位置).toBeLessThan(合并模块位置);
-    expect(合并模块位置).toBeLessThan(值星位置);
+    expect(值星位置).toBeLessThan(合并模块位置);
     expect(值星位置).toBeLessThan(节气位置);
     expect(节气位置).toBeLessThan(节庆位置);
-    expect(页面源码.match(/日期信息项目\("值日"/gu)).toHaveLength(1);
+    expect(页面源码.match(/核心黄历项目\("值日"/gu)).toHaveLength(1);
+    expect(页面源码).not.toContain('日期信息项目("值日"');
     expect(页面源码.match(/日期信息项目\("节气"/gu)).toHaveLength(1);
   });
 
   it("日吉凶位于四项信息模块之前并独立显示十二天神黄黑道", () => {
     const 四柱位置 = 页面源码.indexOf('class="core-fact pillar-core"');
-    const 日吉凶位置 = 页面源码.indexOf('class="core-fact day-fortune-core');
+    const 日吉凶位置 = 页面源码.indexOf('class="almanac-core-row"');
     const 日期事件位置 = 页面源码.indexOf('class="calendar-info-grid"');
     expect(日吉凶位置).toBeGreaterThan(四柱位置);
     expect(日吉凶位置).toBeLessThan(日期事件位置);
-    expect(页面源码).toContain('aria-label="日吉凶"');
     expect(页面源码).toContain("${历法结果.日吉凶.天神} · ${历法结果.日吉凶.类型} · ${历法结果.日吉凶.吉凶}");
-    expect(页面样式).toMatch(/\.day-fortune-core\.is-凶 strong\s*\{[^}]*color:\s*var\(--danger\)/u);
-    expect(页面样式).toMatch(/\.day-fortune-core strong\s*\{[^}]*color:\s*var\(--gold-soft\)/u);
+    expect(页面源码).toContain('aria-label="日吉凶与值日"');
+    expect(页面样式).toMatch(/\.almanac-core-item\.is-凶 strong\s*\{[^}]*color:\s*var\(--danger\)/u);
+    expect(页面样式).toMatch(/\.almanac-core-item strong\s*\{[^}]*color:\s*var\(--gold-soft\)/u);
   });
 
   it("日宜日忌紧接日吉凶并完整呈现两列标签", () => {
-    const 日吉凶位置 = 页面源码.indexOf('class="core-fact day-fortune-core');
+    const 日吉凶位置 = 页面源码.indexOf('class="almanac-core-row"');
     const 每日宜忌位置 = 页面源码.indexOf('class="day-actions"');
     const 日期事件位置 = 页面源码.indexOf('class="calendar-info-grid"');
     expect(日吉凶位置).toBeLessThan(每日宜忌位置);
     expect(每日宜忌位置).toBeLessThan(日期事件位置);
     expect(页面源码).toContain('aria-label="日宜与日忌"');
-    expect(页面源码).toContain('每日宜忌栏("日宜", 历法结果.每日宜忌.宜, "good")');
-    expect(页面源码).toContain('每日宜忌栏("日忌", 历法结果.每日宜忌.忌, "bad")');
+    expect(页面源码).toContain('每日宜忌栏("日宜", 每日宜忌显示.日宜, "good")');
+    expect(页面源码).toContain('每日宜忌栏("日忌", 每日宜忌显示.日忌, "bad")');
     expect(页面源码).toContain('const 显示内容 = 内容.length > 0 ? 内容 : ["无"]');
     expect(页面源码).toContain('显示内容.map');
     expect(页面源码).not.toContain('显示内容.slice');
@@ -142,9 +143,14 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("定位坐标仅在当前页面内使用，不会上传或保存。");
   });
 
-  it("主日历只保留一个年月日一体日期选择器", () => {
+  it("主日历保留年月日一体日期按钮并提供真实弹层", () => {
     expect(页面源码).toContain('class="calendar-date-control"');
     expect(页面源码).toContain('type="date" data-calendar-date');
+    expect(页面源码).toContain('data-action="open-calendar-date"');
+    expect(页面源码).toContain('data-calendar-date-dialog');
+    expect(页面源码).toContain(".showModal()");
+    expect(页面源码).toContain('data-action="calendar-date-today"');
+    expect(页面源码).toContain('data-action="calendar-date-clear"');
     expect(页面源码).toContain('const 主日期显示 = 主日期值.replaceAll("-", "/")');
     expect(页面源码).not.toContain('data-action="previous-day"');
     expect(页面源码).not.toContain('data-action="next-day"');
@@ -191,11 +197,11 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.day-event\s*\{[^}]*font-size:\s*8px;/u);
   });
 
-  it("四项信息双栏、详情内风水规则自适应多列", () => {
+  it("三项辅助信息三栏、详情内风水规则自适应多列", () => {
     expect(页面源码).toContain('class="calendar-info-grid"');
     expect(页面源码).toContain('class="rule-results-grid"');
     expect(页面源码).toContain("时段.风水禁忌.map(规则标记).join");
-    expect(页面样式).toMatch(/\.calendar-info-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
+    expect(页面样式).toMatch(/\.calendar-info-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,/u);
     expect(页面样式).toContain("repeat(auto-fit, minmax(148px, 1fr))");
   });
 
@@ -276,8 +282,10 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('时辰详情标签("日时关系"');
     expect(页面源码).toContain('时辰详情标签("吉神"');
     expect(页面源码).toContain('时辰详情标签("凶煞"');
-    expect(页面源码).toContain('时辰详情标签("时宜"');
-    expect(页面源码).toContain('时辰详情标签("时忌"');
+    expect(页面源码).toContain('时辰详情标签("时宜", 时段.详情.现代时宜');
+    expect(页面源码).toContain('时辰详情标签("时忌", 时段.详情.现代时忌');
+    expect(页面源码).toContain('aria-label="现代时辰宜忌"');
+    expect(页面源码).toContain("${时段.详情.现代来源}");
     expect(页面源码).toContain('"无特殊关系"');
     expect(页面源码).toContain('标题 === "日时关系" ? "无特殊关系" : "无"');
   });

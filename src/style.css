@@ -229,6 +229,7 @@ button:focus-visible {
   border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
   border-radius: 12px;
   cursor: pointer;
+  font-family: var(--serif-font);
 }
 
 .calendar-date-control span {
@@ -242,18 +243,59 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.calendar-date-control input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  opacity: 0;
+.calendar-date-dialog {
+  width: min(360px, calc(100% - 32px));
+  padding: 0;
+  color: var(--ink);
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
 }
 
-.calendar-date-control:focus-within {
-  outline: 3px solid color-mix(in srgb, var(--gold) 48%, transparent);
-  outline-offset: 3px;
+.calendar-date-dialog::backdrop {
+  background: rgba(20, 10, 7, 0.62);
+}
+
+.calendar-date-dialog form {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.calendar-date-dialog label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+}
+
+.calendar-date-dialog input {
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 11px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color-scheme: light dark;
+  font-size: 16px;
+}
+
+.calendar-date-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendar-date-dialog-actions button {
+  min-height: 38px;
+  color: var(--gold-strong);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+  border-radius: 9px;
+  cursor: pointer;
 }
 
 .week-row,
@@ -485,8 +527,35 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.day-fortune-core {
+.almanac-core-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
   margin-top: 14px;
+}
+
+.almanac-core-item {
+  min-width: 0;
+}
+
+.almanac-core-item h3 {
+  margin: 0 0 6px;
+  color: var(--gold-soft);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.almanac-core-item strong {
+  color: var(--gold-soft);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.almanac-core-item.is-凶 strong {
+  color: var(--danger);
 }
 
 .day-actions {
@@ -528,17 +597,6 @@ button:focus-visible {
   color: #ffd9d2;
   background: color-mix(in srgb, var(--danger) 12%, transparent);
   border-color: color-mix(in srgb, var(--danger) 28%, transparent);
-}
-
-.day-fortune-core strong {
-  color: var(--gold-soft);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.day-fortune-core.is-凶 strong {
-  color: var(--danger);
 }
 
 .time-controls {
@@ -645,7 +703,7 @@ button:focus-visible {
 
 .calendar-info-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px 18px;
   margin-top: 18px;
   padding-top: 14px;
@@ -1064,6 +1122,29 @@ button:focus-visible {
   line-height: 1.35;
 }
 
+.modern-hour-actions {
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid var(--panel-line);
+}
+
+.modern-hour-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.modern-hour-actions .hour-detail-group {
+  grid-template-columns: 36px minmax(0, 1fr);
+}
+
+.modern-hour-actions > small {
+  display: block;
+  margin-top: 8px;
+  color: color-mix(in srgb, var(--panel-muted) 70%, transparent);
+  font-size: 8px;
+}
+
 .hour-detail-group.is-good dd span {
   color: var(--gold-soft);
   border-color: color-mix(in srgb, var(--gold-soft) 34%, transparent);
@@ -1263,6 +1344,10 @@ button:focus-visible {
   .rule-results-grid,
   .bazi-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-info-item:last-child {
+    grid-column: 1 / -1;
   }
 }
 
