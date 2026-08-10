@@ -7,8 +7,21 @@
       name="description"
       content="简洁、可靠的传统历法日历系统。第一阶段提供完整公历月历与中文规则配置基础。"
     />
-    <meta name="theme-color" content="#f1eee7" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#151816" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#24140f" />
+    <script>
+      (() => {
+        const key = "traditional-calendar-theme";
+        let preference = "system";
+        try {
+          const saved = localStorage.getItem(key);
+          if (saved === "light" || saved === "dark" || saved === "system") preference = saved;
+        } catch {}
+        const dark = preference === "dark" || (preference === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.themePreference = preference;
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.querySelector('meta[name="theme-color"]').content = dark ? "#120b08" : "#24140f";
+      })();
+    </script>
     <title>传统历法日历</title>
   </head>
   <body>

@@ -35,10 +35,12 @@ import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } f
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
 import { 格式化主日期值, 解析主日期值 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
+import { 创建浏览器主题控制器, 是主题偏好, type 主题偏好 } from "./界面/主题";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
 const 根节点: HTMLDivElement = 应用容器;
+const 主题控制器 = 创建浏览器主题控制器();
 
 type 定位状态 = "未定位" | "定位中" | "成功" | "失败";
 
@@ -193,6 +195,27 @@ function 核心黄历项目(标题: "日吉凶" | "值日" | "风水禁忌", 内
       <h3>${标题}</h3>
       <strong>${转义HTML(内容)}</strong>
     </div>`;
+}
+
+const 主题选项: ReadonlyArray<{ 值: 主题偏好; 标签: string }> = [
+  { 值: "light", 标签: "浅色" },
+  { 值: "system", 标签: "自动" },
+  { 值: "dark", 标签: "深色" },
+];
+
+function 主题切换控件(): string {
+  return `
+    <div class="theme-switch" role="group" aria-label="页面主题">
+      ${主题选项.map((选项) => `<button type="button" data-theme-preference="${选项.值}" aria-pressed="${主题控制器.偏好 === 选项.值}"${主题控制器.偏好 === 选项.值 ? ' class="is-active"' : ""}>${选项.标签}</button>`).join("")}
+    </div>`;
+}
+
+function 更新主题控件状态(): void {
+  根节点.querySelectorAll<HTMLButtonElement>("[data-theme-preference]").forEach((按钮) => {
+    const 已选中 = 按钮.dataset.themePreference === 主题控制器.偏好;
+    按钮.classList.toggle("is-active", 已选中);
+    按钮.setAttribute("aria-pressed", String(已选中));
+  });
 }
 
 function 规则标记(规则: 时辰规则判断): string {
@@ -392,7 +415,10 @@ function 渲染(): void {
       <section class="calendar-layout" aria-label="日期核心详情与公历月历">
         <aside class="detail-card" aria-label="所选日期核心详情" aria-live="polite">
           <div class="detail-accent" aria-hidden="true"></div>
-          <p class="detail-kicker">农历</p>
+          <div class="detail-topbar">
+            <p class="detail-kicker">农历</p>
+            ${主题切换控件()}
+          </div>
           <div class="lunar-title-row">
             <h2 class="lunar-title">${历法结果.农历.显示}</h2>
             <button
@@ -626,6 +652,12 @@ function 渲染(): void {
 根节点.addEventListener("click", async (事件) => {
   const 目标 = (事件.target as HTMLElement).closest<HTMLButtonElement>("button");
   if (!目标) return;
+
+  if (是主题偏好(目标.dataset.themePreference)) {
+    主题控制器.设置偏好(目标.dataset.themePreference);
+    更新主题控件状态();
+    return;
+  }
 
   if (目标.dataset.action === "bazi-locate") {
     await 请求八字定位();

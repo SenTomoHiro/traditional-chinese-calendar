@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const 页面源码 = readFileSync(resolve(process.cwd(), "src/main.ts"), "utf8");
 const 页面样式 = readFileSync(resolve(process.cwd(), "src/style.css"), "utf8");
 const 当前历时源码 = readFileSync(resolve(process.cwd(), "src/当前历时.ts"), "utf8");
+const 首页源码 = readFileSync(resolve(process.cwd(), "index.html"), "utf8");
 
 describe("日期详情展示回归", () => {
   it("以农历、四柱和核心黄历信息组成详情层级", () => {
@@ -120,6 +121,8 @@ describe("日期详情展示回归", () => {
     expect(页面样式).not.toContain(".day-fengshui");
     expect(页面源码).toContain('aria-label="日吉凶值日与风水禁忌"');
     expect(页面源码).toContain('核心黄历项目("风水禁忌", 日级风水禁忌.命中.length > 0 ? 日级风水禁忌.当日状态 : "无"');
+    expect(页面源码).toContain("时段.当日风水禁忌.当日状态");
+    expect(页面源码).not.toContain("日犯月忌");
     expect(页面样式).toMatch(/\.almanac-core-row\s*\{[^}]*grid-template-columns:\s*repeat\(3,/u);
     expect(页面源码).toContain('class="hour-rule-heading"');
     expect(页面源码).toContain("时段.当日风水禁忌.当日状态");
@@ -138,6 +141,26 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.rule-result p\s*\{[^}]*color:\s*var\(--panel-muted\)/u);
     expect(页面样式).toMatch(/\.rule-result\.is-命中 p\s*\{[^}]*color:\s*var\(--danger\)/u);
     expect(页面样式).not.toContain(".rule-result.is-未命中 p");
+  });
+
+  it("时辰速查同时显示原规则禁忌时辰与当前命中状态", () => {
+    expect(页面源码).toContain("<p>${规则.说明}</p>");
+    expect(页面样式).toMatch(/\.rule-result\.is-命中 p\s*\{[^}]*color:\s*var\(--danger\)/u);
+    expect(页面样式).toMatch(/\.rule-result p\s*\{[^}]*color:\s*var\(--panel-muted\)/u);
+  });
+
+  it("顶部提供浅色自动深色三状态主题且切换不重算页面状态", () => {
+    expect(页面源码).toContain('class="theme-switch"');
+    expect(页面源码).toContain('{ 值: "light", 标签: "浅色" }');
+    expect(页面源码).toContain('{ 值: "system", 标签: "自动" }');
+    expect(页面源码).toContain('{ 值: "dark", 标签: "深色" }');
+    const 主题处理 = 页面源码.match(/if \(是主题偏好\(目标\.dataset\.themePreference\)\) \{[\s\S]*?return;\n  \}/u)?.[0] ?? "";
+    expect(主题处理).toContain("主题控制器.设置偏好");
+    expect(主题处理).not.toMatch(/渲染|设置日期|时间依据|手动查看时辰键/u);
+    expect(首页源码.indexOf("traditional-calendar-theme")).toBeLessThan(首页源码.indexOf('src="/src/main.ts"'));
+    expect(首页源码).toContain("document.documentElement.dataset.theme");
+    expect(页面样式).toContain(':root[data-theme="dark"]');
+    expect(页面样式).toMatch(/\.theme-switch\s*\{[^}]*display:\s*inline-flex/u);
   });
 
   it("移动端源码顺序为核心详情、右栏工具、辅助计算", () => {
@@ -372,7 +395,7 @@ describe("日期详情展示回归", () => {
   });
 
   it("暗色模式为月历和八字语义色提供米金覆盖", () => {
-    const 暗色规则 = 页面样式.match(/@media \(prefers-color-scheme: dark\) \{[\s\S]*?@media \(prefers-reduced-motion/u)?.[0] ?? "";
+    const 暗色规则 = 页面样式.match(/:root\[data-theme="dark"\] \{[\s\S]*?@media \(prefers-reduced-motion/u)?.[0] ?? "";
     expect(暗色规则).toContain("--calendar-text: #e8d6b1");
     expect(暗色规则).toContain("--calendar-muted: #b9a681");
     expect(暗色规则).toContain("--warm-icon-filter:");

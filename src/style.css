@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --serif-font: "Songti SC", "STSong", SimSun, "Noto Serif CJK SC", Georgia, serif;
   font-family: var(--serif-font);
   color: #2d2117;
@@ -67,6 +67,48 @@ button:focus-visible {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.18em;
+}
+
+.detail-topbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail-topbar .detail-kicker {
+  margin: 0;
+}
+
+.theme-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 2px;
+  background: color-mix(in srgb, var(--gold) 9%, transparent);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.theme-switch button {
+  padding: 3px 7px;
+  color: var(--panel-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-size: 8px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.theme-switch button:hover,
+.theme-switch button.is-active {
+  color: var(--panel-ink);
+  background: color-mix(in srgb, var(--gold) 24%, transparent);
+}
+
+.theme-switch button.is-active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold-soft) 38%, transparent);
 }
 
 .calendar-layout {
@@ -156,7 +198,7 @@ button:focus-visible {
 
 .bazi-form input,
 .bazi-form select {
-  color-scheme: light;
+  color-scheme: inherit;
 }
 
 .bazi-form select {
@@ -266,7 +308,7 @@ button:focus-visible {
   font-weight: 500;
   line-height: 1;
   text-align: center;
-  color-scheme: light;
+  color-scheme: inherit;
 }
 
 .calendar-date-control::-webkit-calendar-picker-indicator {
@@ -606,7 +648,7 @@ button:focus-visible {
 .time-controls input {
   width: 100%;
   padding: 7px 9px;
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 .time-controls button {
@@ -1363,8 +1405,8 @@ button:focus-visible {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+:root[data-theme="dark"] {
+    color-scheme: dark;
     --page: #120b08;
     --surface: #1e1511;
     --surface-strong: #2a1d16;
@@ -1387,18 +1429,17 @@ button:focus-visible {
     --calendar-muted: #b9a681;
     --warm-icon-filter: invert(81%) sepia(35%) saturate(516%) hue-rotate(359deg) brightness(91%) contrast(86%);
     --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23dfbf75' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  }
+}
 
-  body {
-    background:
-      radial-gradient(circle at 8% 10%, rgba(197, 160, 82, 0.11), transparent 28rem),
-      radial-gradient(circle at 88% 78%, rgba(132, 46, 36, 0.12), transparent 34rem),
-      var(--page);
-  }
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 8% 10%, rgba(197, 160, 82, 0.11), transparent 28rem),
+    radial-gradient(circle at 88% 78%, rgba(132, 46, 36, 0.12), transparent 34rem),
+    var(--page);
+}
 
-  .day-button.is-selected {
-    color: var(--panel-ink);
-  }
+:root[data-theme="dark"] .day-button.is-selected {
+  color: var(--panel-ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
