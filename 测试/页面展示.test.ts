@@ -93,8 +93,16 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('显示内容.map');
     expect(页面源码).not.toContain('显示内容.slice');
     expect(页面样式).toMatch(/\.day-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
-    expect(页面样式).toMatch(/\.day-action-group \+ \.day-action-group\s*\{[^}]*border-top:/u);
+    expect(页面样式).not.toMatch(/\.day-action-group \+ \.day-action-group\s*\{[^}]*border-(?:top|bottom):/u);
     expect(页面样式).toContain(".day-action-group.is-bad .day-action-tags span");
+  });
+
+  it("日吉凶和值日整体下方使用主题分割线并与日宜保持紧凑间距", () => {
+    expect(页面样式).toMatch(/\.almanac-core-row\s*\{[^}]*padding-bottom:\s*14px;[^}]*border-bottom:\s*1px solid var\(--panel-line\)/u);
+    expect(页面样式).toMatch(/\.day-actions\s*\{[^}]*margin-top:\s*14px/u);
+    const 日吉凶位置 = 页面源码.indexOf('class="almanac-core-row"');
+    const 日宜忌位置 = 页面源码.indexOf('class="day-actions"');
+    expect(日吉凶位置).toBeLessThan(日宜忌位置);
   });
 
   it("将三项既有规则并入具体时辰详情且删除原独立模块", () => {
