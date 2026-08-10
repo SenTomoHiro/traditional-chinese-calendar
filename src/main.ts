@@ -33,6 +33,7 @@ import { 创建日期事件分栏 } from "./界面/详情布局";
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
+import { 格式化主日期值, 解析主日期值 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
 
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
@@ -64,6 +65,9 @@ let 八字时间依据: 时间依据 = "北京时间";
 let 八字经度文本 = "";
 let 八字定位中 = false;
 let 八字定位说明 = "";
+let 主日期草稿: string | null = null;
+let 主日期正在编辑 = false;
+let 主日期键盘编辑 = false;
 
 const 配置结果 = 读取全部配置();
 const 已解析时辰配置 = 初始化时辰配置(配置结果);
@@ -72,12 +76,19 @@ const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "�
 const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
 const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
 
+function 结束主日期编辑(): void {
+  主日期草稿 = null;
+  主日期正在编辑 = false;
+  主日期键盘编辑 = false;
+}
+
 function 设置日期(日期: Date): void {
   const 当前北京时间 = 从时间戳读取北京时间();
   今天 = 北京日期(当前北京时间);
   状态 = 选择日期(状态, 日期);
   时间查询 = 创建实时查询时间(当前北京时间);
   手动查看时辰键 = null;
+  结束主日期编辑();
   渲染();
 }
 
@@ -87,7 +98,28 @@ function 回到今天实时模式(): void {
   状态 = 选择日期(状态, 今天);
   时间查询 = 创建实时查询时间(当前北京时间);
   手动查看时辰键 = null;
+  结束主日期编辑();
   渲染();
+}
+
+function 提交主日期(值: string, 来源: "键盘" | "原生选择"): void {
+  if (!值) {
+    if (来源 === "原生选择") 回到今天实时模式();
+    else {
+      结束主日期编辑();
+      渲染();
+    }
+    return;
+  }
+
+  const 日期 = 解析主日期值(值, 八字支持范围.最小日期, 八字支持范围.最大日期);
+  if (!日期) {
+    结束主日期编辑();
+    渲染();
+    return;
+  }
+  if (是同一天(日期, 北京日期())) 回到今天实时模式();
+  else 设置日期(日期);
 }
 
 async function 请求定位(成功后使用真太阳时: boolean, 记录用户选择 = false): Promise<boolean> {
@@ -348,7 +380,7 @@ function 渲染(): void {
   const 切换目标 = 当前时间依据 === "北京时间" ? "真太阳时" : "北京时间";
   const 全部时段 = 十二时辰.项目.flatMap((项目) => 项目.时段);
   const 查看时辰 = 选出查看时辰(全部时段, 手动查看时辰键);
-  const 主日期值 = `${状态.年}-${String(状态.月 + 1).padStart(2, "0")}-${String(所选.getDate()).padStart(2, "0")}`;
+  const 主日期值 = 格式化主日期值(所选);
   const 每日宜忌显示 = 创建每日宜忌展示(历法结果.每日宜忌);
   if (手动查看时辰键 && 查看时辰?.键 !== 手动查看时辰键) 手动查看时辰键 = null;
 
@@ -502,6 +534,12 @@ function 渲染(): void {
 }
 
 根节点.addEventListener("input", (事件) => {
+  const 主日期输入 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-calendar-date]");
+  if (主日期输入) {
+    主日期草稿 = 主日期输入.value;
+    主日期正在编辑 = true;
+    return;
+  }
   const 输入框 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-time-input]");
   if (!输入框?.value) return;
   时间查询 = 创建手动查询时间(输入框.value);
@@ -512,26 +550,8 @@ function 渲染(): void {
 根节点.addEventListener("change", (事件) => {
   const 目标 = 事件.target as HTMLInputElement | HTMLSelectElement;
   if (目标.matches("[data-calendar-date]")) {
-    if (!目标.value) {
-      回到今天实时模式();
-      return;
-    }
-    const 匹配 = 目标.value.match(/^(\d{4})-(\d{2})-(\d{2})$/u);
-    if (!匹配) {
-      回到今天实时模式();
-      return;
-    }
-    const [年, 月, 日] = [匹配[1], 匹配[2], 匹配[3]].map(Number);
-    const 日期 = new Date(年, 月 - 1, 日);
-    if (
-      日期.getFullYear() !== 年 || 日期.getMonth() !== 月 - 1 || 日期.getDate() !== 日 ||
-      目标.value < 八字支持范围.最小日期 || 目标.value > 八字支持范围.最大日期
-    ) {
-      回到今天实时模式();
-      return;
-    }
-    if (是同一天(日期, 北京日期())) 回到今天实时模式();
-    else 设置日期(日期);
+    主日期草稿 = 目标.value;
+    if (!主日期键盘编辑) 提交主日期(目标.value, "原生选择");
   } else if (目标.matches("[data-bazi-date]")) {
     八字日期 = 目标.value;
     更新八字结果区();
@@ -560,7 +580,43 @@ function 渲染(): void {
 
 根节点.addEventListener("focusout", (事件) => {
   const 目标 = 事件.target as HTMLInputElement;
-  if (目标.matches("[data-bazi-longitude]")) 更新八字结果区();
+  if (目标.matches("[data-calendar-date]")) {
+    const 需要提交键盘草稿 = 主日期键盘编辑;
+    主日期正在编辑 = false;
+    if (需要提交键盘草稿) 提交主日期(主日期草稿 ?? 目标.value, "键盘");
+    else 结束主日期编辑();
+  } else if (目标.matches("[data-bazi-longitude]")) 更新八字结果区();
+});
+
+根节点.addEventListener("focusin", (事件) => {
+  const 目标 = 事件.target as HTMLInputElement;
+  if (!目标.matches("[data-calendar-date]")) return;
+  主日期正在编辑 = true;
+  主日期草稿 = 目标.value;
+});
+
+根节点.addEventListener("pointerdown", (事件) => {
+  const 目标 = 事件.target as HTMLInputElement;
+  if (目标.matches("[data-calendar-date]")) 主日期键盘编辑 = false;
+});
+
+根节点.addEventListener("keydown", (事件) => {
+  const 目标 = 事件.target as HTMLInputElement;
+  if (!目标.matches("[data-calendar-date]")) return;
+  if (事件.key === "Enter") {
+    事件.preventDefault();
+    提交主日期(主日期草稿 ?? 目标.value, "键盘");
+    return;
+  }
+  if (事件.key === "Escape") {
+    事件.preventDefault();
+    结束主日期编辑();
+    渲染();
+    return;
+  }
+  if (/^\d$/u.test(事件.key) || ["Backspace", "Delete", "ArrowUp", "ArrowDown"].includes(事件.key)) {
+    主日期键盘编辑 = true;
+  }
 });
 
 根节点.addEventListener("click", async (事件) => {
@@ -626,7 +682,7 @@ const 分钟实时更新器 = 创建分钟实时更新器((当前毫秒) => {
   今天 = 刷新结果.今天;
   if (!是同一天(状态.所选日期, 刷新结果.所选日期)) 状态 = 选择日期(状态, 刷新结果.所选日期);
   时间查询 = 刷新结果.时间查询;
-  if (刷新结果.需要渲染) 渲染();
+  if (刷新结果.需要渲染 && !主日期正在编辑) 渲染();
 });
 
 分钟实时更新器.启动();

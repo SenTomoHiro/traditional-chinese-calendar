@@ -80,7 +80,7 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.almanac-core-item strong\s*\{[^}]*color:\s*var\(--gold-soft\)/u);
   });
 
-  it("日宜日忌紧接日吉凶并完整呈现两列标签", () => {
+  it("日宜日忌紧接日吉凶并在全平台纵向使用整行", () => {
     const 日吉凶位置 = 页面源码.indexOf('class="almanac-core-row"');
     const 每日宜忌位置 = 页面源码.indexOf('class="day-actions"');
     const 日期事件位置 = 页面源码.indexOf('class="calendar-info-grid"');
@@ -92,7 +92,8 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('const 显示内容 = 内容.length > 0 ? 内容 : ["无"]');
     expect(页面源码).toContain('显示内容.map');
     expect(页面源码).not.toContain('显示内容.slice');
-    expect(页面样式).toMatch(/\.day-actions\s*\{[^}]*grid-template-columns:\s*repeat\(2,/u);
+    expect(页面样式).toMatch(/\.day-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+    expect(页面样式).toMatch(/\.day-action-group \+ \.day-action-group\s*\{[^}]*border-top:/u);
     expect(页面样式).toContain(".day-action-group.is-bad .day-action-tags span");
   });
 
@@ -158,11 +159,20 @@ describe("日期详情展示回归", () => {
   });
 
   it("清空或选回今天会恢复实时模式", () => {
-    const 日期处理 = 页面源码.match(/if \(目标\.matches\("\[data-calendar-date\]"\)\) \{[\s\S]*?\n  \} else if/u)?.[0] ?? "";
-    expect(日期处理).toContain("if (!目标.value)");
-    expect(日期处理).toContain("回到今天实时模式()");
-    expect(日期处理).toContain("是同一天(日期, 北京日期())");
+    const 日期提交 = 页面源码.match(/function 提交主日期\([\s\S]*?\n\}/u)?.[0] ?? "";
+    expect(日期提交).toContain('if (来源 === "原生选择") 回到今天实时模式()');
+    expect(日期提交).toContain("是同一天(日期, 北京日期())");
     expect(页面源码).toContain("时间查询 = 创建实时查询时间(当前北京时间)");
+  });
+
+  it("键盘编辑日期使用草稿并只在Enter或失焦后提交", () => {
+    expect(页面源码).toContain("let 主日期草稿: string | null = null");
+    expect(页面源码).toContain("let 主日期键盘编辑 = false");
+    expect(页面源码).toContain("主日期草稿 = 主日期输入.value");
+    expect(页面源码).toContain("if (!主日期键盘编辑) 提交主日期");
+    expect(页面源码).toContain('if (事件.key === "Enter")');
+    expect(页面源码).toContain('提交主日期(主日期草稿 ?? 目标.value, "键盘")');
+    expect(页面源码).toContain("刷新结果.需要渲染 && !主日期正在编辑");
   });
 
   it("切换任意日期会清除手动时辰并跟随当前真实时分", () => {
@@ -304,6 +314,41 @@ describe("日期详情展示回归", () => {
     expect(标签规则).not.toMatch(/flex-grow:\s*1/u);
     expect(页面源码).toContain('时辰详情标签("时宜", 时段.详情.现代时宜');
     expect(页面源码).toContain('时辰详情标签("时忌", 时段.详情.现代时忌');
+  });
+
+  it("现代时宜时忌在全平台纵向使用整行且来源说明仍在下方", () => {
+    expect(页面样式).toMatch(/\.modern-hour-actions-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+    expect(页面样式).toMatch(/\.modern-hour-actions \.hour-detail-group \+ \.hour-detail-group\s*\{[^}]*border-top:/u);
+    const 网格位置 = 页面源码.indexOf('class="modern-hour-actions-grid"');
+    const 来源位置 = 页面源码.indexOf("${时段.详情.现代来源}");
+    expect(网格位置).toBeLessThan(来源位置);
+  });
+
+  it("月历普通文字使用棕金语义色且保留红色事件与选中态", () => {
+    expect(页面样式).toMatch(/--calendar-text:\s*#[0-9a-f]+/u);
+    expect(页面样式).toMatch(/--calendar-muted:\s*#[0-9a-f]+/u);
+    expect(页面样式).toMatch(/\.day-button\s*\{[^}]*color:\s*var\(--calendar-text\)/u);
+    expect(页面样式).toMatch(/\.lunar-day\s*\{[^}]*color:\s*var\(--calendar-muted\)/u);
+    expect(页面样式).toMatch(/\.day-event\s*\{[^}]*color:\s*var\(--accent-strong\)/u);
+    expect(页面样式).toMatch(/\.day-button\.is-selected\s*\{[^}]*background:\s*var\(--accent\)/u);
+  });
+
+  it("顶部日期与八字控件、结果统一使用主题棕金色和可见焦点", () => {
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*color:\s*var\(--gold-strong\)/u);
+    expect(页面样式).toMatch(/\.calendar-date-control::-webkit-calendar-picker-indicator\s*\{[^}]*filter:\s*var\(--warm-icon-filter\)/u);
+    expect(页面样式).toMatch(/\.bazi-form input,[\s\S]*?\.bazi-locate\s*\{[^}]*color:\s*var\(--calendar-text\)/u);
+    expect(页面样式).toMatch(/\.bazi-pillars\s*\{[^}]*color:\s*var\(--calendar-text\)/u);
+    expect(页面样式).toMatch(/\.bazi-line strong\s*\{[^}]*color:\s*var\(--gold-strong\)/u);
+    expect(页面样式).toContain("background-image: var(--select-arrow)");
+    expect(页面样式).toMatch(/\.bazi-form input:focus-visible,[\s\S]*?outline:\s*3px solid/u);
+    expect(页面样式).not.toMatch(/\.bazi-[^{]*\{[^}]*(?:color:\s*(?:black|#000(?:000)?))/u);
+  });
+
+  it("暗色模式为月历和八字语义色提供米金覆盖", () => {
+    const 暗色规则 = 页面样式.match(/@media \(prefers-color-scheme: dark\) \{[\s\S]*?@media \(prefers-reduced-motion/u)?.[0] ?? "";
+    expect(暗色规则).toContain("--calendar-text: #e8d6b1");
+    expect(暗色规则).toContain("--calendar-muted: #b9a681");
+    expect(暗色规则).toContain("--warm-icon-filter:");
   });
 
   it("十二时辰标题右侧提供恢复当前查询时辰按钮", () => {

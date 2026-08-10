@@ -24,6 +24,10 @@
   --accent-soft: #ead2bd;
   --danger: #d97869;
   --shadow: 0 24px 70px rgba(25, 12, 7, 0.3);
+  --calendar-text: #684823;
+  --calendar-muted: #8a7353;
+  --warm-icon-filter: invert(28%) sepia(30%) saturate(1090%) hue-rotate(354deg) brightness(88%) contrast(91%);
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23684823' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 * {
@@ -95,6 +99,7 @@ button:focus-visible {
   padding: 22px clamp(22px, 4vw, 48px) 28px;
   border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color: var(--calendar-text);
 }
 
 .bazi-card > header {
@@ -118,7 +123,7 @@ button:focus-visible {
 }
 
 .bazi-card > header p {
-  color: var(--muted);
+  color: var(--calendar-muted);
   font-size: 10px;
 }
 
@@ -132,7 +137,7 @@ button:focus-visible {
   display: grid;
   gap: 5px;
   min-width: 0;
-  color: var(--muted);
+  color: var(--calendar-muted);
   font-size: 10px;
 }
 
@@ -143,10 +148,38 @@ button:focus-visible {
   min-width: 0;
   min-height: 38px;
   padding: 7px 9px;
-  color: var(--ink);
+  color: var(--calendar-text);
   background: color-mix(in srgb, var(--gold-soft) 12%, transparent);
   border: 1px solid var(--line);
   border-radius: 9px;
+}
+
+.bazi-form input,
+.bazi-form select {
+  color-scheme: light;
+}
+
+.bazi-form select {
+  appearance: none;
+  padding-right: 28px;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.bazi-form input[type="date"]::-webkit-calendar-picker-indicator,
+.bazi-form input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: var(--warm-icon-filter);
+  opacity: 0.88;
+}
+
+.calendar-date-control:focus-visible,
+.bazi-form input:focus-visible,
+.bazi-form select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gold) 62%, transparent);
+  outline-offset: 2px;
+  border-color: var(--gold);
 }
 
 .bazi-locate {
@@ -162,7 +195,7 @@ button:focus-visible {
 .bazi-location-note,
 .bazi-message {
   margin: 10px 0 0;
-  color: var(--muted);
+  color: var(--calendar-muted);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -175,7 +208,7 @@ button:focus-visible {
 
 .bazi-pillars {
   margin: 0;
-  color: var(--ink);
+  color: var(--calendar-text);
   font-family: "Songti SC", "STSong", serif;
   font-size: clamp(13px, 1.4vw, 16px);
   line-height: 1.6;
@@ -191,7 +224,7 @@ button:focus-visible {
 
 .bazi-line span,
 .bazi-result li {
-  color: var(--muted);
+  color: var(--calendar-muted);
 }
 
 .bazi-line strong {
@@ -233,12 +266,13 @@ button:focus-visible {
   font-weight: 500;
   line-height: 1;
   text-align: center;
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 .calendar-date-control::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  opacity: 0.78;
+  filter: var(--warm-icon-filter);
+  opacity: 0.88;
 }
 
 .week-row,
@@ -249,7 +283,7 @@ button:focus-visible {
 
 .week-row {
   margin-bottom: 9px;
-  color: var(--muted);
+  color: var(--calendar-muted);
   font-size: 12px;
   text-align: center;
 }
@@ -277,7 +311,7 @@ button:focus-visible {
   gap: 3px;
   min-width: 0;
   padding: 7px 0;
-  color: var(--ink);
+  color: var(--calendar-text);
   background: transparent;
   border: 0;
   border-radius: 14px;
@@ -295,7 +329,7 @@ button:focus-visible {
 .lunar-day {
   max-width: 100%;
   overflow: hidden;
-  color: var(--muted);
+  color: var(--calendar-muted);
   font-size: 10px;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -503,13 +537,18 @@ button:focus-visible {
 
 .day-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
   margin-top: 14px;
 }
 
 .day-action-group {
   min-width: 0;
+}
+
+.day-action-group + .day-action-group {
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--panel-line) 72%, transparent);
 }
 
 .day-action-group h3 {
@@ -1073,8 +1112,13 @@ button:focus-visible {
 
 .modern-hour-actions-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+}
+
+.modern-hour-actions .hour-detail-group + .hour-detail-group {
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--panel-line) 72%, transparent);
 }
 
 .modern-hour-actions .hour-detail-group {
@@ -1319,6 +1363,10 @@ button:focus-visible {
     --accent-soft: #48231c;
     --danger: #dc8172;
     --shadow: 0 26px 75px rgba(0, 0, 0, 0.35);
+    --calendar-text: #e8d6b1;
+    --calendar-muted: #b9a681;
+    --warm-icon-filter: invert(81%) sepia(35%) saturate(516%) hue-rotate(359deg) brightness(91%) contrast(86%);
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23dfbf75' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 
   body {
