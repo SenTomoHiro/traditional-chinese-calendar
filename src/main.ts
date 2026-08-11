@@ -204,29 +204,26 @@ function 核心黄历项目(标题: "日吉凶" | "值日" | "风水禁忌", 内
     </div>`;
 }
 
-type 主日期控件位置 = "detail" | "calendar";
-
-function 主日期控件(值: string, 位置: 主日期控件位置): string {
-  const 是详情 = 位置 === "detail";
+function 主日期控件(值: string, 星期: string): string {
   const 快捷按钮 = [
     { action: "previous-day", label: "上一天", text: "‹" },
     { action: "today", label: "返回今天", text: "今" },
     { action: "next-day", label: "下一天", text: "›" },
   ];
   return `
-    <div class="main-date-navigation is-${位置}">
+    <div class="main-date-navigation">
       <input
-        class="calendar-date-control${是详情 ? " detail-date-control" : ""}"
+        class="calendar-date-control"
         type="date"
         data-calendar-date
-        data-date-position="${位置}"
-        aria-label="${是详情 ? "左侧选择主日历日期" : "选择主日历日期"}"
+        aria-label="选择主日历日期"
         lang="zh-CN"
         min="${八字支持范围.最小日期}"
         max="${八字支持范围.最大日期}"
         value="${值}"
       >
-      <div class="date-shortcuts" role="group" aria-label="${是详情 ? "左侧日期快捷操作" : "月历日期快捷操作"}">
+      <span class="date-weekday">${星期}</span>
+      <div class="date-shortcuts" role="group" aria-label="日期快捷操作">
         ${快捷按钮.map((按钮) => `<button type="button" class="date-shortcut-button" data-action="${按钮.action}" aria-label="${按钮.label}" title="${按钮.label}">${按钮.text}</button>`).join("")}
       </div>
     </div>`;
@@ -480,7 +477,7 @@ function 渲染(): void {
               ${当前定位状态 === "定位中" ? "disabled" : ""}
             >${当前定位状态 === "定位中" ? "定位中…" : 当前时间依据}</button>
           </div>
-          ${主日期控件(主日期值, "detail")}
+          ${主日期控件(主日期值, 星期名称[所选.getDay()])}
 
           <section class="core-fact pillar-core" aria-label="四柱">
             <span>四柱</span>
@@ -528,10 +525,6 @@ function 渲染(): void {
 
         <div class="calendar-right">
           <article class="calendar-card">
-          <div class="calendar-toolbar">
-            ${主日期控件(主日期值, "calendar")}
-          </div>
-
           <div class="week-row" role="row">
             ${星期短名.map((星期, 索引) => `<span role="columnheader" title="${星期名称[索引]}">${星期}</span>`).join("")}
           </div>
@@ -602,6 +595,7 @@ function 渲染(): void {
       </section>
 
     </main>
+    <button type="button" class="back-to-top" data-action="back-to-top" aria-label="返回顶部" title="返回顶部">↑</button>
   `;
 }
 
@@ -610,9 +604,6 @@ function 渲染(): void {
   if (主日期输入) {
     主日期草稿 = 主日期输入.value;
     主日期正在编辑 = true;
-    根节点.querySelectorAll<HTMLInputElement>("[data-calendar-date]").forEach((输入) => {
-      if (输入 !== 主日期输入) 输入.value = 主日期输入.value;
-    });
     return;
   }
   const 输入框 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-time-input]");
@@ -740,6 +731,9 @@ function 渲染(): void {
       break;
     case "next-day":
       切换相邻主日期(1);
+      break;
+    case "back-to-top":
+      window.scrollTo({ top: 0, behavior: "smooth" });
       break;
     case "time-basis": {
       if (当前时间依据 === "真太阳时") {

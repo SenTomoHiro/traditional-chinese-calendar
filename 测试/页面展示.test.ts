@@ -29,22 +29,23 @@ describe("日期详情展示回归", () => {
   it("农历标题右侧提供当前时间依据切换按钮", () => {
     const 标题位置 = 页面源码.indexOf('class="lunar-title"');
     const 按钮位置 = 页面源码.indexOf('class="time-basis-button"');
-    const 公历位置 = 页面源码.indexOf('主日期控件(主日期值, "detail")');
+    const 公历位置 = 页面源码.indexOf("主日期控件(主日期值, 星期名称[所选.getDay()])");
     expect(页面源码).toContain('data-action="time-basis"');
     expect(按钮位置).toBeGreaterThan(标题位置);
     expect(按钮位置).toBeLessThan(公历位置);
     expect(页面源码).toContain("当前使用${当前时间依据}，点击切换为${切换目标}");
   });
 
-  it("左侧公历日期改为紧凑可编辑日期输入且不再附带星期", () => {
-    expect(页面源码).toContain('主日期控件(主日期值, "detail")');
-    expect(页面源码).toContain('class="calendar-date-control${是详情 ? " detail-date-control" : ""}"');
-    expect(页面源码).toContain('aria-label="${是详情 ? "左侧选择主日历日期" : "选择主日历日期"}"');
+  it("左侧唯一公历输入紧凑可编辑并独立显示同步星期", () => {
+    expect(页面源码).toContain("主日期控件(主日期值, 星期名称[所选.getDay()])");
+    expect(页面源码).toContain('class="calendar-date-control"');
+    expect(页面源码).toContain('aria-label="选择主日历日期"');
+    expect(页面源码).toContain('class="date-weekday">${星期}</span>');
     expect(页面源码).not.toContain('class="solar-date"');
-    expect(页面源码).not.toContain("${格式化公历日期(所选)} · ${星期名称[所选.getDay()]}");
     expect(页面源码).not.toContain("selected-day-number");
     expect(页面样式).not.toContain(".selected-day-number");
-    expect(页面样式).toMatch(/\.detail-date-control\s*\{[^}]*flex:\s*0 1 180px[^}]*max-width:\s*180px/u);
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*flex:\s*1 1 140px[^}]*max-width:\s*180px/u);
+    expect(页面样式).toMatch(/\.date-weekday\s*\{[^}]*white-space:\s*nowrap/u);
   });
 
   it("四柱不再拆分且详情不重复显示月建或时辰字段", () => {
@@ -225,11 +226,14 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain("定位坐标仅在当前页面内使用，不会上传或保存。");
   });
 
-  it("左右主日期复用同一原生输入组件且不经过中间弹层", () => {
-    expect(页面源码).toContain('class="calendar-date-control${是详情 ? " detail-date-control" : ""}"');
+  it("仅左侧保留原生主日期输入与快捷导航", () => {
+    expect(页面源码).toContain('class="calendar-date-control"');
     expect(页面源码).toMatch(/function 主日期控件[\s\S]*?type="date"[\s\S]*?data-calendar-date/u);
-    expect(页面源码).toContain('主日期控件(主日期值, "detail")');
-    expect(页面源码).toContain('主日期控件(主日期值, "calendar")');
+    expect(页面源码).toContain("主日期控件(主日期值, 星期名称[所选.getDay()])");
+    expect(页面源码.match(/主日期控件\(主日期值/gu)).toHaveLength(1);
+    expect(页面源码).not.toContain('class="calendar-toolbar"');
+    expect(页面源码).not.toContain('data-date-position="calendar"');
+    expect(页面源码).not.toContain('aria-label="月历日期快捷操作"');
     expect(页面源码).not.toContain('data-action="open-calendar-date"');
     expect(页面源码).not.toContain('data-calendar-date-dialog');
     expect(页面源码).not.toContain(".showModal()");
@@ -239,14 +243,14 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain('class="period-navigation"');
   });
 
-  it("两个日期输入共用草稿提交并在编辑时同步可见值", () => {
+  it("唯一日期输入继续使用稳定草稿提交且无双输入同步代码", () => {
     expect(页面源码).toContain('closest<HTMLInputElement>("[data-calendar-date]")');
-    expect(页面源码).toContain('querySelectorAll<HTMLInputElement>("[data-calendar-date]")');
-    expect(页面源码).toContain("if (输入 !== 主日期输入) 输入.value = 主日期输入.value");
+    expect(页面源码).not.toContain('querySelectorAll<HTMLInputElement>("[data-calendar-date]")');
+    expect(页面源码).not.toContain("if (输入 !== 主日期输入) 输入.value = 主日期输入.value");
     expect(页面源码).toContain("刷新结果.需要渲染 && !主日期正在编辑");
   });
 
-  it("两组快捷按钮共用前一天今天后一天逻辑并保持既有实时模式", () => {
+  it("左侧快捷按钮共用前一天今天后一天逻辑并保持既有实时模式", () => {
     const 快捷处理 = 页面源码.match(/case "previous-day":[\s\S]*?case "time-basis"/u)?.[0] ?? "";
     expect(快捷处理).toContain("切换相邻主日期(-1)");
     expect(快捷处理).toContain("回到今天实时模式()");
@@ -282,20 +286,19 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("刷新主日期实时时钟");
   });
 
-  it("一体日期使用宋体等高表格数字", () => {
-    expect(页面样式).toMatch(/:root\s*\{[^}]*--serif-font:/u);
-    expect(页面样式).toMatch(/\.lunar-title\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
-    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*font-family:\s*var\(--serif-font\)/u);
-    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*font-variant-numeric:\s*lining-nums tabular-nums/u);
-    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*font-feature-settings:\s*"lnum" 1, "tnum" 1/u);
+  it("紧凑日期输入保持原生完整年月日值", () => {
+    expect(页面源码).toContain('type="date"');
+    expect(页面源码).toContain('min="${八字支持范围.最小日期}"');
+    expect(页面源码).toContain('max="${八字支持范围.最大日期}"');
     expect(页面源码).toContain('value="${值}"');
     expect(页面源码).not.toContain("digit-");
   });
 
-  it("一体日期选择器在桌面与手机均保持居中且不横溢", () => {
-    expect(页面样式).toMatch(/\.calendar-toolbar\s*\{[^}]*justify-content:\s*center/u);
-    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*width:\s*min\(100%, 300px\)/u);
-    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.calendar-date-control\s*\{[^}]*font-size:/u);
+  it("日期星期与三个快捷按钮在桌面和手机均保持单行", () => {
+    expect(页面样式).toMatch(/\.main-date-navigation\s*\{[^}]*flex-wrap:\s*nowrap/u);
+    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.main-date-navigation\s*\{[^}]*gap:\s*3px;[^}]*width:\s*100%/u);
+    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.calendar-date-control\s*\{[^}]*min-width:\s*0;[^}]*font-size:\s*11px/u);
+    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.date-shortcut-button\s*\{[^}]*width:\s*28px;[^}]*height:\s*28px/u);
   });
 
   it("月历与详情都已接入节日和神圣纪念", () => {
@@ -352,11 +355,20 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.beidou-item strong\s*\{[^}]*overflow-wrap:\s*anywhere/u);
   });
 
-  it("左侧快捷按钮仅手机显示而右侧快捷按钮全端保留", () => {
-    expect(页面样式).toMatch(/\.main-date-navigation\.is-detail \.date-shortcuts\s*\{[^}]*display:\s*none/u);
-    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.main-date-navigation\.is-detail \.date-shortcuts\s*\{[^}]*display:\s*flex/u);
-    expect(页面样式).not.toMatch(/\.main-date-navigation\.is-calendar \.date-shortcuts\s*\{[^}]*display:\s*none/u);
+  it("左侧快捷按钮全端显示且保留无障碍名称", () => {
+    expect(页面样式).not.toMatch(/\.main-date-navigation[^}]*\.date-shortcuts\s*\{[^}]*display:\s*none/u);
+    expect(页面源码).toContain('aria-label="日期快捷操作"');
+    expect(页面源码).toContain('aria-label="${按钮.label}" title="${按钮.label}"');
     expect(页面样式).toMatch(/\.date-shortcut-button\s*\{[^}]*width:\s*30px[^}]*height:\s*30px/u);
+  });
+
+  it("全局返回顶部按钮常驻右下角并平滑滚动窗口", () => {
+    expect(页面源码).toContain('class="back-to-top"');
+    expect(页面源码).toContain('data-action="back-to-top"');
+    expect(页面源码).toContain('aria-label="返回顶部" title="返回顶部"');
+    expect(页面源码).toContain('window.scrollTo({ top: 0, behavior: "smooth" })');
+    expect(页面样式).toMatch(/\.back-to-top\s*\{[^}]*position:\s*fixed;[^}]*right:\s*18px;[^}]*env\(safe-area-inset-bottom, 0px\)[^}]*z-index:\s*30/u);
+    expect(页面样式).toMatch(/@media \(max-width: 560px\)[\s\S]*?\.back-to-top\s*\{[^}]*right:\s*6px;[^}]*width:\s*36px/u);
   });
 
   it("生辰八字查询位于月历下方并与主日历状态分离", () => {
@@ -459,7 +471,7 @@ describe("日期详情展示回归", () => {
   });
 
   it("顶部日期与八字控件、结果统一使用主题棕金色和可见焦点", () => {
-    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*color:\s*var\(--gold-strong\)/u);
+    expect(页面样式).toMatch(/\.calendar-date-control\s*\{[^}]*color:\s*var\(--panel-muted\)/u);
     expect(页面样式).toMatch(/\.calendar-date-control::-webkit-calendar-picker-indicator\s*\{[^}]*filter:\s*var\(--warm-icon-filter\)/u);
     expect(页面样式).toMatch(/\.bazi-form input,[\s\S]*?\.bazi-locate\s*\{[^}]*color:\s*var\(--calendar-text\)/u);
     expect(页面样式).toMatch(/\.bazi-pillars\s*\{[^}]*color:\s*var\(--calendar-text\)/u);
