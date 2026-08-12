@@ -8,7 +8,7 @@ An open-source web calendar for traditional Chinese calendrical work: Gregorian 
 
 ## Mission
 
-This project aims to use AI-assisted software development to lower the technical barrier to building and maintaining traditional calendrical tools. Its long-term mission is to make open, reviewable, testable, and continuously improved software available to Taoist practitioners, traditional-culture researchers and enthusiasts, and others who rely on traditional Chinese calendrical knowledge.
+This project aims to use AI-assisted software development to lower the technical barrier to building and maintaining traditional calendrical tools. Its long-term mission is to make open, reviewable, testable, and continuously improved software available to Taoist priests, traditional-culture researchers and enthusiasts, and others who rely on traditional Chinese calendrical knowledge.
 
 > An open-source traditional calendrical project led by a domain practitioner and engineered with substantial assistance from GPT and Codex.
 
@@ -20,7 +20,7 @@ The project is under active maintenance; the page and its results evolve with re
 
 ## Project Background
 
-This project was initiated and is continuously maintained by a Taoist domain practitioner without a formal software engineering or programming background. The maintainer is responsible for calendrical and Taoist source material, product requirements, rule decisions, source review, and final validation. Software implementation, code changes, testing, debugging, refactoring, and iterative maintenance are carried out primarily in collaboration with OpenAI GPT and Codex.
+This project is initiated and maintained by a Taoist priest without a formal software engineering background. The maintainer is responsible for calendrical and Taoist source material, product requirements, rule decisions, source review, and final validation. Software implementation, code changes, testing, debugging, refactoring, and iterative maintenance are carried out primarily in collaboration with OpenAI GPT and Codex.
 
 The maintainer retains responsibility for product and domain-rule decisions and does not treat AI as an authority on traditional rules. The project is also an ongoing experiment in whether a practitioner with domain knowledge can sustainably build and maintain reviewable open-source software with AI-assisted engineering.
 
