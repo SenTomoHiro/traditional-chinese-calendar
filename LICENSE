@@ -1,22 +1,6 @@
-# 第三方、传统文献与资料声明
-
-## 适用范围 / Scope
-
-仓库根目录的 [MIT License](LICENSE) 适用于本项目原创的软件代码与原创内容，除非具体文件或目录另有说明。
-
-仓库收录、引用、摘录、转录、整理或依据古籍、历史文献、第三方资料形成的材料，其原有的版权、公共领域状态、署名要求或其他权利不因收录于本仓库而改变。本项目不通过 MIT License 重新授权第三方材料；有明确来源的传统规则应继续保留其来源信息。
-
-The root MIT License covers original project code and original project content unless a file or directory says otherwise. It does not relicense third-party, historical, or source-based materials; their original rights and attribution requirements remain unchanged.
-
-## 第三方软件 / Third-party software
-
-## lunar-typescript 1.8.6
-
-项目地址：https://github.com/6tail/lunar-typescript
-
 MIT License
 
-Copyright (c) 2020 6tail
+Copyright (c) 2026 SenTomoHiro
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

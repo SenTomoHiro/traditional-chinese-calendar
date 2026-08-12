@@ -10,7 +10,7 @@ This file is an internal preparation draft, not an application submission. It in
 
 Character count: 392 (including spaces; verify against the application form if its counter differs).
 
-**Repository readiness note:** the repository currently has no project LICENSE. A maintainer must choose and add an explicit license before representing it as an open-source licensed project or submitting an application that requires one.
+**Repository readiness note:** the repository is licensed under the [MIT License](../LICENSE). Traditional and third-party source materials remain subject to the scope notice in [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
 
 ## API credits usage
 

@@ -81,4 +81,4 @@ npm run build
 
 欢迎通过 Issue 或 Pull Request 讨论计算边界、资料出处、测试用例和文档改进；涉及传统规则时，请尽量附上可核对的来源并说明版本差异。
 
-**当前仓库尚未提供项目 LICENSE。** 在项目所有者选择并加入明确许可证前，代码不应被假定为已获授权可再分发或衍生使用。第三方依赖的声明见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
+项目采用 [MIT License](LICENSE)。传统文献与第三方来源材料的权利边界见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)（Traditional and third-party materials notice）。
