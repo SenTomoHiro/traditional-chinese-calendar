@@ -217,6 +217,14 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/"detail"\s+"right"\s+"calculation"/u);
   });
 
+  it("手机端将八字输入和查询时间定位控件改为上下排列", () => {
+    const 手机断点 = 页面样式.match(/@media \(max-width: 560px\) \{[\s\S]*?(?=@media \(max-width: 350px\))/u)?.[0] ?? "";
+    expect(手机断点).toMatch(/\.bazi-form,\s*\.time-controls\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+    expect(手机断点).toMatch(/\.time-controls button\s*\{[^}]*width:\s*100%[^}]*align-self:\s*stretch/u);
+    const 极窄断点 = 页面样式.match(/@media \(max-width: 350px\) \{[\s\S]*?(?=:root\[data-theme="dark"\])/u)?.[0] ?? "";
+    expect(极窄断点).not.toMatch(/\.bazi-form\s*\{/u);
+  });
+
   it("顶部标题和底部说明均已删除", () => {
     expect(页面源码).not.toContain("TRADITIONAL CALENDAR");
     expect(页面源码).not.toContain("传统历法日历</h1>");

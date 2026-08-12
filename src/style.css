@@ -1370,6 +1370,20 @@ button:focus-visible {
     padding: 20px 14px 24px;
   }
 
+  .bazi-form,
+  .time-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bazi-form {
+    gap: 12px;
+  }
+
+  .time-controls button {
+    width: 100%;
+    align-self: stretch;
+  }
+
   .main-date-navigation {
     gap: 3px;
     width: 100%;
@@ -1508,8 +1522,7 @@ button:focus-visible {
     grid-template-columns: 50px minmax(0, 1fr);
   }
 
-  .rule-results-grid,
-  .bazi-form {
+  .rule-results-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
