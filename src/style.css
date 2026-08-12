@@ -191,6 +191,17 @@ button:focus-visible {
   font-size: 10px;
 }
 
+.mobile-picker-shell {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mobile-picker-value {
+  display: none;
+}
+
 .bazi-form input,
 .bazi-form select,
 .bazi-locate {
@@ -207,8 +218,7 @@ button:focus-visible {
 }
 
 .bazi-form input[type="date"],
-.bazi-form input[type="time"],
-.time-controls input[type="time"] {
+.bazi-form input[type="time"] {
   display: block;
   inline-size: 100%;
   min-inline-size: 0;
@@ -731,7 +741,17 @@ button:focus-visible {
   font-size: 11px;
 }
 
-.time-controls input,
+.time-display-field {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--panel-muted);
+  font-size: 11px;
+}
+
+.current-time-display,
 .time-controls button {
   min-height: 39px;
   color: var(--panel-ink);
@@ -740,13 +760,15 @@ button:focus-visible {
   border-radius: 9px;
 }
 
-.time-controls input {
+.current-time-display {
+  display: grid;
+  place-items: center;
   box-sizing: border-box;
   inline-size: 100%;
   min-inline-size: 0;
   max-inline-size: 100%;
   padding: 7px 9px;
-  color-scheme: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
 .time-controls button {
@@ -1432,15 +1454,70 @@ button:focus-visible {
   }
 
   .bazi-form label,
-  .time-controls label,
-  .bazi-form input,
+  .time-display-field,
+  .mobile-picker-shell,
   .bazi-form select,
-  .time-controls input,
+  .current-time-display,
   .time-controls button {
     box-sizing: border-box;
     min-inline-size: 0;
     inline-size: 100%;
     max-inline-size: 100%;
+  }
+
+  .mobile-picker-shell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 7px 9px;
+    color: var(--calendar-text);
+    background: color-mix(in srgb, var(--gold-soft) 12%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+  }
+
+  .mobile-picker-value {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .bazi-form .mobile-picker-native {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    color: transparent;
+    background: transparent;
+    border: 0;
+    border-radius: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    -webkit-appearance: auto;
+    appearance: auto;
+  }
+
+  .mobile-picker-shell:focus-within {
+    outline: 3px solid color-mix(in srgb, var(--gold) 62%, transparent);
+    outline-offset: 2px;
+    border-color: var(--gold);
   }
 
   .main-date-navigation {

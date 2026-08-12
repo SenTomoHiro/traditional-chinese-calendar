@@ -225,11 +225,24 @@ describe("日期详情展示回归", () => {
     expect(极窄断点).not.toMatch(/\.bazi-form\s*\{/u);
   });
 
-  it("手机端输入控件以卡片可用宽度为上限，避免 Safari 原生控件溢出", () => {
+  it("手机端日期时间改用可见shell与绝对定位透明原生picker", () => {
     const 手机断点 = 页面样式.match(/@media \(max-width: 560px\) \{[\s\S]*?(?=@media \(max-width: 350px\))/u)?.[0] ?? "";
-    expect(手机断点).toMatch(/\.bazi-form label,[\s\S]*?\.time-controls button\s*\{[^}]*box-sizing:\s*border-box[^}]*min-inline-size:\s*0[^}]*inline-size:\s*100%[^}]*max-inline-size:\s*100%/u);
+    expect(页面源码).toContain('class="mobile-picker-shell" data-picker-shell="date"');
+    expect(页面源码).toContain('class="mobile-picker-shell" data-picker-shell="time"');
+    expect(页面源码).toContain('class="mobile-picker-value" data-picker-value="date"');
+    expect(页面源码).toContain('class="mobile-picker-value" data-picker-value="time"');
+    expect(手机断点).toMatch(/\.mobile-picker-shell\s*\{[^}]*position:\s*relative[^}]*min-height:\s*38px[^}]*padding:\s*7px 9px[^}]*border:/u);
+    expect(手机断点).toMatch(/\.bazi-form \.mobile-picker-native\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*opacity:\s*0[^}]*appearance:\s*auto/u);
+    expect(手机断点).not.toMatch(/\.mobile-picker-shell\s*\{[^}]*overflow:\s*hidden/u);
     expect(页面样式).toMatch(/\.bazi-card\s*\{[^}]*min-width:\s*0/u);
     expect(页面样式).toMatch(/\.calculation-card\s*\{[^}]*min-width:\s*0/u);
+  });
+
+  it("实时查询时间使用非input语义显示并继续由实时状态渲染", () => {
+    expect(页面源码).toContain('<output class="current-time-display" data-time-output aria-label="当前查询时间">${时间查询.时间}</output>');
+    expect(页面源码).not.toContain('data-time-input');
+    expect(页面源码).not.toContain('创建手动查询时间');
+    expect(页面样式).toMatch(/\.current-time-display\s*\{[^}]*display:\s*grid[^}]*inline-size:\s*100%[^}]*max-inline-size:\s*100%/u);
   });
 
   it("定位由直接点击触发，且明确展示失败原因而不假装切换成功", () => {
@@ -409,10 +422,9 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("更新八字结果区()");
   });
 
-  it("实时更新、手动暂停、返回今天与卸载清理均已接入", () => {
+  it("实时更新、返回今天与卸载清理均已接入", () => {
     expect(页面源码).toContain("创建分钟实时更新器");
     expect(页面源码).toContain('根节点.addEventListener("input"');
-    expect(页面源码).toContain('时间查询 = 创建手动查询时间(输入框.value)');
     expect(页面源码).toContain("时间查询 = 创建实时查询时间(当前北京时间)");
     expect(页面源码).toContain('window.addEventListener("pagehide"');
     expect(页面源码).toContain('window.addEventListener("pageshow"');

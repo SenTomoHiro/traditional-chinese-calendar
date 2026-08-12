@@ -9,6 +9,8 @@ interface 边界测量 {
   right: number;
   contentLeft: number;
   contentRight: number;
+  visualLeftGap: number;
+  visualRightGap: number;
   display: string;
   minWidth: string;
   maxWidth: string;
@@ -30,6 +32,8 @@ async function 测量父卡片内容边界(page: Page, 控件选择器: string, 
       right: 控件矩形.right,
       contentLeft: 卡片矩形.left + 左内边距,
       contentRight: 卡片矩形.right - 右内边距,
+      visualLeftGap: 控件矩形.left - 卡片矩形.left,
+      visualRightGap: 卡片矩形.right - 控件矩形.right,
       display: 控件样式.display,
       minWidth: 控件样式.minWidth,
       maxWidth: 控件样式.maxWidth,
@@ -46,31 +50,80 @@ function 断言位于父卡片内容区内(测量: 边界测量): void {
   expect(测量.minWidth).toBe("0px");
   expect(测量.maxWidth).toBe("100%");
   expect(测量.boxSizing).toBe("border-box");
+  expect(Math.abs(测量.visualLeftGap - 测量.visualRightGap)).toBeLessThanOrEqual(1);
 }
 
 for (const width of 手机宽度) {
-  test(`WebKit ${width}px：输入、选择与定位按钮均服从父卡片content box`, async ({ page }) => {
+  test(`WebKit ${width}px：picker shell与实时output服从父卡片content box且留白对称`, async ({ page }) => {
     await page.setViewportSize({ width, height: 956 });
     await page.goto("/");
 
-    for (const 控件选择器 of ["[data-bazi-date]", "[data-bazi-time]", "[data-bazi-basis]"]) {
+    for (const 控件选择器 of ['[data-picker-shell="date"]', '[data-picker-shell="time"]']) {
       断言位于父卡片内容区内(await 测量父卡片内容边界(page, 控件选择器, ".bazi-card"));
     }
-    for (const 控件选择器 of ["[data-time-input]", '[data-action="locate"]']) {
-      断言位于父卡片内容区内(await 测量父卡片内容边界(page, 控件选择器, ".calculation-card"));
+    断言位于父卡片内容区内(await 测量父卡片内容边界(page, "[data-time-output]", ".calculation-card"));
+
+    for (const 控件选择器 of ["[data-bazi-date]", "[data-bazi-time]"]) {
+      const 原生样式 = await page.locator(控件选择器).evaluate((控件) => {
+        const 样式 = getComputedStyle(控件);
+        return {
+          position: 样式.position,
+          opacity: 样式.opacity,
+          appearance: 样式.appearance,
+          display: 样式.display,
+        };
+      });
+      expect(原生样式.position).toBe("absolute");
+      expect(原生样式.opacity).toBe("0");
+      expect(原生样式.appearance).toBe("auto");
+      expect(原生样式.display).not.toBe("none");
     }
 
-    await page.locator("[data-bazi-basis]").selectOption("真太阳时");
-    断言位于父卡片内容区内(await 测量父卡片内容边界(page, '[data-action="bazi-locate"]', ".bazi-card"));
+    expect(await page.locator('[data-time-output]').evaluate((元素) => 元素.tagName)).toBe("OUTPUT");
+    expect(await page.locator('[data-time-input]').count()).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+  });
+}
 
-    for (const 控件选择器 of ["[data-bazi-date]", "[data-bazi-time]", "[data-time-input]"]) {
-      const 测量 = await 测量父卡片内容边界(
-        page,
-        控件选择器,
-        控件选择器 === "[data-time-input]" ? ".calculation-card" : ".bazi-card",
-      );
-      expect(测量.display).toBe("block");
+test("手机shell整块点击命中原生picker，日期和时间改变后可见值立即同步", async ({ page }) => {
+  await page.setViewportSize({ width: 440, height: 956 });
+  await page.goto("/");
+  await page.evaluate(() => {
+    (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks = { date: 0, time: 0 };
+    document.querySelector("[data-bazi-date]")?.addEventListener("click", () => {
+      (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks.date += 1;
+    });
+    document.querySelector("[data-bazi-time]")?.addEventListener("click", () => {
+      (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks.time += 1;
+    });
+  });
+
+  await page.locator('[data-picker-shell="date"]').click();
+  await page.locator('[data-picker-shell="time"]').click();
+  expect(await page.evaluate(() => (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks)).toEqual({ date: 1, time: 1 });
+
+  await page.locator("[data-bazi-date]").fill("1990-05-20");
+  await expect(page.locator('[data-picker-value="date"]')).toHaveText("1990年5月20日");
+  await page.locator("[data-bazi-time]").fill("14:35");
+  await expect(page.locator('[data-picker-value="time"]')).toHaveText("14:35");
+});
+
+for (const width of [1024, 1440] as const) {
+  test(`WebKit ${width}px：桌面原生picker保持可见且页面无横向滚动`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/");
+
+    for (const 控件选择器 of ["[data-bazi-date]", "[data-bazi-time]"]) {
+      const 原生样式 = await page.locator(控件选择器).evaluate((控件) => {
+        const 样式 = getComputedStyle(控件);
+        return { position: 样式.position, opacity: 样式.opacity, display: 样式.display };
+      });
+      expect(原生样式.position).toBe("static");
+      expect(原生样式.opacity).toBe("1");
+      expect(原生样式.display).toBe("block");
     }
+    expect(await page.locator('[data-time-output]').evaluate((元素) => 元素.tagName)).toBe("OUTPUT");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
   });
 }
 

@@ -32,7 +32,6 @@ import { 初始化时辰配置, 计算当前历时, type 时间依据 } from "./
 import {
   创建分钟实时更新器,
   创建实时查询时间,
-  创建手动查询时间,
   type 查询时间状态,
 } from "./实时历时";
 import { 格式化时分 } from "./历法/时间";
@@ -447,6 +446,19 @@ function 生成八字结果区(): string {
     : `<p class="bazi-message" aria-live="polite">${转义HTML(查询结果.提示)}</p>`;
 }
 
+function 格式化八字日期显示(日期: string): string {
+  const 匹配 = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(日期);
+  if (!匹配) return 日期 || "请选择日期";
+  return `${Number(匹配[1])}年${Number(匹配[2])}月${Number(匹配[3])}日`;
+}
+
+function 更新八字选择器显示(): void {
+  const 日期显示 = 根节点.querySelector<HTMLElement>('[data-picker-value="date"]');
+  const 时间显示 = 根节点.querySelector<HTMLElement>('[data-picker-value="time"]');
+  if (日期显示) 日期显示.textContent = 格式化八字日期显示(八字日期);
+  if (时间显示) 时间显示.textContent = 八字时间 || "请选择时间";
+}
+
 function 更新八字结果区(): void {
   const 结果容器 = 根节点.querySelector<HTMLElement>("[data-bazi-output]");
   if (结果容器) 结果容器.innerHTML = 生成八字结果区();
@@ -457,8 +469,18 @@ function 八字查询卡片(): string {
     <section class="bazi-card" aria-label="生辰八字查询">
       <header><h2>生辰八字查询</h2><p>只查询年月日时四柱</p></header>
       <div class="bazi-form">
-        <label>日期<input type="date" data-bazi-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${八字日期}"></label>
-        <label>时间<input type="time" data-bazi-time value="${八字时间}"></label>
+        <label class="bazi-picker-field" for="bazi-birth-date">日期
+          <span class="mobile-picker-shell" data-picker-shell="date">
+            <span class="mobile-picker-value" data-picker-value="date" aria-hidden="true">${格式化八字日期显示(八字日期)}</span>
+            <input class="mobile-picker-native" id="bazi-birth-date" type="date" data-bazi-date aria-label="生辰日期" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${八字日期}">
+          </span>
+        </label>
+        <label class="bazi-picker-field" for="bazi-birth-time">时间
+          <span class="mobile-picker-shell" data-picker-shell="time">
+            <span class="mobile-picker-value" data-picker-value="time" aria-hidden="true">${八字时间 || "请选择时间"}</span>
+            <input class="mobile-picker-native" id="bazi-birth-time" type="time" data-bazi-time aria-label="生辰时间" value="${八字时间}">
+          </span>
+        </label>
         <label>计算依据<select data-bazi-basis>
           <option value="北京时间"${八字时间依据 === "北京时间" ? " selected" : ""}>北京时间</option>
           <option value="真太阳时"${八字时间依据 === "真太阳时" ? " selected" : ""}>真太阳时</option>
@@ -672,7 +694,10 @@ function 渲染(): void {
 
         <section class="calculation-card" aria-label="时间与计算依据">
           <div class="time-controls">
-            <label>查询时间 · ${时间模式说明}<input type="time" data-time-input value="${时间查询.时间}" aria-label="查询时间"></label>
+            <div class="time-display-field">
+              <span>查询时间 · ${时间模式说明}</span>
+              <output class="current-time-display" data-time-output aria-label="当前查询时间">${时间查询.时间}</output>
+            </div>
             <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
               ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
             </button>
@@ -711,11 +736,6 @@ function 渲染(): void {
     主日期正在编辑 = true;
     return;
   }
-  const 输入框 = (事件.target as HTMLElement).closest<HTMLInputElement>("[data-time-input]");
-  if (!输入框?.value) return;
-  时间查询 = 创建手动查询时间(输入框.value);
-  手动查看时辰键 = null;
-  渲染();
 });
 
 根节点.addEventListener("change", (事件) => {
@@ -725,9 +745,11 @@ function 渲染(): void {
     if (!主日期键盘编辑) 提交主日期(目标.value, "原生选择");
   } else if (目标.matches("[data-bazi-date]")) {
     八字日期 = 目标.value;
+    更新八字选择器显示();
     更新八字结果区();
   } else if (目标.matches("[data-bazi-time]")) {
     八字时间 = 目标.value;
+    更新八字选择器显示();
     更新八字结果区();
   } else if (目标.matches("[data-bazi-basis]")) {
     八字时间依据 = 目标.value === "真太阳时" ? "真太阳时" : "北京时间";
@@ -746,6 +768,7 @@ function 渲染(): void {
   else if (目标.matches("[data-bazi-time]")) 八字时间 = 目标.value;
   else if (目标.matches("[data-bazi-longitude]")) 八字经度文本 = 目标.value;
   else return;
+  更新八字选择器显示();
   更新八字结果区();
 });
 
