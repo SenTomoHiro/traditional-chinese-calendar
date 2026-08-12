@@ -130,6 +130,7 @@ button:focus-visible {
   grid-area: right;
   flex-direction: column;
   min-width: 0;
+  max-width: 100%;
   border-left: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
@@ -139,6 +140,7 @@ button:focus-visible {
 
 .bazi-card {
   min-width: 0;
+  max-width: 100%;
   padding: 22px clamp(22px, 4vw, 48px) 28px;
   border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -174,13 +176,17 @@ button:focus-visible {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .bazi-form label {
   display: grid;
   gap: 5px;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
   color: var(--calendar-muted);
   font-size: 10px;
 }
@@ -188,14 +194,27 @@ button:focus-visible {
 .bazi-form input,
 .bazi-form select,
 .bazi-locate {
-  width: 100%;
-  min-width: 0;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   min-height: 38px;
   padding: 7px 9px;
   color: var(--calendar-text);
   background: color-mix(in srgb, var(--gold-soft) 12%, transparent);
   border: 1px solid var(--line);
   border-radius: 9px;
+}
+
+.bazi-form input[type="date"],
+.bazi-form input[type="time"],
+.time-controls input[type="time"] {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  -webkit-appearance: auto;
+  appearance: auto;
 }
 
 .bazi-form input,
@@ -521,6 +540,7 @@ button:focus-visible {
   position: relative;
   grid-area: calculation;
   min-width: 0;
+  max-width: 100%;
   padding: 16px clamp(28px, 3.5vw, 42px) 20px;
   color: var(--panel-ink);
   background: var(--panel);
@@ -694,14 +714,19 @@ button:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
+  width: 100%;
   margin-top: 0;
   min-width: 0;
+  max-width: 100%;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 .time-controls label {
   display: grid;
   gap: 5px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   color: var(--panel-muted);
   font-size: 11px;
 }
@@ -716,7 +741,10 @@ button:focus-visible {
 }
 
 .time-controls input {
-  width: 100%;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   padding: 7px 9px;
   color-scheme: inherit;
 }
@@ -790,6 +818,19 @@ button:focus-visible {
   margin: 0;
   font-size: 12px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.location-diagnostics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.location-diagnostics span {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 

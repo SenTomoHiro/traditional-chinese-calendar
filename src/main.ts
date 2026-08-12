@@ -9,7 +9,15 @@ import {
   type 日历状态,
 } from "./日历/公历";
 import { 创建月历日期信息 } from "./日历/月历信息";
-import { 获取浏览器定位, 定位失败提示 } from "./定位";
+import {
+  读取定位环境,
+  获取浏览器定位,
+  定位失败提示,
+  type 定位失败原因,
+  type 定位环境诊断,
+  type 定位结果,
+  type 定位错误码,
+} from "./定位";
 import { 读取全部配置 } from "./规则/配置读取";
 import { 获取神圣纪念日 } from "./规则/神圣纪念日";
 import type { 时辰规则判断 } from "./规则/时辰规则";
@@ -38,12 +46,26 @@ import { 解析北斗配置 } from "./规则/北斗";
 import { 创建浏览器主题控制器, 是主题偏好, type 主题偏好 } from "./界面/主题";
 import type { 日级风水禁忌结果 } from "./规则/日级风水禁忌";
 
+declare const __APP_VERSION__: string;
+
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
 const 根节点: HTMLDivElement = 应用容器;
 const 主题控制器 = 创建浏览器主题控制器();
 
 type 定位状态 = "未定位" | "定位中" | "成功" | "失败";
+type 定位诊断请求状态 = "未请求" | "请求中" | "成功" | "失败";
+
+interface 定位诊断状态 {
+  环境: 定位环境诊断;
+  状态: 定位诊断请求状态;
+  错误类型: 定位失败原因 | null;
+  错误码: 定位错误码;
+  纬度: number | null;
+  经度: number | null;
+  精度米: number | null;
+  尝试次数: number;
+}
 
 function 北京日期(时间 = 从时间戳读取北京时间()): Date {
   return new Date(时间.年, 时间.月 - 1, 时间.日);
@@ -60,6 +82,16 @@ let 当前时间依据: 时间依据 = "北京时间";
 let 当前经度: number | null = null;
 let 当前定位状态: 定位状态 = "未定位";
 let 定位说明 = "尚未定位，当前使用北京时间";
+let 定位诊断: 定位诊断状态 = {
+  环境: 读取定位环境(),
+  状态: "未请求",
+  错误类型: null,
+  错误码: null,
+  纬度: null,
+  经度: null,
+  精度米: null,
+  尝试次数: 0,
+};
 let 手动查看时辰键: string | null = null;
 let 八字日期 = `${初始北京时间.年}-${String(初始北京时间.月).padStart(2, "0")}-${String(初始北京时间.日).padStart(2, "0")}`;
 let 八字时间 = 格式化时分(初始北京时间);
@@ -77,6 +109,46 @@ const 北斗配置结果 = 解析北斗配置(配置结果);
 const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "神圣纪念日.txt");
 const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
 const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
+
+function 开始定位任务(): Promise<定位结果> {
+  定位诊断 = {
+    环境: 读取定位环境(),
+    状态: "请求中",
+    错误类型: null,
+    错误码: null,
+    纬度: null,
+    经度: null,
+    精度米: null,
+    尝试次数: 0,
+  };
+  return 获取浏览器定位();
+}
+
+function 记录定位结果(结果: 定位结果): void {
+  if (结果.成功) {
+    定位诊断 = {
+      ...定位诊断,
+      状态: "成功",
+      错误类型: null,
+      错误码: null,
+      纬度: 结果.纬度,
+      经度: 结果.经度,
+      精度米: 结果.精度米,
+      尝试次数: 结果.尝试次数,
+    };
+    return;
+  }
+  定位诊断 = {
+    ...定位诊断,
+    状态: "失败",
+    错误类型: 结果.原因,
+    错误码: 结果.错误码,
+    纬度: null,
+    经度: null,
+    精度米: null,
+    尝试次数: 结果.尝试次数,
+  };
+}
 
 function 结束主日期编辑(): void {
   主日期草稿 = null;
@@ -132,12 +204,13 @@ function 提交主日期(值: string, 来源: "键盘" | "原生选择"): void {
 async function 请求定位(成功后使用真太阳时: boolean): Promise<boolean> {
   if (当前定位状态 === "定位中") return false;
   // 在点击事件仍处于同步执行阶段直接触发原生定位，兼容 Safari 的用户手势限制。
-  const 定位任务 = 获取浏览器定位();
+  const 定位任务 = 开始定位任务();
   当前定位状态 = "定位中";
   定位说明 = "正在获取本机位置…";
   渲染();
 
   const 结果 = await 定位任务;
+  记录定位结果(结果);
   if (结果.成功) {
     当前经度 = 结果.经度;
     当前定位状态 = "成功";
@@ -164,6 +237,40 @@ function 格式化修正(分钟: number): string {
   const 符号 = 总秒数 >= 0 ? "+" : "−";
   const 绝对秒数 = Math.abs(总秒数);
   return `${符号}${Math.floor(绝对秒数 / 60)}分${String(绝对秒数 % 60).padStart(2, "0")}秒`;
+}
+
+function 定位错误类型显示(原因: 定位失败原因 | null): string {
+  switch (原因) {
+    case "已拒绝": return "权限拒绝";
+    case "不可用": return "位置不可用";
+    case "超时": return "超时";
+    case "不支持": return "浏览器不支持";
+    case "非安全连接": return "非安全连接";
+    case "坐标无效": return "坐标无效";
+    case "未知错误": return "未知错误";
+    default: return "无";
+  }
+}
+
+function 定位诊断详情(): string {
+  const 环境 = 定位诊断.环境;
+  const 坐标详情 = 定位诊断.状态 === "成功"
+    ? `
+      <span>纬度：${定位诊断.纬度?.toFixed(6)}</span>
+      <span>经度：${定位诊断.经度?.toFixed(6)}</span>
+      <span>定位精度：${定位诊断.精度米?.toFixed(0)} 米</span>`
+    : "";
+  return `
+    <div class="location-diagnostics" data-location-diagnostics>
+      <span>HTTPS：${环境.HTTPS ? "是" : "否"}</span>
+      <span>Geolocation：${环境.支持定位 ? "支持" : "不支持"}</span>
+      <span>页面可见：${环境.页面可见 ? "是" : "否"}</span>
+      <span data-location-diagnostic-status>定位状态：${定位诊断.状态}</span>
+      <span data-location-diagnostic-error>错误类型：${定位错误类型显示(定位诊断.错误类型)}</span>
+      <span data-location-diagnostic-code>错误码：${定位诊断.错误码 ?? "无"}</span>
+      <span>请求次数：${定位诊断.尝试次数}</span>
+      ${坐标详情}
+    </div>`;
 }
 
 function 转义HTML(文本: string): string {
@@ -395,11 +502,12 @@ function 时辰展开详情(时段: 时辰概览段 | undefined): string {
 
 async function 请求八字定位(): Promise<void> {
   if (八字定位中) return;
-  const 定位任务 = 获取浏览器定位();
+  const 定位任务 = 开始定位任务();
   八字定位中 = true;
   八字定位说明 = "正在获取当前位置…";
   渲染();
   const 结果 = await 定位任务;
+  记录定位结果(结果);
   八字定位中 = false;
   if (结果.成功) {
     八字经度文本 = 结果.经度.toFixed(2);
@@ -579,6 +687,8 @@ function 渲染(): void {
               <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
               <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
               <div><dt>节气</dt><dd>${节气显示}</dd></div>
+              <div><dt>定位环境</dt><dd>${定位诊断详情()}</dd></div>
+              <div><dt>版本</dt><dd data-app-version>${__APP_VERSION__}</dd></div>
             </dl>
             <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
           </details>

@@ -39,9 +39,12 @@ npm run dev
 执行自动测试和正式构建：
 
 ```bash
+npx playwright install webkit
 npm test
 npm run build
 ```
+
+`npm test` 会同时运行算法单元测试与 440、430、390、375、320px 的 WebKit 父卡片内容边界测试。
 
 ## 维护传统规则
 
