@@ -38,9 +38,9 @@ Character count: 341 (including spaces; verify against the application form if i
 
 ### Optional draft
 
-> This is a focused, actively maintained open-source web tool in a domain where calendrical boundaries and traditional source variants are easy to obscure. The project keeps computation browser-local, tests boundary behavior, and documents sources and rule configuration so changes can be reviewed by maintainers and contributors.
+> The primary maintainer is a Taoist practitioner without a formal software engineering background. The maintainer owns domain rules, source review, and final decisions; GPT and Codex support implementation and maintenance. The long-term mission is to lower technical barriers so Taoist practitioners, researchers, and enthusiasts can use open, reviewable calendrical software.
 
-Character count: 328 (including spaces; verify against the application form if its counter differs).
+Character count: 375 (including spaces; verify against the application form if its counter differs).
 
 ## Suggested GitHub About values
 

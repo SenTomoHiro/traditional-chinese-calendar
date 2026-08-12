@@ -1,14 +1,28 @@
 # 传统历法日历系统
 
+[English](README_EN.md)
+
 > **Traditional Calendar Web Tool** — A browser-local calendar for the Chinese lunisolar calendar, the 24 solar terms, Ganzhi (Heavenly Stems and Earthly Branches), true solar time, and reviewable traditional date-selection rules.
 
 一个面向中国传统历法、干支、节气、真太阳时与传统择日规则的 Web 日历工具。它把公历日期、农历日期、节气月与用于时辰计算的时间体系明确区分，并尽量让传统规则资料保持可读、可检查、可维护。
 
+## 项目愿景
+
+本项目希望借助 AI 技术降低专业软件开发的技术门槛，把传统历法知识转化为开放、可检查、可测试并能够持续维护的软件工具。项目长期希望服务道教界人士、传统文化研究者与爱好者，以及其他有实际传统历法需求的人，让他们更容易获得透明且可持续改进的传统历法工具。
+
+> 这是一个领域实践者主导、GPT / Codex 协助工程实现的开源传统历法项目。
+
 ## 在线体验
 
-当前 GitHub Pages 测试部署：[打开日历](https://sentomohiro.github.io/0f25bcf2bbb8a869e712/)。
+当前 GitHub Pages 部署：[打开日历](https://sentomohiro.github.io/0f25bcf2bbb8a869e712/)。
 
-该地址是独立的测试部署；项目仍在持续维护中，页面和结果会随发布更新。
+项目仍在持续维护中，页面和结果会随发布更新。
+
+## 项目缘起
+
+本项目由一名道教领域实践者发起并持续维护，维护者没有正式的软件工程或编程专业背景。传统历法与道教相关资料、业务需求、规则判断、资料核对和最终验收由维护者负责；软件工程实现、代码修改、测试、调试、重构和持续迭代主要通过与 OpenAI GPT 和 Codex 协作完成。
+
+维护者承担最终的产品与领域规则决策责任，不把 AI 当作传统规则的权威来源。项目也在探索：具备领域知识的实践者能否在 AI 协助下，持续建设和维护可审阅的开源软件。
 
 ## 为什么不是普通日历 Demo
 
