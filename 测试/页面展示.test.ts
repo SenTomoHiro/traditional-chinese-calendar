@@ -225,6 +225,22 @@ describe("日期详情展示回归", () => {
     expect(极窄断点).not.toMatch(/\.bazi-form\s*\{/u);
   });
 
+  it("手机端输入控件以卡片可用宽度为上限，避免 Safari 原生控件溢出", () => {
+    const 手机断点 = 页面样式.match(/@media \(max-width: 560px\) \{[\s\S]*?(?=@media \(max-width: 350px\))/u)?.[0] ?? "";
+    expect(手机断点).toMatch(/\.bazi-form label,[\s\S]*?\.time-controls button\s*\{[^}]*box-sizing:\s*border-box[^}]*min-inline-size:\s*0[^}]*inline-size:\s*100%[^}]*max-inline-size:\s*100%/u);
+    expect(页面样式).toMatch(/\.bazi-card\s*\{[^}]*min-width:\s*0/u);
+    expect(页面样式).toMatch(/\.calculation-card\s*\{[^}]*min-width:\s*0/u);
+  });
+
+  it("定位由直接点击触发，且明确展示失败原因而不假装切换成功", () => {
+    const 请求函数 = 页面源码.match(/async function 请求定位[\s\S]*?\n\}/u)?.[0] ?? "";
+    expect(请求函数.indexOf("const 定位任务 = 获取浏览器定位()") ).toBeLessThan(请求函数.indexOf("渲染()"));
+    expect(请求函数).toContain("定位失败提示(结果.原因)");
+    expect(页面源码).toContain('aria-live="polite"');
+    expect(页面源码).toContain('case "locate":\n      await 请求定位(true);');
+    expect(页面源码).toContain('await 请求定位(true);');
+  });
+
   it("顶部标题和底部说明均已删除", () => {
     expect(页面源码).not.toContain("TRADITIONAL CALENDAR");
     expect(页面源码).not.toContain("传统历法日历</h1>");

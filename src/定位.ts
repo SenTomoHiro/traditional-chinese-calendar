@@ -1,4 +1,4 @@
-export type 定位失败原因 = "不支持" | "已拒绝" | "不可用" | "超时" | "坐标无效" | "未知错误";
+export type 定位失败原因 = "不支持" | "非安全连接" | "已拒绝" | "不可用" | "超时" | "坐标无效" | "未知错误";
 
 export type 定位结果 =
   | { 成功: true; 经度: number; 纬度: number; 精度米: number }
@@ -26,6 +26,14 @@ export interface 浏览器定位接口 {
   ): void;
 }
 
+function 默认定位接口(): 浏览器定位接口 | undefined {
+  return typeof navigator === "undefined" ? undefined : navigator.geolocation;
+}
+
+function 是安全定位环境(): boolean {
+  return typeof window === "undefined" || window.isSecureContext;
+}
+
 function 转换失败原因(代码: number): 定位失败原因 {
   if (代码 === 1) return "已拒绝";
   if (代码 === 2) return "不可用";
@@ -35,9 +43,10 @@ function 转换失败原因(代码: number): 定位失败原因 {
 
 /** 仅取一次浏览器坐标并保存在内存中，不上传、不持久化。 */
 export function 获取浏览器定位(
-  定位接口: 浏览器定位接口 | undefined =
-    typeof navigator === "undefined" ? undefined : navigator.geolocation,
+  定位接口: 浏览器定位接口 | undefined = 默认定位接口(),
+  安全定位环境 = 是安全定位环境(),
 ): Promise<定位结果> {
+  if (!安全定位环境) return Promise.resolve({ 成功: false, 原因: "非安全连接" });
   if (!定位接口) return Promise.resolve({ 成功: false, 原因: "不支持" });
 
   return new Promise((完成) => {
@@ -63,10 +72,27 @@ export function 获取浏览器定位(
           });
         },
         (错误) => 完成({ 成功: false, 原因: 转换失败原因(错误.code) }),
-        { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+        { enableHighAccuracy: false, timeout: 15_000, maximumAge: 0 },
       );
     } catch {
       完成({ 成功: false, 原因: "未知错误" });
     }
   });
+}
+
+export function 定位失败提示(原因: 定位失败原因): string {
+  switch (原因) {
+    case "已拒绝":
+      return "定位权限未允许，请在Safari网站设置中允许定位。";
+    case "不可用":
+      return "暂时无法取得位置，请稍后重试。";
+    case "超时":
+      return "定位超时，请重新获取。";
+    case "不支持":
+      return "当前浏览器不支持定位。";
+    case "非安全连接":
+      return "当前页面不是安全连接，无法使用定位。";
+    default:
+      return "暂时无法取得位置，请重新获取。";
+  }
 }

@@ -9,7 +9,7 @@ import {
   type 日历状态,
 } from "./日历/公历";
 import { 创建月历日期信息 } from "./日历/月历信息";
-import { 获取浏览器定位 } from "./定位";
+import { 获取浏览器定位, 定位失败提示 } from "./定位";
 import { 读取全部配置 } from "./规则/配置读取";
 import { 获取神圣纪念日 } from "./规则/神圣纪念日";
 import type { 时辰规则判断 } from "./规则/时辰规则";
@@ -57,7 +57,6 @@ let 状态: 日历状态 = 选择日期(
 );
 let 时间查询: 查询时间状态 = 创建实时查询时间(初始北京时间);
 let 当前时间依据: 时间依据 = "北京时间";
-let 用户已选择时间依据 = false;
 let 当前经度: number | null = null;
 let 当前定位状态: 定位状态 = "未定位";
 let 定位说明 = "尚未定位，当前使用北京时间";
@@ -130,19 +129,20 @@ function 提交主日期(值: string, 来源: "键盘" | "原生选择"): void {
   else 设置日期(日期);
 }
 
-async function 请求定位(成功后使用真太阳时: boolean, 记录用户选择 = false): Promise<boolean> {
+async function 请求定位(成功后使用真太阳时: boolean): Promise<boolean> {
   if (当前定位状态 === "定位中") return false;
+  // 在点击事件仍处于同步执行阶段直接触发原生定位，兼容 Safari 的用户手势限制。
+  const 定位任务 = 获取浏览器定位();
   当前定位状态 = "定位中";
   定位说明 = "正在获取本机位置…";
   渲染();
 
-  const 结果 = await 获取浏览器定位();
+  const 结果 = await 定位任务;
   if (结果.成功) {
     当前经度 = 结果.经度;
     当前定位状态 = "成功";
     if (成功后使用真太阳时) {
       当前时间依据 = "真太阳时";
-      if (记录用户选择) 用户已选择时间依据 = true;
     }
     定位说明 = 当前时间依据 === "真太阳时"
       ? "定位成功，当前使用真太阳时"
@@ -154,7 +154,7 @@ async function 请求定位(成功后使用真太阳时: boolean, 记录用户�
   当前经度 = null;
   当前时间依据 = "北京时间";
   当前定位状态 = "失败";
-  定位说明 = "未取得定位，当前使用北京时间";
+  定位说明 = 定位失败提示(结果.原因);
   渲染();
   return false;
 }
@@ -395,22 +395,17 @@ function 时辰展开详情(时段: 时辰概览段 | undefined): string {
 
 async function 请求八字定位(): Promise<void> {
   if (八字定位中) return;
-  if (当前经度 !== null) {
-    八字经度文本 = 当前经度.toFixed(2);
-    八字定位说明 = "已使用当前设备经度";
-    渲染();
-    return;
-  }
+  const 定位任务 = 获取浏览器定位();
   八字定位中 = true;
   八字定位说明 = "正在获取当前位置…";
   渲染();
-  const 结果 = await 获取浏览器定位();
+  const 结果 = await 定位任务;
   八字定位中 = false;
   if (结果.成功) {
     八字经度文本 = 结果.经度.toFixed(2);
     八字定位说明 = "定位成功，已填入当前设备经度";
   } else {
-    八字定位说明 = "未取得定位，请手工输入出生地经度";
+    八字定位说明 = 定位失败提示(结果.原因);
   }
   渲染();
 }
@@ -573,7 +568,7 @@ function 渲染(): void {
             <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
               ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
             </button>
-            <p class="location-status is-${当前定位状态}">${定位说明}</p>
+            <p class="location-status is-${当前定位状态}" aria-live="polite">${定位说明}</p>
           </div>
 
           <details class="calculation-details">
@@ -738,22 +733,20 @@ function 渲染(): void {
     case "time-basis": {
       if (当前时间依据 === "真太阳时") {
         当前时间依据 = "北京时间";
-        用户已选择时间依据 = true;
         定位说明 = 当前经度 === null ? "当前使用北京时间" : "定位成功，当前使用北京时间";
         渲染();
       } else if (当前经度 !== null) {
         当前时间依据 = "真太阳时";
-        用户已选择时间依据 = true;
         当前定位状态 = "成功";
         定位说明 = "定位成功，当前使用真太阳时";
         渲染();
       } else {
-        await 请求定位(true, true);
+        await 请求定位(true);
       }
       break;
     }
     case "locate":
-      await 请求定位(当前时间依据 === "真太阳时" || !用户已选择时间依据);
+      await 请求定位(true);
       break;
   }
 });
