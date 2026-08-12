@@ -6,3 +6,6 @@ playwright-report/
 *.local
 .local-test-server.json
 .local-test-server.log
+
+# Project-owner and AI-assistant working materials; never publish these files.
+本地资料/
