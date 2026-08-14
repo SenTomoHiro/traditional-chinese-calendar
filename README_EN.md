@@ -38,10 +38,17 @@ Traditional date-selection material is not hidden behind an unreviewable online 
 - **Zi hour / 子时 and day boundaries**: Zi hour starts at 23:00; late and early Zi are handled separately for hour-stem and duty-deity calculations, while the day pillar changes at 00:00.
 - **Beijing Time and true solar time**: uses Beijing Time by default. With browser geolocation, it calculates true solar time from local longitude and the Equation of Time; unavailable, denied, or invalid location safely falls back to Beijing Time.
 - **Traditional date-selection rules**: presents daily auspiciousness, daily suitable/unsuitable activities, hourly duty deities, auspiciousness, spiritual influences, and selected feng-shui-taboo lookups. Configurable materials are in [`配置/`](配置/).
+- **Beidou rules**: the Benming Xia Ri rule follows the full sexagenary day cycle. Each day's Ganzhi identifies people born in a year with the same Ganzhi, and the corresponding natal star official is then mapped from that birth-year Earthly Branch.
 - **Browser-local computation**: normal operation needs no custom backend or account system. Location is used for the current calculation only; no location history is created.
 - **Responsive layout and themes**: supports desktop, iPad, and phone layouts, with light, dark, and system-following themes.
 
 > **Terminology note:** the Chinese lunisolar calendar (农历) and the solar-term month (节气月) are distinct systems. This project keeps them separate rather than using lunar months directly for the month pillar.
+
+### Beidou Rule Semantics
+
+- **Benming Xia Ri / 本命下日** follows the full 60-day Ganzhi cycle. A Jiazi day applies to people born in a Jiazi year, a Gengyin day to people born in a Gengyin year, and a Gengshen day to people born in a Gengshen year. In this context, “XX 生人” means people whose birth-year Ganzhi is XX, not people whose birth-day pillar is XX.
+- **Benming Xingguan / 本命星官** is mapped from the Earthly Branch of that birth year. The page first derives the matching “XX-year-born people” from the current day's Ganzhi, then uses the Earthly Branch of that birth-year Ganzhi for the star mapping. For example, a Gengshen day identifies Gengshen-year-born people; their birth-year branch is Shen, which maps to 北斗第五丹元廉贞罡星君. It is not calculated from a person's birth-day branch.
+- **Doujiang days / 斗降日** retain their separate, source-based rules and are not merged with either rule above.
 
 ## Design Principles
 

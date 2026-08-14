@@ -127,6 +127,51 @@ for (const width of [1024, 1440] as const) {
   });
 }
 
+for (const width of [1024, 768, 390, 320] as const) {
+  for (const theme of ["light", "dark"] as const) {
+    test(`WebKit ${width}px ${theme}：本命下日明确显示年生人且北斗模块无溢出`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto("/");
+      await page.locator(`[data-theme-preference="${theme}"]`).click();
+      await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+      await page.locator("[data-calendar-date]").fill("2000-03-03");
+
+      const 本命下日 = page.locator(".beidou-item").filter({ hasText: "本命下日" }).locator("strong");
+      await expect(本命下日).toHaveText("庚申年生人");
+      await expect(page.locator(".beidou-item").filter({ hasText: "本命星官" }).locator("strong"))
+        .toHaveText("北斗第五丹元廉贞罡星君");
+      expect(await page.locator(".beidou-panel").evaluate((面板) => {
+        const 矩形 = 面板.getBoundingClientRect();
+        return 矩形.left >= -1
+          && 矩形.right <= document.documentElement.clientWidth + 1
+          && 面板.scrollWidth <= 面板.clientWidth + 1
+          && document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1;
+      })).toBe(true);
+    });
+  }
+}
+
+test("北斗页面加载和日期切换没有控制台错误、脚本错误或资源404", async ({ page }) => {
+  const 控制台错误: string[] = [];
+  const 页面错误: string[] = [];
+  const 资源404: string[] = [];
+  page.on("console", (消息) => {
+    if (消息.type() === "error") 控制台错误.push(消息.text());
+  });
+  page.on("pageerror", (错误) => 页面错误.push(错误.message));
+  page.on("response", (响应) => {
+    if (响应.status() === 404) 资源404.push(响应.url());
+  });
+
+  await page.goto("/");
+  await page.locator("[data-calendar-date]").fill("2000-03-03");
+  await expect(page.locator(".beidou-item").filter({ hasText: "本命下日" }).locator("strong"))
+    .toHaveText("庚申年生人");
+  expect(控制台错误).toEqual([]);
+  expect(页面错误).toEqual([]);
+  expect(资源404).toEqual([]);
+});
+
 test("用户点击时即使Permissions API报告denied也会直接调用Geolocation并重算真太阳时", async ({ page }) => {
   await page.addInitScript(() => {
     const 测试窗口 = window as typeof window & { __geoCalls: number };

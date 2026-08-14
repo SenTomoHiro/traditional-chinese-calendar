@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const 页面源码 = readFileSync(resolve(process.cwd(), "src/main.ts"), "utf8");
 const 页面样式 = readFileSync(resolve(process.cwd(), "src/style.css"), "utf8");
 const 当前历时源码 = readFileSync(resolve(process.cwd(), "src/当前历时.ts"), "utf8");
+const 规则源码 = readFileSync(resolve(process.cwd(), "src/规则/北斗.ts"), "utf8");
 const 首页源码 = readFileSync(resolve(process.cwd(), "index.html"), "utf8");
 
 describe("日期详情展示回归", () => {
@@ -373,6 +374,8 @@ describe("日期详情展示回归", () => {
     expect(页面源码.indexOf('class="beidou-source"')).toBeGreaterThan(页面源码.indexOf('class="beidou-grid"'));
     expect(页面源码).toContain("${北斗.本命下日}");
     expect(页面源码).toContain("${转义HTML(北斗.本命星官)}");
+    expect(规则源码).toContain("`${本命下日对应生年干支}年生人`");
+    expect(规则源码).toContain("配置.出生年支本命星官[出生年支]");
     expect(页面样式).toMatch(/\.beidou-grid\s*\{[^}]*grid-template-columns:\s*var\(--detail-grid-columns\)/u);
     expect(页面样式).toMatch(/\.beidou-source\s*\{[^}]*margin:\s*7px 0 0;[^}]*overflow-wrap:\s*anywhere/u);
   });

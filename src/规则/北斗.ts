@@ -16,7 +16,7 @@ export interface 北斗配置 {
   真经注: Record<number, number[]>;
   真经注每月: number[];
   真经注干支日: string[];
-  本命星官: Record<(typeof 地支)[number], string>;
+  出生年支本命星官: Record<(typeof 地支)[number], string>;
 }
 
 export interface 北斗配置解析结果 {
@@ -102,7 +102,7 @@ export function 解析北斗配置(配置结果: 配置解析结果[]): 北斗�
     错误.push(错误项(真经文件, 闰月规则?.行号 ?? 0, 闰月规则?.原文 ?? "", "必须明确配置“闰月从前月”"));
   }
 
-  const 本命星官 = {} as Record<(typeof 地支)[number], string>;
+  const 出生年支本命星官 = {} as Record<(typeof 地支)[number], string>;
   if (!星官结果) 错误.push(错误项(星官文件, 0, "", "缺少配置文件"));
   else {
     错误.push(...星官结果.错误);
@@ -112,10 +112,10 @@ export function 解析北斗配置(配置结果: 配置解析结果[]): 北斗�
         错误.push(错误项(星官文件, 规则.行号, 规则.原文, "包含无效地支"));
         continue;
       }
-      for (const 支 of 支列表) 本命星官[支] = 规则.内容;
+      for (const 出生年支 of 支列表) 出生年支本命星官[出生年支] = 规则.内容;
     }
   }
-  if (Object.keys(本命星官).length !== 12) 错误.push(错误项(星官文件, 0, "", "必须完整覆盖十二地支"));
+  if (Object.keys(出生年支本命星官).length !== 12) 错误.push(错误项(星官文件, 0, "", "必须完整覆盖十二出生年支"));
   if (错误.length > 0) return { 配置: null, 错误 };
   return {
     配置: {
@@ -123,7 +123,7 @@ export function 解析北斗配置(配置结果: 配置解析结果[]): 北斗�
       真经注,
       真经注每月: 真经注每月 as number[],
       真经注干支日,
-      本命星官,
+      出生年支本命星官,
     },
     错误: [],
   };
@@ -133,11 +133,12 @@ function 日期规则名称(农历: 农历日期): string {
   return `${农历.月名}${农历.日名}`;
 }
 
-export function 计算北斗(配置: 北斗配置 | null, 农历: 农历日期, 日柱: string): 北斗结果 {
+export function 计算北斗(配置: 北斗配置 | null, 农历: 农历日期, 当天日柱: string): 北斗结果 {
+  const 本命下日对应生年干支 = 当天日柱;
   if (!配置) {
     return {
       斗降日: { 命中: false, 名称: "无", 依据: [], 来源显示: "" },
-      本命下日: `${日柱}生人`,
+      本命下日: `${本命下日对应生年干支}年生人`,
       本命星官: "配置错误",
     };
   }
@@ -151,12 +152,12 @@ export function 计算北斗(配置: 北斗配置 | null, 农历: 农历日期, 
   if (配置.真经注每月.includes(农历.日)) {
     依据.push({ 来源: 真经注来源, 规则: `每月${农历.日名}` });
   }
-  if (配置.真经注干支日.includes(日柱)) {
-    依据.push({ 来源: 真经注来源, 规则: `${日柱}日` });
+  if (配置.真经注干支日.includes(当天日柱)) {
+    依据.push({ 来源: 真经注来源, 规则: `${当天日柱}日` });
   }
   const 来源 = [...new Set(依据.map((条目) => 条目.来源))];
   const 来源显示 = 来源.join("、");
-  const 日支 = 日柱[1] as (typeof 地支)[number];
+  const 出生年支 = 本命下日对应生年干支[1] as (typeof 地支)[number];
   return {
     斗降日: {
       命中: 依据.length > 0,
@@ -164,7 +165,7 @@ export function 计算北斗(配置: 北斗配置 | null, 农历: 农历日期, 
       依据,
       来源显示,
     },
-    本命下日: `${日柱}生人`,
-    本命星官: 配置.本命星官[日支],
+    本命下日: `${本命下日对应生年干支}年生人`,
+    本命星官: 配置.出生年支本命星官[出生年支],
   };
 }

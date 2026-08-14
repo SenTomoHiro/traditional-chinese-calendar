@@ -51,7 +51,7 @@ describe("自主黄历大范围验证", () => {
       expect(["黄道", "黑道"]).toContain(历法.日吉凶.类型);
       expect(历法.每日宜忌.宜.every((事项) => !历法.每日宜忌.忌.includes(事项))).toBe(true);
       expect(时辰.时宜.every((事项) => !时辰.时忌.includes(事项))).toBe(true);
-      expect(北斗.本命下日).toBe(`${历法.日柱}生人`);
+      expect(北斗.本命下日).toBe(`${历法.日柱}年生人`);
       expect(北斗.本命星官).toContain("星君");
     }
   });
