@@ -27,11 +27,17 @@ function 解析农历日(名称: string): number | null {
   return null;
 }
 
+function 规范配置月名(月名: string): string {
+  if (月名 === "冬月") return "十一月";
+  if (月名 === "腊月") return "十二月";
+  return 月名;
+}
+
 function 匹配范围(条件: string, 农历: 农历日期): boolean {
   const [起始文本, 结束原文, 多余部分] = 条件.split("至");
   if (!起始文本 || !结束原文 || 多余部分 !== undefined) return false;
   const 月名 = 农历月份.find((候选) => 起始文本.startsWith(候选));
-  if (!月名 || 月名 !== 农历.月名) return false;
+  if (!月名 || 月名 !== 规范配置月名(农历.月名)) return false;
 
   const 起始日 = 解析农历日(起始文本.slice(月名.length));
   const 结束文本 = 结束原文.startsWith(月名) ? 结束原文.slice(月名.length) : 结束原文;
@@ -40,7 +46,7 @@ function 匹配范围(条件: string, 农历: 农历日期): boolean {
 }
 
 function 匹配条件(条件: string, 农历: 农历日期): boolean {
-  if (条件 === `${农历.月名}${农历.日名}`) return true;
+  if (条件 === `${规范配置月名(农历.月名)}${农历.日名}`) return true;
   if (条件 === `每月${农历.日名}`) return true;
   return 条件.includes("至") && 匹配范围(条件, 农历);
 }
