@@ -27,14 +27,17 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toContain("color: var(--panel-muted)");
   });
 
-  it("农历标题右侧提供当前时间依据切换按钮", () => {
+  it("农历标题右侧提供北京时间和真太阳时的分段切换", () => {
     const 标题位置 = 页面源码.indexOf('class="lunar-title"');
-    const 按钮位置 = 页面源码.indexOf('class="time-basis-button"');
+    const 控件位置 = 页面源码.indexOf("${时间依据切换控件()}");
     const 公历位置 = 页面源码.indexOf("主日期控件(主日期值, 星期名称[所选.getDay()])");
-    expect(页面源码).toContain('data-action="time-basis"');
-    expect(按钮位置).toBeGreaterThan(标题位置);
-    expect(按钮位置).toBeLessThan(公历位置);
-    expect(页面源码).toContain("当前使用${当前时间依据}，点击切换为${切换目标}");
+    expect(页面源码).toContain('const 时间依据选项: ReadonlyArray<时间依据> = ["北京时间", "真太阳时"]');
+    expect(页面源码).toContain('data-time-basis="${选项}"');
+    expect(页面源码).toContain('aria-pressed="${当前时间依据 === 选项}"');
+    expect(控件位置).toBeGreaterThan(标题位置);
+    expect(控件位置).toBeLessThan(公历位置);
+    expect(页面样式).toMatch(/\.theme-switch,\s*\.time-basis-switch\s*\{[^}]*display:\s*inline-flex/u);
+    expect(页面样式).toContain(".time-basis-switch button");
   });
 
   it("左侧唯一公历输入紧凑可编辑并独立显示同步星期", () => {
@@ -197,7 +200,7 @@ describe("日期详情展示回归", () => {
     expect(首页源码.indexOf("traditional-calendar-theme")).toBeLessThan(首页源码.indexOf('src="/src/main.ts"'));
     expect(首页源码).toContain("document.documentElement.dataset.theme");
     expect(页面样式).toContain(':root[data-theme="dark"]');
-    expect(页面样式).toMatch(/\.theme-switch\s*\{[^}]*display:\s*inline-flex/u);
+    expect(页面样式).toMatch(/\.theme-switch,\s*\.time-basis-switch\s*\{[^}]*display:\s*inline-flex/u);
   });
 
   it("移动端源码顺序为核心详情、右栏工具、辅助计算", () => {
@@ -289,7 +292,7 @@ describe("日期详情展示回归", () => {
   });
 
   it("左侧快捷按钮共用前一天今天后一天逻辑并保持既有实时模式", () => {
-    const 快捷处理 = 页面源码.match(/case "previous-day":[\s\S]*?case "time-basis"/u)?.[0] ?? "";
+    const 快捷处理 = 页面源码.match(/case "previous-day":[\s\S]*?case "locate"/u)?.[0] ?? "";
     expect(快捷处理).toContain("切换相邻主日期(-1)");
     expect(快捷处理).toContain("回到今天实时模式()");
     expect(快捷处理).toContain("切换相邻主日期(1)");
@@ -297,6 +300,15 @@ describe("日期详情展示回归", () => {
     expect(今日处理).toContain("时间查询 = 创建实时查询时间(当前北京时间)");
     expect(今日处理).toContain("手动查看时辰键 = null");
     expect(今日处理).not.toMatch(/当前时间依据\s*=|主题控制器/u);
+  });
+
+  it("浅色主题提亮暖色宣纸背景，深色主题变量保持原有配色", () => {
+    expect(页面样式).toMatch(/:root\s*\{[\s\S]*?--page:\s*#eadcc1;[\s\S]*?--surface:\s*#faf1e2;[\s\S]*?--panel:\s*#5d3026;/u);
+    const 深色主题 = 页面样式.match(/:root\[data-theme="dark"\]\s*\{[\s\S]*?\n\}/u)?.[0] ?? "";
+    expect(深色主题).toContain("--page: #120b08");
+    expect(深色主题).toContain("--surface: #1e1511");
+    expect(深色主题).toContain("--panel: #371914");
+    expect(深色主题).toContain("--gold: #c5a052");
   });
 
   it("清空或选回今天会恢复实时模式", () => {

@@ -127,6 +127,97 @@ for (const width of [1024, 1440] as const) {
   });
 }
 
+for (const width of [1440, 1024, 390, 320] as const) {
+  test(`WebKit ${width}px：时间模式分段控件完整可见且不产生横向滚动`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/");
+
+    const 选项 = page.locator("[data-time-basis]");
+    await expect(选项).toHaveCount(2);
+    await expect(选项.nth(0)).toHaveText("北京时间");
+    await expect(选项.nth(1)).toHaveText("真太阳时");
+    await expect(选项.nth(0)).toHaveAttribute("aria-pressed", "true");
+    expect(await page.locator(".time-basis-switch").evaluate((控件) => {
+      const 矩形 = 控件.getBoundingClientRect();
+      return 矩形.left >= -1
+        && 矩形.right <= document.documentElement.clientWidth + 1
+        && 控件.scrollWidth <= 控件.clientWidth + 1
+        && document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1;
+    })).toBe(true);
+  });
+}
+
+test("时间模式分段控件复用既有定位成功流程，并可切回北京时间", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition(成功: PositionCallback) {
+          成功({
+            coords: {
+              latitude: 39.9042,
+              longitude: 116.4074,
+              accuracy: 25,
+              altitude: null,
+              altitudeAccuracy: null,
+              heading: null,
+              speed: null,
+              toJSON: () => ({}),
+            },
+            timestamp: Date.now(),
+            toJSON: () => ({}),
+          });
+        },
+      },
+    });
+  });
+  await page.goto("/");
+
+  await page.locator('[data-time-basis="真太阳时"]').click();
+  await expect(page.locator('[data-time-basis="真太阳时"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".location-status")).toContainText("真太阳时");
+  await page.locator('[data-time-basis="北京时间"]').click();
+  await expect(page.locator('[data-time-basis="北京时间"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".location-status")).toContainText("北京时间");
+});
+
+test("真太阳时定位被拒绝后，分段控件同步回退北京时间", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition(_成功: PositionCallback, 失败: PositionErrorCallback) {
+          失败({ code: 1, message: "permission denied", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+        },
+      },
+    });
+  });
+  await page.goto("/");
+
+  await page.locator('[data-time-basis="真太阳时"]').click();
+  await expect(page.locator('[data-time-basis="北京时间"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[data-time-basis="真太阳时"]')).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator(".location-status")).toContainText("隐私与安全性");
+});
+
+for (const 场景 of [
+  { 偏好: "light", 系统主题: "dark", 实际主题: "light" },
+  { 偏好: "dark", 系统主题: "light", 实际主题: "dark" },
+  { 偏好: "system", 系统主题: "light", 实际主题: "light" },
+  { 偏好: "system", 系统主题: "dark", 实际主题: "dark" },
+] as const) {
+  test(`主题 ${场景.偏好}/${场景.系统主题} 下时间模式控件保持可见`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 场景.系统主题 });
+    await page.addInitScript((偏好) => localStorage.setItem("traditional-calendar-theme", 偏好), 场景.偏好);
+    await page.goto("/");
+
+    await expect(page.locator("html")).toHaveAttribute("data-theme", 场景.实际主题);
+    await expect(page.locator("[data-time-basis]")).toHaveCount(2);
+    await expect(page.locator('[data-time-basis="北京时间"]')).toBeVisible();
+    await expect(page.locator('[data-time-basis="真太阳时"]')).toBeVisible();
+  });
+}
+
 for (const width of [1024, 768, 390, 320] as const) {
   for (const theme of ["light", "dark"] as const) {
     test(`WebKit ${width}px ${theme}：本命下日明确显示年生人且北斗模块无溢出`, async ({ page }) => {

@@ -371,6 +371,15 @@ function 更新主题控件状态(): void {
   });
 }
 
+const 时间依据选项: ReadonlyArray<时间依据> = ["北京时间", "真太阳时"];
+
+function 时间依据切换控件(): string {
+  return `
+    <div class="time-basis-switch" role="group" aria-label="时间模式">
+      ${时间依据选项.map((选项) => `<button type="button" data-time-basis="${选项}" aria-pressed="${当前时间依据 === 选项}"${当前时间依据 === 选项 ? ' class="is-active"' : ""}${当前定位状态 === "定位中" ? " disabled" : ""}>${选项}</button>`).join("")}
+    </div>`;
+}
+
 function 规则标记(规则: 时辰规则判断): string {
   return `
     <div class="rule-result is-${规则.状态}">
@@ -576,7 +585,6 @@ function 渲染(): void {
     : "未取得定位，暂不计算";
   const 最终日期提示 = `${最终.日柱计算时间.年}年${最终.日柱计算时间.月}月${最终.日柱计算时间.日}日`;
   const 时间模式说明 = 时间查询.模式 === "实时" ? "实时更新" : "手动查询";
-  const 切换目标 = 当前时间依据 === "北京时间" ? "真太阳时" : "北京时间";
   const 全部时段 = 十二时辰.项目.flatMap((项目) => 项目.时段);
   const 查看时辰 = 选出查看时辰(全部时段, 手动查看时辰键);
   const 主日期值 = 格式化主日期值(所选);
@@ -594,13 +602,7 @@ function 渲染(): void {
           </div>
           <div class="lunar-title-row">
             <h2 class="lunar-title">${历法结果.农历.显示}</h2>
-            <button
-              class="time-basis-button"
-              type="button"
-              data-action="time-basis"
-              aria-label="当前使用${当前时间依据}，点击切换为${切换目标}"
-              ${当前定位状态 === "定位中" ? "disabled" : ""}
-            >${当前定位状态 === "定位中" ? "定位中…" : 当前时间依据}</button>
+            ${时间依据切换控件()}
           </div>
           ${主日期控件(主日期值, 星期名称[所选.getDay()])}
 
@@ -823,6 +825,24 @@ function 渲染(): void {
     return;
   }
 
+  const 目标时间依据 = 目标.dataset.timeBasis;
+  if (目标时间依据 === "北京时间" || 目标时间依据 === "真太阳时") {
+    if (目标时间依据 === 当前时间依据) return;
+    if (目标时间依据 === "北京时间") {
+      当前时间依据 = "北京时间";
+      定位说明 = 当前经度 === null ? "当前使用北京时间" : "定位成功，当前使用北京时间";
+      渲染();
+    } else if (当前经度 !== null) {
+      当前时间依据 = "真太阳时";
+      当前定位状态 = "成功";
+      定位说明 = "定位成功，当前使用真太阳时";
+      渲染();
+    } else {
+      await 请求定位(true);
+    }
+    return;
+  }
+
   if (目标.dataset.action === "bazi-locate") {
     await 请求八字定位();
     return;
@@ -863,21 +883,6 @@ function 渲染(): void {
     case "back-to-top":
       window.scrollTo({ top: 0, behavior: "smooth" });
       break;
-    case "time-basis": {
-      if (当前时间依据 === "真太阳时") {
-        当前时间依据 = "北京时间";
-        定位说明 = 当前经度 === null ? "当前使用北京时间" : "定位成功，当前使用北京时间";
-        渲染();
-      } else if (当前经度 !== null) {
-        当前时间依据 = "真太阳时";
-        当前定位状态 = "成功";
-        定位说明 = "定位成功，当前使用真太阳时";
-        渲染();
-      } else {
-        await 请求定位(true);
-      }
-      break;
-    }
     case "locate":
       await 请求定位(true);
       break;

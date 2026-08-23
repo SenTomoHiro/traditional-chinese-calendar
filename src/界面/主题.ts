@@ -103,6 +103,6 @@ export function 创建浏览器主题控制器(): 主题控制器 {
     根元素: document.documentElement,
     媒体查询: window.matchMedia("(prefers-color-scheme: dark)"),
     存储: window.localStorage,
-    更新主题色: (主题) => 主题色?.setAttribute("content", 主题 === "dark" ? "#120b08" : "#24140f"),
+    更新主题色: (主题) => 主题色?.setAttribute("content", 主题 === "dark" ? "#120b08" : "#eadcc1"),
   });
 }
