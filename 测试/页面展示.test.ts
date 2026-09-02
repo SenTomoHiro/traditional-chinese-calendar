@@ -68,7 +68,7 @@ describe("日期详情展示回归", () => {
     const 合并模块位置 = 页面源码.indexOf('class="calendar-info-grid"');
     const 值星位置 = 页面源码.indexOf('核心黄历项目("值日"');
     const 节气位置 = 页面源码.indexOf('日期信息项目("节气"');
-    const 节庆位置 = 页面源码.indexOf("日期事件栏.map");
+    const 节庆位置 = 页面源码.indexOf("神圣纪念信息项目(神圣纪念)");
     expect(四柱位置).toBeLessThan(合并模块位置);
     expect(值星位置).toBeLessThan(合并模块位置);
     expect(值星位置).toBeLessThan(节气位置);
@@ -277,7 +277,7 @@ describe("日期详情展示回归", () => {
     expect(页面源码).not.toContain('aria-label="月历日期快捷操作"');
     expect(页面源码).not.toContain('data-action="open-calendar-date"');
     expect(页面源码).not.toContain('data-calendar-date-dialog');
-    expect(页面源码).not.toContain(".showModal()");
+    expect(页面源码).not.toMatch(/calendar[^\n]*\.showModal\(\)/u);
     expect(页面源码).toContain('{ action: "previous-day", label: "上一天", text: "‹" }');
     expect(页面源码).toContain('{ action: "today", label: "返回今天", text: "今" }');
     expect(页面源码).toContain('{ action: "next-day", label: "下一天", text: "›" }');
@@ -353,8 +353,8 @@ describe("日期详情展示回归", () => {
 
   it("月历与详情都已接入节日和神圣纪念", () => {
     expect(页面源码).toContain("创建月历日期信息");
-    expect(页面源码).toContain("创建日期事件分栏");
-    expect(页面源码).toContain("日期事件栏.map");
+    expect(页面源码).toContain("神圣纪念信息项目(神圣纪念)");
+    expect(页面源码).toContain('日期信息项目("传统节日", 传统节日)');
   });
 
   it("月历固定三条信息区且超出后显示另N项", () => {
@@ -566,7 +566,7 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('<details class="calculation-details">');
     expect(页面源码).toContain("<summary>计算详情</summary>");
     expect(页面源码).not.toContain('<h2>时间与计算依据</h2>');
-    expect(页面源码).toContain("规则配置：已读取 ${配置结果.length} 个文件 · ${规则总数} 条规则");
+    expect(页面源码).toContain("规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则");
     expect(页面源码).not.toContain("<strong>传统规则配置</strong>");
   });
 });

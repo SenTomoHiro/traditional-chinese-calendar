@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { 解析配置 } from "../src/规则/配置读取";
+import { 解析神圣纪念与神仙资料 } from "../src/规则/神圣纪念与神仙资料";
 
 describe("中文配置读取", () => {
   it("解析中文冒号", () => {
@@ -39,6 +40,12 @@ describe("中文配置读取", () => {
 
     for (const 文件名 of 文件列表) {
       const 内容 = readFileSync(resolve(配置目录, 文件名), "utf8");
+      if (文件名 === "神圣纪念与神仙资料.txt") {
+        const 结果 = 解析神圣纪念与神仙资料(文件名, 内容);
+        expect(结果.人物.length, `${文件名} 应包含人物资料`).toBeGreaterThan(0);
+        expect(结果.错误, `${文件名} 不应包含格式错误`).toEqual([]);
+        continue;
+      }
       const 结果 = 解析配置(文件名, 内容);
       expect(结果.规则.length, `${文件名} 应至少包含一条规则`).toBeGreaterThan(0);
       expect(结果.错误, `${文件名} 不应包含格式错误`).toEqual([]);

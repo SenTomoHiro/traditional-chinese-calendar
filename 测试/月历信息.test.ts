@@ -3,11 +3,12 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { 创建月历日期信息, 格式化农历摘要, 生成月历事件展示 } from "../src/日历/月历信息";
 import { 解析北斗配置 } from "../src/规则/北斗";
-import { 读取全部配置, 解析配置 } from "../src/规则/配置读取";
+import { 读取全部配置 } from "../src/规则/配置读取";
+import { 解析神圣纪念与神仙资料 } from "../src/规则/神圣纪念与神仙资料";
 
-const 神圣纪念配置 = 解析配置(
-  "神圣纪念日.txt",
-  readFileSync(resolve(process.cwd(), "配置/神圣纪念日.txt"), "utf8"),
+const 神圣纪念配置 = 解析神圣纪念与神仙资料(
+  "神圣纪念与神仙资料.txt",
+  readFileSync(resolve(process.cwd(), "配置/神圣纪念与神仙资料.txt"), "utf8"),
 );
 const 北斗配置 = 解析北斗配置(读取全部配置()).配置;
 

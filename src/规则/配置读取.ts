@@ -57,9 +57,20 @@ export function 读取全部配置(): 配置解析结果[] {
   }) as Record<string, string>;
 
   return Object.entries(配置文本)
+    .filter(([路径]) => !路径.endsWith("/神圣纪念与神仙资料.txt"))
     .map(([路径, 文本]) => {
       const 文件名 = 路径.split("/").pop() ?? 路径;
       return 解析配置(文件名, 文本);
     })
     .sort((左, 右) => 左.文件名.localeCompare(右.文件名, "zh-CN"));
+}
+
+export function 读取原始配置(文件名: string): string | undefined {
+  const 配置文本 = import.meta.glob("../../配置/*.txt", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }) as Record<string, string>;
+
+  return Object.entries(配置文本).find(([路径]) => 路径.endsWith(`/${文件名}`))?.[1];
 }

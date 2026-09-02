@@ -18,8 +18,15 @@ import {
   type 定位结果,
   type 定位错误码,
 } from "./定位";
-import { 读取全部配置 } from "./规则/配置读取";
-import { 获取神圣纪念日 } from "./规则/神圣纪念日";
+import { 读取全部配置, 读取原始配置 } from "./规则/配置读取";
+import {
+  人物有前台内容,
+  获取神圣纪念日,
+  查找神仙人物,
+  解析神圣纪念与神仙资料,
+  type 当日神圣纪念,
+  type 神仙人物资料,
+} from "./规则/神圣纪念与神仙资料";
 import type { 时辰规则判断 } from "./规则/时辰规则";
 import type { 时辰概览段, 时辰概览项 } from "./历法/十二时辰";
 import {
@@ -36,7 +43,6 @@ import {
 } from "./实时历时";
 import { 格式化时分 } from "./历法/时间";
 import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
-import { 创建日期事件分栏 } from "./界面/详情布局";
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
@@ -103,11 +109,19 @@ let 主日期正在编辑 = false;
 let 主日期键盘编辑 = false;
 
 const 配置结果 = 读取全部配置();
+const 神圣纪念资料配置 = 解析神圣纪念与神仙资料(
+  "神圣纪念与神仙资料.txt",
+  读取原始配置("神圣纪念与神仙资料.txt") ?? "",
+);
 const 已解析时辰配置 = 初始化时辰配置(配置结果);
 const 北斗配置结果 = 解析北斗配置(配置结果);
-const 神圣纪念配置 = 配置结果.find((配置) => 配置.文件名 === "神圣纪念日.txt");
-const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0);
-const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0);
+const 神圣纪念事件总数 = 神圣纪念资料配置.人物.reduce((总数, 人物) => 总数 + 人物.纪念事件.length, 0)
+  + 神圣纪念资料配置.独立纪念事件.length;
+const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0)
+  + 神圣纪念资料配置.人物.length + 神圣纪念事件总数;
+const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0)
+  + 神圣纪念资料配置.错误.length;
+let 详情触发元素: HTMLElement | null = null;
 
 function 开始定位任务(): Promise<定位结果> {
   定位诊断 = {
@@ -282,6 +296,39 @@ function 转义HTML(文本: string): string {
   })[字符] ?? 字符);
 }
 
+function 转义属性(文本: string): string {
+  return 转义HTML(文本);
+}
+
+function 神圣纪念文本(纪念: 当日神圣纪念): string {
+  const 纪念文本 = 纪念.名称;
+  if (!纪念.人物 || !人物有前台内容(纪念.人物)) return 转义HTML(纪念文本);
+  const 候选名称 = [...new Set([纪念.人物.主名称, ...纪念.人物.匹配名称])]
+    .sort((左, 右) => 右.length - 左.length || 左.localeCompare(右, "zh-CN"));
+  const 匹配结果: Array<{ 开始: number; 结束: number }> = [];
+  for (let 位置 = 0; 位置 < 纪念文本.length;) {
+    const 名称 = 候选名称.find((候选) => 纪念文本.startsWith(候选, 位置));
+    if (!名称) {
+      位置 += 1;
+      continue;
+    }
+    匹配结果.push({ 开始: 位置, 结束: 位置 + 名称.length });
+    位置 += 名称.length;
+  }
+  if (匹配结果.length === 0) {
+    return `<button type="button" class="deity-link" data-deity-name="${转义属性(纪念.人物.主名称)}">${转义HTML(纪念文本)}</button>`;
+  }
+  let 位置 = 0;
+  let 结果 = "";
+  for (const 命中 of 匹配结果) {
+    结果 += 转义HTML(纪念文本.slice(位置, 命中.开始));
+    const 名称 = 转义HTML(纪念文本.slice(命中.开始, 命中.结束));
+    结果 += `<button type="button" class="deity-link" data-deity-name="${转义属性(纪念.人物.主名称)}">${名称}</button>`;
+    位置 = 命中.结束;
+  }
+  return `${结果}${转义HTML(纪念文本.slice(位置))}`;
+}
+
 function 日期信息项目(标题: string, 内容: string[]): string {
   return `
     <div class="calendar-info-item">
@@ -290,6 +337,70 @@ function 日期信息项目(标题: string, 内容: string[]): string {
         .map((名称) => `<span${名称 === "无" ? ' class="is-empty"' : ""}>${转义HTML(名称)}</span>`)
         .join("")}</div>
     </div>`;
+}
+
+function 神圣纪念信息项目(内容: 当日神圣纪念[]): string {
+  return `
+    <div class="calendar-info-item">
+      <h3>神圣纪念</h3>
+      <div class="calendar-info-values">${内容.length > 0
+        ? 内容.map((纪念) => `<span>${神圣纪念文本(纪念)}</span>`).join("")
+        : '<span class="is-empty">无</span>'}</div>
+    </div>`;
+}
+
+function 多行正文(文本: string): string {
+  return 文本
+    .split(/\r?\n[ \t]*\r?\n/u)
+    .map((段落) => `<p>${转义HTML(段落).replace(/\r?\n/gu, "<br>")}</p>`)
+    .join("");
+}
+
+function 神像地址(地址: string): string {
+  if (!地址.startsWith("/")) return 地址;
+  return `${import.meta.env.BASE_URL}${地址.slice(1)}`;
+}
+
+function 人物详情内容(人物: 神仙人物资料): string {
+  const 神像 = 人物.神像
+    ? `<figure class="deity-portrait"><img src="${转义属性(神像地址(人物.神像))}" alt="${转义属性(人物.主名称)}神像"></figure>`
+    : "";
+  const 宝诰 = 人物.宝诰
+    ? `<section class="deity-section deity-proclamation"><h3>${转义HTML(人物.宝诰标题 || "宝诰")}</h3>${多行正文(人物.宝诰)}</section>`
+    : "";
+  const 简介 = 人物.简介
+    ? `<section class="deity-section deity-introduction"><h3>简介</h3>${多行正文(人物.简介)}</section>`
+    : "";
+  const 出处 = 人物.宝诰 && 人物.宝诰出处
+    ? `<p class="deity-source">宝诰出处：${转义HTML(人物.宝诰出处)}</p>`
+    : "";
+  return `
+    <article class="deity-dialog-card${人物.神像 ? " has-portrait" : " is-text-only"}">
+      ${神像}
+      <div class="deity-dialog-content">
+        <header class="deity-dialog-heading">
+          <div><p>神圣人物</p><h2 id="deity-dialog-title">${转义HTML(人物.主名称)}</h2></div>
+          <button type="button" class="deity-dialog-close" data-action="close-deity" aria-label="关闭人物详情">×</button>
+        </header>
+        <div class="deity-dialog-scroll">${宝诰}${简介}${出处}</div>
+      </div>
+    </article>`;
+}
+
+function 打开人物详情(人物: 神仙人物资料, 触发元素: HTMLElement): void {
+  if (!人物有前台内容(人物)) return;
+  const 对话框 = 根节点.querySelector<HTMLDialogElement>("[data-deity-dialog]");
+  if (!对话框) return;
+  对话框.innerHTML = 人物详情内容(人物);
+  对话框.classList.toggle("is-text-only", !人物.神像);
+  详情触发元素 = 触发元素;
+  document.body.classList.add("deity-dialog-open");
+  对话框.showModal();
+  对话框.querySelector<HTMLButtonElement>("[data-action='close-deity']")?.focus();
+}
+
+function 关闭人物详情(对话框: HTMLDialogElement): void {
+  if (对话框.open) 对话框.close();
 }
 
 function 每日宜忌栏(标题: "日宜" | "日忌", 内容: string[], 类型: "good" | "bad"): string {
@@ -551,7 +662,7 @@ async function 请求八字定位(): Promise<void> {
 
 function 渲染(): void {
   const 月历格 = 创建月历格(状态.年, 状态.月);
-  const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念配置, 北斗配置结果.配置);
+  const 月历信息 = 创建月历日期信息(状态.年, 状态.月, 神圣纪念资料配置, 北斗配置结果.配置);
   const 所选 = 状态.所选日期;
   const [时文本, 分文本] = 时间查询.时间.split(":");
   const 北京时间 = 创建北京时间(
@@ -574,8 +685,7 @@ function 渲染(): void {
   const 错误总数 = 基础配置错误总数 + 时辰配置错误.length + 北斗配置结果.错误.length;
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
-  const 神圣纪念 = 获取神圣纪念日(神圣纪念配置, 历法结果.农历);
-  const 日期事件栏 = 创建日期事件分栏(神圣纪念, 传统节日);
+  const 神圣纪念 = 获取神圣纪念日(神圣纪念资料配置, 历法结果.农历);
   const 节气显示 = 历法结果.节气
     ? `${历法结果.节气.名称} · ${格式化时分(历法结果.节气)}`
     : "当日无节气";
@@ -624,7 +734,8 @@ function 渲染(): void {
 
           <section class="calendar-info-grid" aria-label="节气神圣纪念与传统节日">
             ${日期信息项目("节气", [核心节气显示])}
-            ${日期事件栏.map((栏) => 日期信息项目(栏.标题, 栏.事件)).join("")}
+            ${神圣纪念信息项目(神圣纪念)}
+            ${日期信息项目("传统节日", 传统节日)}
           </section>
 
           <section class="beidou-panel" aria-label="北斗">
@@ -721,13 +832,14 @@ function 渲染(): void {
           </details>
 
           <p class="config-status${错误总数 > 0 ? " has-error" : ""}">
-            规则配置：已读取 ${配置结果.length} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
+            规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
           </p>
         </section>
       </section>
 
     </main>
     <button type="button" class="back-to-top" data-action="back-to-top" aria-label="返回顶部" title="返回顶部">↑</button>
+    <dialog class="deity-dialog" data-deity-dialog aria-labelledby="deity-dialog-title"></dialog>
   `;
 }
 
@@ -816,8 +928,27 @@ function 渲染(): void {
 });
 
 根节点.addEventListener("click", async (事件) => {
-  const 目标 = (事件.target as HTMLElement).closest<HTMLButtonElement>("button");
+  const 事件目标 = 事件.target as HTMLElement;
+  const 对话框 = 事件目标.closest<HTMLDialogElement>("[data-deity-dialog]");
+  if (对话框 && 事件目标 === 对话框) {
+    关闭人物详情(对话框);
+    return;
+  }
+  const 目标 = 事件目标.closest<HTMLButtonElement>("button");
   if (!目标) return;
+
+  if (目标.dataset.action === "close-deity") {
+    const 当前对话框 = 目标.closest<HTMLDialogElement>("[data-deity-dialog]");
+    if (当前对话框) 关闭人物详情(当前对话框);
+    return;
+  }
+
+  const 人物主名称 = 目标.dataset.deityName;
+  if (人物主名称) {
+    const 人物 = 查找神仙人物(神圣纪念资料配置.人物, 人物主名称);
+    if (人物) 打开人物详情(人物, 目标);
+    return;
+  }
 
   if (是主题偏好(目标.dataset.themePreference)) {
     主题控制器.设置偏好(目标.dataset.themePreference);
@@ -889,6 +1020,13 @@ function 渲染(): void {
   }
 });
 
+根节点.addEventListener("close", (事件) => {
+  if (!(事件.target instanceof HTMLDialogElement) || !事件.target.matches("[data-deity-dialog]")) return;
+  document.body.classList.remove("deity-dialog-open");
+  详情触发元素?.focus();
+  详情触发元素 = null;
+}, true);
+
 渲染();
 
 const 分钟实时更新器 = 创建分钟实时更新器((当前毫秒) => {
@@ -897,7 +1035,7 @@ const 分钟实时更新器 = 创建分钟实时更新器((当前毫秒) => {
   今天 = 刷新结果.今天;
   if (!是同一天(状态.所选日期, 刷新结果.所选日期)) 状态 = 选择日期(状态, 刷新结果.所选日期);
   时间查询 = 刷新结果.时间查询;
-  if (刷新结果.需要渲染 && !主日期正在编辑) 渲染();
+  if (刷新结果.需要渲染 && !主日期正在编辑 && !根节点.querySelector("[data-deity-dialog][open]")) 渲染();
 });
 
 分钟实时更新器.启动();

@@ -1,0 +1,161 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import {
+  人物有前台内容,
+  获取神圣纪念日,
+  匹配神圣纪念人物,
+  查找神仙人物,
+  解析神圣纪念与神仙资料,
+} from "../src/规则/神圣纪念与神仙资料";
+
+const 配置文本 = readFileSync(resolve(process.cwd(), "配置/神圣纪念与神仙资料.txt"), "utf8");
+const 配置 = 解析神圣纪念与神仙资料("神圣纪念与神仙资料.txt", 配置文本);
+
+function 命中主名称(文本: string): string[] {
+  return 匹配神圣纪念人物(文本, 配置.人物).map((命中) => 命中.人物.主名称);
+}
+
+describe("神仙资料正式配置", () => {
+  it("完整解析全部人物块且主名称与别名均唯一", () => {
+    expect(配置.错误).toEqual([]);
+    expect(配置.人物).toHaveLength(147);
+    expect(new Set(配置.人物.map((人物) => 人物.主名称)).size).toBe(147);
+  });
+
+  it("统一配置完整承载人物、纪念事件与全部已选定宝诰", () => {
+    const 人物事件数 = 配置.人物.reduce((总数, 人物) => 总数 + 人物.纪念事件.length, 0);
+    expect(人物事件数).toBe(159);
+    expect(配置.独立纪念事件).toHaveLength(23);
+    expect(配置.人物.filter((人物) => 人物.宝诰)).toHaveLength(87);
+    expect(配置.人物.filter((人物) => 人物.宝诰标题 && !人物.宝诰)).toEqual([]);
+    expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(50);
+    expect(配置.人物.filter((人物) => !人物.神像 && !人物.宝诰 && !人物.简介)).toHaveLength(10);
+  });
+
+  it("锁定已确定宝诰版本的关键异文", () => {
+    const 正文 = (人物: string) => 查找神仙人物(配置.人物, 人物)?.宝诰 ?? "";
+    expect(正文("祖天师张道陵")).toContain("泰玄上相，扶教三天");
+    expect(正文("玄天上帝")).toContain("九天游奕使。佐天罡北极");
+    expect(正文("太乙救苦天尊")).toMatch(/青玄九阳上帝。$/u);
+    expect(正文("王灵官")).toMatch(/太乙雷神应化天尊。$/u);
+    expect(正文("九天应元雷声普化天尊")).toEqual(expect.stringContaining("以智慧力，而伏诸魔"));
+    expect(正文("九天应元雷声普化天尊")).toEqual(expect.stringContaining("运行三界"));
+    expect(正文("九天应元雷声普化天尊")).toEqual(expect.stringContaining("趺九凤"));
+    expect(正文("元始天尊")).toEqual(expect.stringContaining("开明三景，化生诸天"));
+    expect(正文("炳灵公")).toContain("降福降祥降福祉");
+    expect(正文("玉阳真人王处一")).toContain("道力监凝");
+    expect(正文("长真真人谭处端")).toContain("忍辱炼无明之火");
+  });
+
+  it("同一人物直接拥有多条纪念事件且运行时保留明确人物关系", () => {
+    const 紫微 = 查找神仙人物(配置.人物, "中天紫微北极大帝");
+    const 燃灯 = 查找神仙人物(配置.人物, "燃灯古佛");
+    expect(紫微?.纪念事件.map((事件) => 事件.名称)).toEqual(expect.arrayContaining(["紫微大帝圣诞", "中天紫微北极大帝下降"]));
+    expect(燃灯?.纪念事件.map((事件) => 事件.名称)).toEqual(expect.arrayContaining(["定光佛圣诞", "燃灯佛圣诞"]));
+    expect(获取神圣纪念日(配置, { 年: 2026, 月: 8, 日: 5, 月名: "八月", 日名: "初五", 是否闰月: false, 显示: "八月初五" }))
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ 名称: "北方雷祖圣诞", 人物: expect.objectContaining({ 主名称: "北方雷祖" }) }),
+        expect.objectContaining({ 名称: "雷声天帝下降", 人物: expect.objectContaining({ 主名称: "雷声天帝" }) }),
+      ]));
+  });
+
+  it("独立纪念不创建假人物且不会获得人物详情", () => {
+    const 事件 = 获取神圣纪念日(配置, { 年: 2026, 月: 5, 日: 5, 月名: "五月", 日名: "初五", 是否闰月: false, 显示: "五月初五" })
+      .find((项目) => 项目.名称 === "地腊之辰");
+    expect(事件).toEqual(expect.objectContaining({ 人物: null }));
+  });
+
+  it("迁移后旧配置已移除且不存在传统节日数据", () => {
+    expect(existsSync(resolve(process.cwd(), "配置/神圣纪念日.txt"))).toBe(false);
+    expect(existsSync(resolve(process.cwd(), "配置/神仙资料.txt"))).toBe(false);
+    expect(配置文本).not.toContain("民俗涅槃日（放生日）");
+    expect(配置文本).not.toMatch(/名称：(春节|端午节|中秋节)$/mu);
+  });
+
+  it("保留多行宝诰、简介、中文标点和原始段落", () => {
+    const 样例 = `【人物：测试人物】\n匹配名称：测试；长测试名\n神像：\n宝诰标题：测试宝诰\n宝诰出处：测试底本\n宝诰版本说明：测试版本\n【宝诰开始】\n第一行，中文标点。\n第二行。\n\n第二段。\n【宝诰结束】\n【简介开始】\n简介第一行。\n简介第二行。\n【简介结束】\n【人物结束】`;
+    const 结果 = 解析神圣纪念与神仙资料("样例.txt", 样例);
+    expect(结果.错误).toEqual([]);
+    expect(结果.人物[0].宝诰).toBe("第一行，中文标点。\n第二行。\n\n第二段。");
+    expect(结果.人物[0].简介).toBe("简介第一行。\n简介第二行。");
+  });
+
+  it("允许空字段并仅在神像、宝诰或简介非空时提供前台内容", () => {
+    const 空人物 = 查找神仙人物(配置.人物, "弥勒菩萨");
+    const 简介人物 = 查找神仙人物(配置.人物, "湛然天师张彦頨");
+    expect(空人物).toBeDefined();
+    expect(简介人物).toBeDefined();
+    expect(人物有前台内容(空人物!)).toBe(false);
+    expect(人物有前台内容(简介人物!)).toBe(true);
+  });
+
+  it("注释不参与解析，并明确报告跨人物重复别名", () => {
+    const 块 = (人物: string, 别名: string) => `【人物：${人物}】\n匹配名称：${别名}\n神像：\n宝诰标题：\n宝诰出处：\n宝诰版本说明：\n【宝诰开始】\n\n【宝诰结束】\n【简介开始】\n\n【简介结束】\n【人物结束】`;
+    const 结果 = 解析神圣纪念与神仙资料("重复.txt", `# 注释\n${块("甲", "同名")}\n${块("乙", "同名")}`);
+    expect(结果.人物).toHaveLength(2);
+    expect(结果.错误).toEqual([expect.objectContaining({ 信息: expect.stringContaining("匹配名称“同名”同时属于") })]);
+  });
+
+  it("明确报告不可解析日期、重复人物与重复正式纪念事件", () => {
+    const 人物块 = (名称: string, 日期: string) => `【人物：${名称}】\n匹配名称：${名称}\n【纪念事件】\n日期：${日期}\n名称：同名圣诞\n类型：圣诞\n【纪念结束】\n神像：\n宝诰标题：\n宝诰出处：\n宝诰版本说明：\n【宝诰开始】\n\n【宝诰结束】\n【简介开始】\n\n【简介结束】\n【人物结束】`;
+    const 错误日期 = 解析神圣纪念与神仙资料("错误日期.txt", 人物块("甲", "公历2026年1月1日"));
+    expect(错误日期.错误).toEqual(expect.arrayContaining([expect.objectContaining({ 信息: expect.stringContaining("日期格式无法解析") })]));
+
+    const 重复人物 = 解析神圣纪念与神仙资料("重复人物.txt", `${人物块("甲", "农历正月初一")}\n${人物块("甲", "农历正月初二")}`);
+    expect(重复人物.错误).toEqual(expect.arrayContaining([expect.objectContaining({ 信息: expect.stringContaining("人物主名称“甲”重复") })]));
+
+    const 重复事件 = 解析神圣纪念与神仙资料("重复事件.txt", `${人物块("甲", "农历正月初一")}\n${人物块("乙", "农历正月初一")}`);
+    expect(重复事件.错误).toEqual(expect.arrayContaining([expect.objectContaining({ 信息: expect.stringContaining("纪念事件“同名圣诞”重复") })]));
+  });
+});
+
+describe("神圣纪念人物最长匹配与同神异名", () => {
+  it("井泉龙王优先于短名龙王", () => {
+    const 命中 = 匹配神圣纪念人物("井泉龙王圣诞", 配置.人物);
+    expect(命中[0].匹配文本).toBe("井泉龙王");
+    expect(命中[0].人物.主名称).toBe("井泉龙王");
+  });
+
+  it.each([
+    ["马元帅圣诞", "五显华光大帝马元帅"],
+    ["华光大帝圣诞", "五显华光大帝马元帅"],
+    ["五显灵官圣诞", "五显华光大帝马元帅"],
+    ["玄天上帝飞升", "玄天上帝"],
+    ["真武大帝圣诞", "玄天上帝"],
+    ["佑圣真君圣诞", "玄天上帝"],
+    ["正一靖应真君圣诞", "祖天师张道陵"],
+    ["混元皇帝圣诞", "太上老君"],
+    ["西子帝君圣诞", "太上老君"],
+    ["刘真人圣诞", "长春真人刘渊然"],
+    ["昌福真君圣诞", "祠山大帝张渤"],
+    ["顶上娘娘圣诞", "碧霞元君"],
+    ["定光佛圣诞", "燃灯古佛"],
+    ["眼光娘娘圣诞", "眼光圣母惠照明目元君"],
+  ])("%s 映射为 %s", (文本, 主名称) => {
+    expect(命中主名称(文本)).toContain(主名称);
+  });
+
+  it("孙真人语境与药王孙真人严格分开", () => {
+    expect(命中主名称("苏门真人孙登圣诞")).toEqual(expect.arrayContaining(["苏门真人孙登"]));
+    expect(命中主名称("药王孙真人圣诞")).toEqual(["药王孙思邈"]);
+  });
+
+  it("葛雍、葛玄、谭处端与刘处玄严格分开", () => {
+    expect(new Set(命中主名称("中元护正真君葛雍圣诞"))).toEqual(new Set(["中元护正真君葛雍"]));
+    expect(new Set(命中主名称("葛孝先真人葛玄圣诞"))).toEqual(new Set(["葛仙翁葛玄"]));
+    expect(new Set(命中主名称("长真真人谭处端圣诞"))).toEqual(new Set(["长真真人谭处端"]));
+    expect(new Set(命中主名称("长生真人刘处玄圣诞"))).toEqual(new Set(["长生真人刘处玄"]));
+  });
+
+  it("雷祖、北方雷祖与雷声天帝严格分开", () => {
+    expect(new Set(命中主名称("九天应元雷声普化天尊雷祖圣诞"))).toEqual(new Set(["九天应元雷声普化天尊"]));
+    expect(命中主名称("北方雷祖圣诞")).toEqual(["北方雷祖"]);
+    expect(命中主名称("雷声天帝下降")).toEqual(["雷声天帝"]);
+  });
+
+  it("同一纪念文本中的不同人物分别命中", () => {
+    expect(命中主名称("关圣帝君与九天应元雷声普化天尊同日圣诞"))
+      .toEqual(expect.arrayContaining(["关圣帝君", "九天应元雷声普化天尊"]));
+  });
+});
