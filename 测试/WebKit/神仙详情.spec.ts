@@ -56,13 +56,20 @@ test("正式人物资料交互、同神异名、空详情和民俗栏目边界�
   await 选择日期(page, "2026-08-06");
   const 关帝按钮 = 神圣纪念栏(page).getByRole("button", { name: "关圣帝君", exact: true });
   await expect(关帝按钮).toBeVisible();
+  expect(await 关帝按钮.evaluate((元素) => {
+    const 样式 = getComputedStyle(元素);
+    return { 下划线: 样式.textDecorationLine, 下边框: 样式.borderBottomWidth, 鼠标: 样式.cursor, 颜色: 样式.color };
+  })).toEqual(expect.objectContaining({ 下划线: "none", 下边框: "0px", 鼠标: "pointer" }));
   await 打开人物(page, "关圣帝君");
   await expect(page.locator("#deity-dialog-title")).toHaveText("关圣帝君");
+  await expect(page.locator(".deity-dialog-heading > div > p")).toHaveText("神圣纪念详情");
+  await expect(page.locator("body")).not.toContainText("仙真纪念");
+  await expect(page.locator("body")).not.toContainText("仙真详情");
   await expect(page.locator(".deity-proclamation")).toContainText("关圣帝君宝诰");
-  await expect(page.locator(".deity-source")).toContainText("关帝宝忏体系");
+  await expect(page.locator(".deity-source")).toContainText("《宝诰大全·关圣帝君宝诰》");
   await expect(page.locator(".deity-introduction")).toHaveCount(0);
   await expect(page.locator("body")).toHaveClass(/deity-dialog-open/u);
-  await page.getByRole("button", { name: "关闭人物详情" }).click();
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
   await expect(关帝按钮).toBeFocused();
   await expect(page.locator("body")).not.toHaveClass(/deity-dialog-open/u);
 
@@ -74,14 +81,14 @@ test("正式人物资料交互、同神异名、空详情和民俗栏目边界�
   await 选择日期(page, "2026-03-03");
   await 打开人物(page, "佑圣真君");
   await expect(page.locator("#deity-dialog-title")).toHaveText("玄天上帝");
-  await page.getByRole("button", { name: "关闭人物详情" }).click();
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
 
   await 选择日期(page, "2026-07-02");
   await 打开人物(page, "湛然天师");
   await expect(page.locator(".deity-introduction")).toContainText("第四十八代天师");
   await expect(page.locator(".deity-proclamation")).toHaveCount(0);
   await expect(page.locator(".deity-source")).toHaveCount(0);
-  await page.getByRole("button", { name: "关闭人物详情" }).click();
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
 
   await 选择日期(page, "2026-08-06");
   await 打开人物(page, "关圣帝君");
@@ -91,7 +98,10 @@ test("正式人物资料交互、同神异名、空详情和民俗栏目边界�
 
   await 选择日期(page, "2026-02-17");
   await expect(神圣纪念栏(page)).toContainText("弥勒佛圣诞");
-  await expect(神圣纪念栏(page).getByRole("button", { name: /弥勒/u })).toHaveCount(0);
+  await 打开人物(page, "弥勒佛");
+  await expect(page.locator(".deity-introduction")).toContainText("未来于此世界成佛");
+  await expect(page.locator(".deity-proclamation")).toHaveCount(0);
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
 
   await 选择日期(page, "2026-11-16");
   const 传统节日栏 = page.locator(".calendar-info-item").filter({ has: page.getByRole("heading", { name: "传统节日", exact: true }) });
@@ -99,9 +109,42 @@ test("正式人物资料交互、同神异名、空详情和民俗栏目边界�
   await expect(神圣纪念栏(page)).not.toContainText("民俗涅槃日（放生日）");
   await expect(page.getByRole("button", { name: "民俗涅槃日（放生日）", exact: true })).toHaveCount(0);
 
+  await 选择日期(page, "2026-05-31");
+  await expect(传统节日栏).toContainText("佛吉祥日（卫塞节）");
+  await expect(神圣纪念栏(page)).not.toContainText("佛吉祥日（卫塞节）");
+  await expect(page.getByRole("button", { name: "佛吉祥日（卫塞节）", exact: true })).toHaveCount(0);
+
   expect(控制台错误).toEqual([]);
   expect(页面错误).toEqual([]);
   expect(资源404).toEqual([]);
+});
+
+test("人物绑定纪念与无人物宗教纪日均可打开非空详情", async ({ page }) => {
+  await page.goto("/");
+
+  await 选择日期(page, "2026-09-25");
+  await 打开人物(page, "太阴朝元之辰");
+  await expect(page.locator("#deity-dialog-title")).toHaveText("太阴星君");
+  await expect(page.locator(".deity-proclamation")).toContainText("太阴皇君诰");
+  await expect(page.locator(".commemoration-introduction")).toContainText("朝元之辰");
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
+
+  await 选择日期(page, "2026-02-17");
+  await 打开人物(page, "天腊之辰");
+  await expect(page.locator("#deity-dialog-title")).toHaveText("天腊之辰");
+  await expect(page.locator(".commemoration-introduction")).toContainText("五腊之首");
+  await expect(page.locator(".deity-proclamation")).toHaveCount(0);
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
+
+  await 选择日期(page, "2030-02-02");
+  await 打开人物(page, "诸佛下界探访善恶");
+  await expect(page.locator(".commemoration-introduction")).toContainText("岁末诸佛下界");
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
+
+  await 选择日期(page, "2027-01-08");
+  await 打开人物(page, "念经一卷胜常日");
+  await expect(page.locator(".commemoration-introduction")).toContainText("不应理解为现代可验证的客观功德倍数");
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
 });
 
 for (const 场景 of [
@@ -117,7 +160,7 @@ for (const 场景 of [
     await 打开人物(page, "关圣帝君");
     await expect(page.locator("html")).toHaveAttribute("data-theme", 场景.实际主题);
     await expect(page.locator(".deity-dialog-card")).toBeVisible();
-    await expect(page.getByRole("button", { name: "关闭人物详情" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "关闭神圣纪念详情" })).toBeVisible();
   });
 }
 
@@ -193,7 +236,7 @@ for (const 场景 of [
         && Boolean(简介.compareDocumentPosition(来源) & Node.DOCUMENT_POSITION_FOLLOWING);
     })).toBe(true);
 
-    await page.getByRole("button", { name: "关闭人物详情" }).click();
+    await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
     await 打开人物(page, "关圣帝君");
     expect(await page.locator(".deity-dialog-scroll").evaluate((元素) => 元素.scrollTop)).toBe(0);
   });

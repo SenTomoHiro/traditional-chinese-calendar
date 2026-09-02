@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   人物有前台内容,
+  纪念有前台内容,
+  获取全部神圣纪念,
   获取神圣纪念日,
   匹配神圣纪念人物,
   查找神仙人物,
@@ -19,18 +21,18 @@ function 命中主名称(文本: string): string[] {
 describe("神仙资料正式配置", () => {
   it("完整解析全部人物块且主名称与别名均唯一", () => {
     expect(配置.错误).toEqual([]);
-    expect(配置.人物).toHaveLength(147);
-    expect(new Set(配置.人物.map((人物) => 人物.主名称)).size).toBe(147);
+    expect(配置.人物).toHaveLength(151);
+    expect(new Set(配置.人物.map((人物) => 人物.主名称)).size).toBe(151);
   });
 
   it("统一配置完整承载人物、纪念事件与全部已选定宝诰", () => {
     const 人物事件数 = 配置.人物.reduce((总数, 人物) => 总数 + 人物.纪念事件.length, 0);
-    expect(人物事件数).toBe(159);
+    expect(人物事件数).toBe(158);
     expect(配置.独立纪念事件).toHaveLength(23);
-    expect(配置.人物.filter((人物) => 人物.宝诰)).toHaveLength(87);
+    expect(配置.人物.filter((人物) => 人物.宝诰)).toHaveLength(91);
     expect(配置.人物.filter((人物) => 人物.宝诰标题 && !人物.宝诰)).toEqual([]);
-    expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(50);
-    expect(配置.人物.filter((人物) => !人物.神像 && !人物.宝诰 && !人物.简介)).toHaveLength(10);
+    expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(64);
+    expect(配置.人物.filter((人物) => !人物.神像 && !人物.宝诰 && !人物.简介)).toHaveLength(0);
   });
 
   it("锁定已确定宝诰版本的关键异文", () => {
@@ -46,6 +48,23 @@ describe("神仙资料正式配置", () => {
     expect(正文("炳灵公")).toContain("降福降祥降福祉");
     expect(正文("玉阳真人王处一")).toContain("道力监凝");
     expect(正文("长真真人谭处端")).toContain("忍辱炼无明之火");
+    expect(正文("大成至圣先师孔子")).toContain("系易执礼");
+    expect(正文("大成至圣先师孔子")).toContain("孝义之经");
+    expect(正文("大成至圣先师孔子")).not.toMatch(/繁易执礼|孝父之经/u);
+    expect(正文("太阳星君")).toMatch(/太阳.*天尊。$/u);
+    expect(正文("太阴星君")).toMatch(/太阴.*天尊。$/u);
+    expect(正文("北斗九皇")).toContain("北斗九皇赐福星君");
+    expect(正文("南斗六司延寿星君")).toContain("南斗六司，延寿星君");
+  });
+
+  it("91篇宝诰均有中文句读、完整结句和具体出处", () => {
+    const 宝诰人物 = 配置.人物.filter((人物) => 人物.宝诰);
+    const 异常 = 宝诰人物.filter((人物) => {
+      const 标点数 = 人物.宝诰.match(/[，。；：！？]/gu)?.length ?? 0;
+      return 标点数 < 3 || !人物.宝诰.endsWith("。") || !人物.宝诰出处 || /^(?:通行本|道门通行本|现行功课体系)$/u.test(人物.宝诰出处);
+    }).map((人物) => 人物.主名称);
+    expect(异常, `宝诰句读或出处异常：${异常.join("、")}`).toEqual([]);
+    expect(配置文本).not.toMatch(/九州岛都仙太史|金鞭银闲|配位与于|鼓明庻|德惠龎弘|开明幽壌|行健于成干/u);
   });
 
   it("同一人物直接拥有多条纪念事件且运行时保留明确人物关系", () => {
@@ -60,10 +79,44 @@ describe("神仙资料正式配置", () => {
       ]));
   });
 
-  it("独立纪念不创建假人物且不会获得人物详情", () => {
+  it("独立纪念不创建假人物并使用事件级详情", () => {
     const 事件 = 获取神圣纪念日(配置, { 年: 2026, 月: 5, 日: 5, 月名: "五月", 日名: "初五", 是否闰月: false, 显示: "五月初五" })
       .find((项目) => 项目.名称 === "地腊之辰");
     expect(事件).toEqual(expect.objectContaining({ 人物: null }));
+    expect(事件?.事件.纪念简介).toContain("五腊");
+    expect(纪念有前台内容(事件!)).toBe(true);
+  });
+
+  it("全部181条神圣纪念详情覆盖率为100%", () => {
+    const 全部 = 获取全部神圣纪念(配置);
+    const 缺失 = 全部
+      .filter((纪念) => !纪念有前台内容(纪念))
+      .map((纪念) => `${纪念.事件.日期.原文} ${纪念.名称}`);
+    expect(全部).toHaveLength(181);
+    expect(缺失, `缺少详情的神圣纪念：\n${缺失.join("\n")}`).toEqual([]);
+  });
+
+  it("人物型、跨人物绑定和纯事件型详情均能解析", () => {
+    const 全部 = 获取全部神圣纪念(配置);
+    expect(全部.find((纪念) => 纪念.名称 === "太阴朝元之辰"))
+      .toEqual(expect.objectContaining({ 人物: expect.objectContaining({ 主名称: "太阴星君" }) }));
+    expect(全部.find((纪念) => 纪念.名称 === "南斗下降"))
+      .toEqual(expect.objectContaining({ 人物: expect.objectContaining({ 主名称: "南斗六司延寿星君" }) }));
+    expect(全部.find((纪念) => 纪念.名称 === "诸佛下界探访善恶"))
+      .toEqual(expect.objectContaining({ 人物: null, 事件: expect.objectContaining({ 纪念简介: expect.any(String) }) }));
+  });
+
+  it("所有“之辰”与重点修持纪日均留在神圣纪念并有详情", () => {
+    const 全部 = 获取全部神圣纪念(配置);
+    const 之辰 = 全部.filter((纪念) => 纪念.名称.includes("之辰"));
+    expect(之辰.length).toBeGreaterThanOrEqual(10);
+    expect(之辰.every(纪念有前台内容)).toBe(true);
+    for (const 名称 of [
+      "诸佛下界探访善恶", "显大神通降魔", "天地主炁及造化万物之辰",
+      "南瞻部洲转大法轮", "念经一卷胜常日",
+    ]) {
+      expect(全部.find((纪念) => 纪念.名称 === 名称)?.事件.纪念简介, 名称).toBeTruthy();
+    }
   });
 
   it("迁移后旧配置已移除且不存在传统节日数据", () => {
@@ -81,13 +134,21 @@ describe("神仙资料正式配置", () => {
     expect(结果.人物[0].简介).toBe("简介第一行。\n简介第二行。");
   });
 
-  it("允许空字段并仅在神像、宝诰或简介非空时提供前台内容", () => {
-    const 空人物 = 查找神仙人物(配置.人物, "弥勒菩萨");
+  it("允许空字段；人物补入简介后自动获得前台内容", () => {
+    const 佛教人物 = 查找神仙人物(配置.人物, "弥勒菩萨");
     const 简介人物 = 查找神仙人物(配置.人物, "湛然天师张彦頨");
-    expect(空人物).toBeDefined();
+    expect(佛教人物).toBeDefined();
     expect(简介人物).toBeDefined();
-    expect(人物有前台内容(空人物!)).toBe(false);
+    expect(人物有前台内容(佛教人物!)).toBe(true);
     expect(人物有前台内容(简介人物!)).toBe(true);
+  });
+
+  it("事件详情人物必须引用正式人物主名称", () => {
+    const 样例 = `【人物：甲】\n匹配名称：甲\n神像：\n宝诰标题：\n宝诰出处：\n宝诰版本说明：\n【宝诰开始】\n\n【宝诰结束】\n【简介开始】\n甲简介\n【简介结束】\n【人物结束】\n\n【独立纪念事件】\n日期：农历正月初一\n名称：测试纪念\n类型：宗教纪念\n详情人物：不存在人物\n【纪念简介开始】\n事件简介\n【纪念简介结束】\n【独立纪念结束】`;
+    const 结果 = 解析神圣纪念与神仙资料("引用.txt", 样例);
+    expect(结果.错误).toEqual(expect.arrayContaining([
+      expect.objectContaining({ 信息: expect.stringContaining("引用了不存在的人物") }),
+    ]));
   });
 
   it("注释不参与解析，并明确报告跨人物重复别名", () => {

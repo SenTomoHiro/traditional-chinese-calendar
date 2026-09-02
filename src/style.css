@@ -905,18 +905,22 @@ button:focus-visible {
   color: var(--gold-soft);
   background: transparent;
   border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--gold-soft) 45%, transparent);
   border-radius: 0;
   font: inherit;
   line-height: inherit;
   text-align: inherit;
+  text-decoration: none;
   cursor: pointer;
-  transition: color 120ms ease, border-color 120ms ease;
+  transition: color 120ms ease, filter 120ms ease;
 }
 
 .deity-link:hover {
   color: #f3d98e;
-  border-bottom-color: currentColor;
+  filter: brightness(1.08);
+}
+
+.deity-link:active {
+  filter: brightness(1.18);
 }
 
 body.deity-dialog-open {

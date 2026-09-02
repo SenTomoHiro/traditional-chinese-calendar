@@ -20,12 +20,10 @@ import {
 } from "./定位";
 import { 读取全部配置, 读取原始配置 } from "./规则/配置读取";
 import {
-  人物有前台内容,
+  纪念有前台内容,
   获取神圣纪念日,
-  查找神仙人物,
   解析神圣纪念与神仙资料,
   type 当日神圣纪念,
-  type 神仙人物资料,
 } from "./规则/神圣纪念与神仙资料";
 import type { 时辰规则判断 } from "./规则/时辰规则";
 import type { 时辰概览段, 时辰概览项 } from "./历法/十二时辰";
@@ -122,6 +120,7 @@ const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规
 const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0)
   + 神圣纪念资料配置.错误.length;
 let 详情触发元素: HTMLElement | null = null;
+let 当前神圣纪念详情: 当日神圣纪念[] = [];
 
 function 开始定位任务(): Promise<定位结果> {
   定位诊断 = {
@@ -300,9 +299,14 @@ function 转义属性(文本: string): string {
   return 转义HTML(文本);
 }
 
-function 神圣纪念文本(纪念: 当日神圣纪念): string {
+function 纪念详情按钮(内容: string, 索引: number): string {
+  return `<button type="button" class="deity-link" data-sacred-commemoration="${索引}">${内容}</button>`;
+}
+
+function 神圣纪念文本(纪念: 当日神圣纪念, 索引: number): string {
   const 纪念文本 = 纪念.名称;
-  if (!纪念.人物 || !人物有前台内容(纪念.人物)) return 转义HTML(纪念文本);
+  if (!纪念有前台内容(纪念)) return 转义HTML(纪念文本);
+  if (!纪念.人物) return 纪念详情按钮(转义HTML(纪念文本), 索引);
   const 候选名称 = [...new Set([纪念.人物.主名称, ...纪念.人物.匹配名称])]
     .sort((左, 右) => 右.length - 左.length || 左.localeCompare(右, "zh-CN"));
   const 匹配结果: Array<{ 开始: number; 结束: number }> = [];
@@ -316,14 +320,14 @@ function 神圣纪念文本(纪念: 当日神圣纪念): string {
     位置 += 名称.length;
   }
   if (匹配结果.length === 0) {
-    return `<button type="button" class="deity-link" data-deity-name="${转义属性(纪念.人物.主名称)}">${转义HTML(纪念文本)}</button>`;
+    return 纪念详情按钮(转义HTML(纪念文本), 索引);
   }
   let 位置 = 0;
   let 结果 = "";
   for (const 命中 of 匹配结果) {
     结果 += 转义HTML(纪念文本.slice(位置, 命中.开始));
     const 名称 = 转义HTML(纪念文本.slice(命中.开始, 命中.结束));
-    结果 += `<button type="button" class="deity-link" data-deity-name="${转义属性(纪念.人物.主名称)}">${名称}</button>`;
+    结果 += 纪念详情按钮(名称, 索引);
     位置 = 命中.结束;
   }
   return `${结果}${转义HTML(纪念文本.slice(位置))}`;
@@ -340,11 +344,12 @@ function 日期信息项目(标题: string, 内容: string[]): string {
 }
 
 function 神圣纪念信息项目(内容: 当日神圣纪念[]): string {
+  当前神圣纪念详情 = 内容;
   return `
     <div class="calendar-info-item">
       <h3>神圣纪念</h3>
       <div class="calendar-info-values">${内容.length > 0
-        ? 内容.map((纪念) => `<span>${神圣纪念文本(纪念)}</span>`).join("")
+        ? 内容.map((纪念, 索引) => `<span>${神圣纪念文本(纪念, 索引)}</span>`).join("")
         : '<span class="is-empty">无</span>'}</div>
     </div>`;
 }
@@ -361,38 +366,43 @@ function 神像地址(地址: string): string {
   return `${import.meta.env.BASE_URL}${地址.slice(1)}`;
 }
 
-function 人物详情内容(人物: 神仙人物资料): string {
-  const 神像 = 人物.神像
+function 神圣纪念详情内容(纪念: 当日神圣纪念): string {
+  const 人物 = 纪念.人物;
+  const 神像 = 人物?.神像
     ? `<figure class="deity-portrait"><img src="${转义属性(神像地址(人物.神像))}" alt="${转义属性(人物.主名称)}神像"></figure>`
     : "";
-  const 宝诰 = 人物.宝诰
+  const 宝诰 = 人物?.宝诰
     ? `<section class="deity-section deity-proclamation"><h3>${转义HTML(人物.宝诰标题 || "宝诰")}</h3>${多行正文(人物.宝诰)}</section>`
     : "";
-  const 简介 = 人物.简介
-    ? `<section class="deity-section deity-introduction"><h3>简介</h3>${多行正文(人物.简介)}</section>`
+  const 简介 = 人物?.简介
+    ? `<section class="deity-section deity-introduction"><h3>人物简介</h3>${多行正文(人物.简介)}</section>`
     : "";
-  const 出处 = 人物.宝诰 && 人物.宝诰出处
+  const 纪念简介 = 纪念.事件.纪念简介
+    ? `<section class="deity-section commemoration-introduction"><h3>纪念简介</h3>${多行正文(纪念.事件.纪念简介)}</section>`
+    : "";
+  const 出处 = 人物?.宝诰 && 人物.宝诰出处
     ? `<p class="deity-source">宝诰出处：${转义HTML(人物.宝诰出处)}</p>`
     : "";
+  const 标题 = 人物?.主名称 || 纪念.名称;
   return `
-    <article class="deity-dialog-card${人物.神像 ? " has-portrait" : " is-text-only"}">
+    <article class="deity-dialog-card${人物?.神像 ? " has-portrait" : " is-text-only"}">
       ${神像}
       <div class="deity-dialog-content">
         <header class="deity-dialog-heading">
-          <div><p>神圣人物</p><h2 id="deity-dialog-title">${转义HTML(人物.主名称)}</h2></div>
-          <button type="button" class="deity-dialog-close" data-action="close-deity" aria-label="关闭人物详情">×</button>
+          <div><p>神圣纪念详情</p><h2 id="deity-dialog-title">${转义HTML(标题)}</h2></div>
+          <button type="button" class="deity-dialog-close" data-action="close-deity" aria-label="关闭神圣纪念详情">×</button>
         </header>
-        <div class="deity-dialog-scroll">${宝诰}${简介}${出处}</div>
+        <div class="deity-dialog-scroll">${宝诰}${简介}${纪念简介}${出处}</div>
       </div>
     </article>`;
 }
 
-function 打开人物详情(人物: 神仙人物资料, 触发元素: HTMLElement): void {
-  if (!人物有前台内容(人物)) return;
+function 打开神圣纪念详情(纪念: 当日神圣纪念, 触发元素: HTMLElement): void {
+  if (!纪念有前台内容(纪念)) return;
   const 对话框 = 根节点.querySelector<HTMLDialogElement>("[data-deity-dialog]");
   if (!对话框) return;
-  对话框.innerHTML = 人物详情内容(人物);
-  对话框.classList.toggle("is-text-only", !人物.神像);
+  对话框.innerHTML = 神圣纪念详情内容(纪念);
+  对话框.classList.toggle("is-text-only", !纪念.人物?.神像);
   详情触发元素 = 触发元素;
   document.body.classList.add("deity-dialog-open");
   对话框.showModal();
@@ -943,10 +953,10 @@ function 渲染(): void {
     return;
   }
 
-  const 人物主名称 = 目标.dataset.deityName;
-  if (人物主名称) {
-    const 人物 = 查找神仙人物(神圣纪念资料配置.人物, 人物主名称);
-    if (人物) 打开人物详情(人物, 目标);
+  const 纪念索引文本 = 目标.dataset.sacredCommemoration;
+  if (纪念索引文本 !== undefined) {
+    const 纪念 = 当前神圣纪念详情[Number(纪念索引文本)];
+    if (纪念) 打开神圣纪念详情(纪念, 目标);
     return;
   }
 

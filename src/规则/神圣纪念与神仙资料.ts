@@ -11,6 +11,9 @@ export interface 神圣纪念事件 {
   日期: 神圣纪念日期;
   名称: string;
   类型: string;
+  详情人物名称: string;
+  纪念简介: string;
+  纪念简介出处: string;
 }
 
 export interface 神仙人物资料 {
@@ -23,6 +26,8 @@ export interface 神仙人物资料 {
   宝诰版本说明: string;
   宝诰: string;
   简介: string;
+  简介出处: string;
+  参校来源: string;
 }
 
 export interface 神仙资料错误 {
@@ -42,6 +47,7 @@ export interface 当日神圣纪念 {
   名称: string;
   类型: string;
   人物: 神仙人物资料 | null;
+  事件: 神圣纪念事件;
 }
 
 export interface 神仙人物匹配 {
@@ -51,7 +57,9 @@ export interface 神仙人物匹配 {
   人物: 神仙人物资料;
 }
 
-const 单行字段 = ["匹配名称", "神像", "宝诰标题", "宝诰出处", "宝诰版本说明"] as const;
+const 必需单行字段 = ["匹配名称", "神像", "宝诰标题", "宝诰出处", "宝诰版本说明"] as const;
+const 可选人物单行字段 = ["简介出处", "参校来源"] as const;
+const 人物单行字段 = [...必需单行字段, ...可选人物单行字段] as const;
 const 月份 = new Map([
   ["正月", 1], ["一月", 1], ["二月", 2], ["三月", 3], ["四月", 4], ["五月", 5], ["六月", 6],
   ["七月", 7], ["八月", 8], ["九月", 9], ["十月", 10], ["十一月", 11], ["冬月", 11],
@@ -67,12 +75,12 @@ function 行号(文本: string, 位置: number): number {
   return 文本.slice(0, 位置).split(/\r?\n/u).length;
 }
 
-function 读取单行(块: string, 字段: typeof 单行字段[number]): string | null {
+function 读取单行(块: string, 字段: typeof 人物单行字段[number]): string | null {
   return 块.match(new RegExp(`^${字段}：(.*)$`, "mu"))?.[1].trim() ?? null;
 }
 
-function 读取事件字段(块: string, 字段: "日期" | "名称" | "类型"): string | null {
-  return 块.match(new RegExp(`^${字段}：(.+)$`, "mu"))?.[1].trim() ?? null;
+function 读取事件字段(块: string, 字段: "日期" | "名称" | "类型" | "详情人物" | "纪念简介出处"): string | null {
+  return 块.match(new RegExp(`^${字段}：(.*)$`, "mu"))?.[1].trim() ?? null;
 }
 
 function 读取多行(块: string, 开始标记: string, 结束标记: string): string | null {
@@ -110,6 +118,9 @@ function 解析纪念事件(
   const 日期文本 = 读取事件字段(块, "日期");
   const 名称 = 读取事件字段(块, "名称");
   const 类型 = 读取事件字段(块, "类型");
+  const 详情人物名称 = 读取事件字段(块, "详情人物") ?? "";
+  const 纪念简介 = 读取多行(块, "纪念简介开始", "纪念简介结束") ?? "";
+  const 纪念简介出处 = 读取事件字段(块, "纪念简介出处") ?? "";
   const 当前行号 = 行号(全文, 块位置);
   if (!日期文本 || !名称 || !类型) {
     错误.push({ 文件名, 行号: 当前行号, 信息: "纪念事件必须完整填写日期、名称和类型" });
@@ -120,7 +131,7 @@ function 解析纪念事件(
     错误.push({ 文件名, 行号: 当前行号, 信息: `纪念事件日期格式无法解析：${日期文本}` });
     return null;
   }
-  return { 日期: 解析日期, 名称, 类型 };
+  return { 日期: 解析日期, 名称, 类型, 详情人物名称, 纪念简介, 纪念简介出处 };
 }
 
 function 解析人物纪念事件(
@@ -144,6 +155,10 @@ export function 人物有前台内容(人物: 神仙人物资料): boolean {
   return Boolean(人物.神像 || 人物.宝诰 || 人物.简介);
 }
 
+export function 纪念有前台内容(纪念: 当日神圣纪念): boolean {
+  return Boolean(纪念.事件.纪念简介 || (纪念.人物 && 人物有前台内容(纪念.人物)));
+}
+
 export function 解析神圣纪念与神仙资料(文件名: string, 文本: string): 神圣纪念资料解析结果 {
   const 结果: 神圣纪念资料解析结果 = { 文件名, 人物: [], 独立纪念事件: [], 错误: [] };
   const 块模式 = /^【人物：([^】\r\n]+)】[ \t]*\r?\n([\s\S]*?)^【人物结束】[ \t]*$/gmu;
@@ -162,8 +177,8 @@ export function 解析神圣纪念与神仙资料(文件名: string, 文本: str
     }
     主名称索引.set(主名称, 起始行);
 
-    const 字段值 = Object.fromEntries(单行字段.map((字段) => [字段, 读取单行(块, 字段)])) as Record<typeof 单行字段[number], string | null>;
-    for (const 字段 of 单行字段) {
+    const 字段值 = Object.fromEntries(人物单行字段.map((字段) => [字段, 读取单行(块, 字段)])) as Record<typeof 人物单行字段[number], string | null>;
+    for (const 字段 of 必需单行字段) {
       if (字段值[字段] === null) 结果.错误.push({ 文件名, 行号: 起始行, 信息: `人物“${主名称}”缺少“${字段}”字段` });
     }
     const 宝诰 = 读取多行(块, "宝诰开始", "宝诰结束");
@@ -181,6 +196,8 @@ export function 解析神圣纪念与神仙资料(文件名: string, 文本: str
       宝诰版本说明: 字段值.宝诰版本说明 ?? "",
       宝诰: 宝诰 ?? "",
       简介: 简介 ?? "",
+      简介出处: 字段值.简介出处 ?? "",
+      参校来源: 字段值.参校来源 ?? "",
     };
 
     const 全部匹配名称 = [...new Set([人物.主名称, ...人物.匹配名称])];
@@ -232,8 +249,39 @@ export function 解析神圣纪念与神仙资料(文件名: string, 文本: str
     if (已有归属) {
       结果.错误.push({ 文件名, 行号: 1, 信息: `纪念事件“${事件.名称}”重复出现在“${已有归属}”与“${归属}”` });
     } else 事件索引.set(键, 归属);
+    if (事件.详情人物名称 && !主名称索引.has(事件.详情人物名称)) {
+      结果.错误.push({ 文件名, 行号: 1, 信息: `纪念事件“${事件.名称}”引用了不存在的人物“${事件.详情人物名称}”` });
+    }
+  }
+  for (const 纪念 of 获取全部神圣纪念(结果)) {
+    if (!纪念有前台内容(纪念)) {
+      结果.错误.push({
+        文件名,
+        行号: 1,
+        信息: `纪念事件“${纪念.事件.日期.原文} ${纪念.名称}”缺少神像、宝诰、人物简介或纪念简介`,
+      });
+    }
   }
   return 结果;
+}
+
+export function 获取全部神圣纪念(配置: 神圣纪念资料解析结果 | undefined): 当日神圣纪念[] {
+  if (!配置) return [];
+  const 人物索引 = new Map(配置.人物.map((人物) => [人物.主名称, 人物]));
+  return [
+    ...配置.人物.flatMap((所属人物) => 所属人物.纪念事件.map((事件) => ({
+      名称: 事件.名称,
+      类型: 事件.类型,
+      人物: 事件.详情人物名称 ? 人物索引.get(事件.详情人物名称) ?? null : 所属人物,
+      事件,
+    }))),
+    ...配置.独立纪念事件.map((事件) => ({
+      名称: 事件.名称,
+      类型: 事件.类型,
+      人物: 事件.详情人物名称 ? 人物索引.get(事件.详情人物名称) ?? null : null,
+      事件,
+    })),
+  ];
 }
 
 export function 获取神圣纪念日(配置: 神圣纪念资料解析结果 | undefined, 农历: 农历日期): 当日神圣纪念[] {
@@ -241,10 +289,7 @@ export function 获取神圣纪念日(配置: 神圣纪念资料解析结果 | u
   const 日期命中 = (事件: 神圣纪念事件) => 事件.日期.月 === 农历.月
     && 农历.日 >= 事件.日期.起始日
     && 农历.日 <= 事件.日期.结束日;
-  return [
-    ...配置.人物.flatMap((人物) => 人物.纪念事件.filter(日期命中).map((事件) => ({ 名称: 事件.名称, 类型: 事件.类型, 人物 }))),
-    ...配置.独立纪念事件.filter(日期命中).map((事件) => ({ 名称: 事件.名称, 类型: 事件.类型, 人物: null })),
-  ];
+  return 获取全部神圣纪念(配置).filter((纪念) => 日期命中(纪念.事件));
 }
 
 export function 查找神仙人物(人物: readonly 神仙人物资料[], 主名称: string): 神仙人物资料 | undefined {
