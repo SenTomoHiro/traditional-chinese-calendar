@@ -200,7 +200,7 @@ for (const 场景 of [
       };
     });
 
-    expect(测量前.objectFit).toBe("contain");
+    expect(测量前.objectFit).toBe("cover");
     expect(测量前.closeVisible).toBe(true);
     expect(测量前.pageNoHorizontalOverflow).toBe(true);
     expect(测量前.scrollHeight).toBeGreaterThan(测量前.clientHeight);

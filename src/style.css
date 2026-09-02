@@ -385,6 +385,10 @@ button:focus-visible {
   gap: 4px;
 }
 
+.date-shortcuts + .date-shortcuts {
+  margin-left: 4px;
+}
+
 .date-shortcut-button {
   display: inline-grid;
   place-items: center;
@@ -406,6 +410,11 @@ button:focus-visible {
 .date-shortcut-button:hover {
   background: color-mix(in srgb, var(--gold) 18%, transparent);
   border-color: var(--gold);
+}
+
+.date-shortcut-button:disabled {
+  cursor: default;
+  opacity: 0.92;
 }
 
 .back-to-top {
@@ -462,6 +471,25 @@ button:focus-visible {
 
 .days-grid {
   gap: 2px;
+  touch-action: pan-y;
+}
+
+.days-grid.is-month-transition-next {
+  animation: month-list-enter-next 180ms ease-out both;
+}
+
+.days-grid.is-month-transition-previous {
+  animation: month-list-enter-previous 180ms ease-out both;
+}
+
+@keyframes month-list-enter-next {
+  from { opacity: 0.72; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes month-list-enter-previous {
+  from { opacity: 0.72; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .empty-day,
@@ -996,7 +1024,7 @@ body.deity-dialog-open {
   height: 100%;
   min-width: 0;
   min-height: 0;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
 }
 
@@ -1908,6 +1936,28 @@ body.deity-dialog-open {
 }
 
 @media (max-width: 350px) {
+  .main-date-navigation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 6px;
+  }
+
+  .calendar-date-control {
+    grid-column: 1;
+  }
+
+  .date-weekday {
+    grid-column: 2;
+  }
+
+  .date-shortcuts {
+    grid-row: 2;
+  }
+
+  .date-shortcuts + .date-shortcuts {
+    margin-left: 0;
+  }
+
   .detail-card,
   .calculation-card {
     padding-right: 18px;

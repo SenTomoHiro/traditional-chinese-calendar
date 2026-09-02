@@ -44,7 +44,7 @@ import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
-import { 格式化主日期值, 解析主日期值, 移动主日期 } from "./界面/主日期输入";
+import { 格式化主日期值, 解析主日期值, 移动主日期, 移动主日期月份 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
 import { 创建浏览器主题控制器, 是主题偏好, type 主题偏好 } from "./界面/主题";
 import type { 日级风水禁忌结果 } from "./规则/日级风水禁忌";
@@ -105,6 +105,8 @@ let 八字定位说明 = "";
 let 主日期草稿: string | null = null;
 let 主日期正在编辑 = false;
 let 主日期键盘编辑 = false;
+let 月历滑动: { 指针: number; 起点X: number; 起点Y: number; 已判定为纵向: boolean } | null = null;
+let 忽略月历日期点击至 = 0;
 
 const 配置结果 = 读取全部配置();
 const 神圣纪念资料配置 = 解析神圣纪念与神仙资料(
@@ -181,6 +183,17 @@ function 设置日期(日期: Date): void {
 function 切换相邻主日期(偏移天数: -1 | 1): void {
   const 日期 = 移动主日期(状态.所选日期, 偏移天数, 八字支持范围.最小日期, 八字支持范围.最大日期);
   if (日期) 设置日期(日期);
+}
+
+/** 月份按钮和月历列表手势共用的正式日期状态迁移。 */
+function 切换相邻主月份(偏移月数: -1 | 1): void {
+  const 日期 = 移动主日期月份(状态.所选日期, 偏移月数, 八字支持范围.最小日期, 八字支持范围.最大日期);
+  if (!日期) return;
+  设置日期(日期);
+  const 月历列表 = 根节点.querySelector<HTMLElement>("[data-month-calendar]");
+  if (!月历列表 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  月历列表.classList.add(偏移月数 > 0 ? "is-month-transition-next" : "is-month-transition-previous");
+  window.setTimeout(() => 月历列表.classList.remove("is-month-transition-next", "is-month-transition-previous"), 180);
 }
 
 function 回到今天实时模式(): void {
@@ -432,6 +445,11 @@ function 核心黄历项目(标题: "日吉凶" | "值日" | "风水禁忌", 内
 }
 
 function 主日期控件(值: string, 星期: string): string {
+  const 月份按钮 = [
+    { action: "previous-month", label: "上一月", text: "‹" },
+    { action: "month-label", label: "月份导航", text: "月" },
+    { action: "next-month", label: "下一月", text: "›" },
+  ];
   const 快捷按钮 = [
     { action: "previous-day", label: "上一天", text: "‹" },
     { action: "today", label: "返回今天", text: "今" },
@@ -450,6 +468,9 @@ function 主日期控件(值: string, 星期: string): string {
         value="${值}"
       >
       <span class="date-weekday">${星期}</span>
+      <div class="date-shortcuts" role="group" aria-label="月份快捷操作">
+        ${月份按钮.map((按钮) => `<button type="button" class="date-shortcut-button" data-action="${按钮.action}" aria-label="${按钮.label}" title="${按钮.label}"${按钮.action === "month-label" ? " disabled" : ""}>${按钮.text}</button>`).join("")}
+      </div>
       <div class="date-shortcuts" role="group" aria-label="日期快捷操作">
         ${快捷按钮.map((按钮) => `<button type="button" class="date-shortcut-button" data-action="${按钮.action}" aria-label="${按钮.label}" title="${按钮.label}">${按钮.text}</button>`).join("")}
       </div>
@@ -777,7 +798,7 @@ function 渲染(): void {
             ${星期短名.map((星期, 索引) => `<span role="columnheader" title="${星期名称[索引]}">${星期}</span>`).join("")}
           </div>
 
-          <div class="days-grid" role="grid" aria-label="${状态.年}年${状态.月 + 1}月">
+          <div class="days-grid" data-month-calendar role="grid" aria-label="${状态.年}年${状态.月 + 1}月">
             ${月历格
               .map((日期) => {
                 if (日期 === null) return '<span class="empty-day" aria-hidden="true"></span>';
@@ -914,8 +935,37 @@ function 渲染(): void {
 });
 
 根节点.addEventListener("pointerdown", (事件) => {
-  const 目标 = 事件.target as HTMLInputElement;
-  if (目标.matches("[data-calendar-date]")) 主日期键盘编辑 = false;
+  const 目标 = 事件.target as HTMLElement;
+  if (目标.matches("[data-calendar-date]")) {
+    主日期键盘编辑 = false;
+    return;
+  }
+  if (事件.button !== 0 || !目标.closest("[data-month-calendar]")) return;
+  月历滑动 = { 指针: 事件.pointerId, 起点X: 事件.clientX, 起点Y: 事件.clientY, 已判定为纵向: false };
+});
+
+根节点.addEventListener("pointermove", (事件) => {
+  if (!月历滑动 || 事件.pointerId !== 月历滑动.指针 || 月历滑动.已判定为纵向) return;
+  const 水平移动 = Math.abs(事件.clientX - 月历滑动.起点X);
+  const 垂直移动 = Math.abs(事件.clientY - 月历滑动.起点Y);
+  if (垂直移动 >= 12 && 垂直移动 > 水平移动) 月历滑动.已判定为纵向 = true;
+});
+
+function 完成月历滑动(事件: PointerEvent): void {
+  if (!月历滑动 || 事件.pointerId !== 月历滑动.指针) return;
+  const 本次滑动 = 月历滑动;
+  月历滑动 = null;
+  if (本次滑动.已判定为纵向) return;
+  const 水平位移 = 事件.clientX - 本次滑动.起点X;
+  const 垂直位移 = 事件.clientY - 本次滑动.起点Y;
+  if (Math.abs(水平位移) < 48 || Math.abs(水平位移) < Math.abs(垂直位移) * 1.35) return;
+  忽略月历日期点击至 = performance.now() + 400;
+  切换相邻主月份(水平位移 < 0 ? 1 : -1);
+}
+
+根节点.addEventListener("pointerup", 完成月历滑动);
+根节点.addEventListener("pointercancel", (事件) => {
+  if (月历滑动?.指针 === 事件.pointerId) 月历滑动 = null;
 });
 
 根节点.addEventListener("keydown", (事件) => {
@@ -1007,6 +1057,7 @@ function 渲染(): void {
 
   const 日期 = 目标.dataset.day;
   if (日期) {
+    if (performance.now() < 忽略月历日期点击至) return;
     设置日期(new Date(状态.年, 状态.月, Number(日期)));
     return;
   }
@@ -1015,11 +1066,17 @@ function 渲染(): void {
     case "previous-day":
       切换相邻主日期(-1);
       break;
+    case "previous-month":
+      切换相邻主月份(-1);
+      break;
     case "today":
       回到今天实时模式();
       break;
     case "next-day":
       切换相邻主日期(1);
+      break;
+    case "next-month":
+      切换相邻主月份(1);
       break;
     case "back-to-top":
       window.scrollTo({ top: 0, behavior: "smooth" });

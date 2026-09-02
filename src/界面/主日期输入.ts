@@ -17,3 +17,15 @@ export function 移动主日期(日期: Date, 偏移天数: -1 | 1, 最小日期
   const 候选日期 = 移动日期(日期, 偏移天数);
   return 解析主日期值(格式化主日期值(候选日期), 最小日期, 最大日期);
 }
+
+/** 切换月份时保留原日号；目标月份没有该日号时安全落到该月最后一天。 */
+export function 移动主日期月份(日期: Date, 偏移月数: -1 | 1, 最小日期: string, 最大日期: string): Date | null {
+  const 目标月份首日 = new Date(日期.getFullYear(), 日期.getMonth() + 偏移月数, 1);
+  const 目标月份最后一天 = new Date(目标月份首日.getFullYear(), 目标月份首日.getMonth() + 1, 0).getDate();
+  const 候选日期 = new Date(
+    目标月份首日.getFullYear(),
+    目标月份首日.getMonth(),
+    Math.min(日期.getDate(), 目标月份最后一天),
+  );
+  return 解析主日期值(格式化主日期值(候选日期), 最小日期, 最大日期);
+}

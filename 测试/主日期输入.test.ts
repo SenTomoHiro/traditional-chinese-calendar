@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { 格式化主日期值, 解析主日期值, 移动主日期 } from "../src/界面/主日期输入";
+import { 格式化主日期值, 解析主日期值, 移动主日期, 移动主日期月份 } from "../src/界面/主日期输入";
 
 const 最小日期 = "1900-01-01";
 const 最大日期 = "2100-12-31";
@@ -23,5 +23,18 @@ describe("主日期输入", () => {
     expect(移动主日期(new Date(2026, 7, 31), 1, 最小日期, 最大日期)).toEqual(new Date(2026, 8, 1));
     expect(移动主日期(new Date(1900, 0, 1), -1, 最小日期, 最大日期)).toBeNull();
     expect(移动主日期(new Date(2100, 11, 31), 1, 最小日期, 最大日期)).toBeNull();
+  });
+
+  it("相邻月保留日号，不存在时安全落在目标月最后一天", () => {
+    expect(移动主日期月份(new Date(2026, 2, 31), 1, 最小日期, 最大日期)).toEqual(new Date(2026, 3, 30));
+    expect(移动主日期月份(new Date(2025, 0, 31), 1, 最小日期, 最大日期)).toEqual(new Date(2025, 1, 28));
+    expect(移动主日期月份(new Date(2024, 0, 31), 1, 最小日期, 最大日期)).toEqual(new Date(2024, 1, 29));
+  });
+
+  it("相邻月正确跨年且服从可支持的日期范围", () => {
+    expect(移动主日期月份(new Date(2026, 0, 15), -1, 最小日期, 最大日期)).toEqual(new Date(2025, 11, 15));
+    expect(移动主日期月份(new Date(2026, 11, 15), 1, 最小日期, 最大日期)).toEqual(new Date(2027, 0, 15));
+    expect(移动主日期月份(new Date(1900, 0, 1), -1, 最小日期, 最大日期)).toBeNull();
+    expect(移动主日期月份(new Date(2100, 11, 31), 1, 最小日期, 最大日期)).toBeNull();
   });
 });
