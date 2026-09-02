@@ -29,6 +29,8 @@ describe("GitHub Pages 测试部署", () => {
     expect(首页).not.toContain('name="description"');
     expect(读取("public/robots.txt").trim()).toBe("User-agent: *\nDisallow: /");
     expect(existsSync(resolve(根目录, "public/.nojekyll"))).toBe(true);
+    expect(首页).toContain('href="%BASE_URL%favicon.svg"');
+    expect(existsSync(resolve(根目录, "public/favicon.svg"))).toBe(true);
   });
 
   it("测试和构建通过后才复制 dist 并推送独立仓库", () => {
