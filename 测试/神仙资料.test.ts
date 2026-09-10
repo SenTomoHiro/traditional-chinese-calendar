@@ -27,8 +27,8 @@ describe("神仙资料正式配置", () => {
 
   it("统一配置完整承载人物、纪念事件与全部已选定宝诰", () => {
     const 人物事件数 = 配置.人物.reduce((总数, 人物) => 总数 + 人物.纪念事件.length, 0);
-    expect(人物事件数).toBe(158);
-    expect(配置.独立纪念事件).toHaveLength(23);
+    expect(人物事件数).toBe(160);
+    expect(配置.独立纪念事件).toHaveLength(22);
     expect(配置.人物.filter((人物) => 人物.宝诰)).toHaveLength(91);
     expect(配置.人物.filter((人物) => 人物.宝诰标题 && !人物.宝诰)).toEqual([]);
     expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(64);
@@ -55,6 +55,13 @@ describe("神仙资料正式配置", () => {
     expect(正文("太阴星君")).toMatch(/太阴.*天尊。$/u);
     expect(正文("北斗九皇")).toContain("北斗九皇赐福星君");
     expect(正文("南斗六司延寿星君")).toContain("南斗六司，延寿星君");
+    expect(正文("许天师")).toContain("混元始祖，一炁分真");
+    expect(正文("许天师")).toContain("救灾拔难");
+    expect(正文("许天师")).toContain("神功妙济");
+    expect(正文("许天师")).toContain("掌九天司籍");
+    expect(正文("许天师")).toContain("太乙定命");
+    expect(正文("许天师")).toContain("九州都仙太使");
+    expect(正文("许天师")).not.toMatch(/掌九天司职|太一定命|天机伏魔上相|九州都仙太史/u);
   });
 
   it("91篇宝诰均有中文句读、完整结句和具体出处", () => {
@@ -87,12 +94,12 @@ describe("神仙资料正式配置", () => {
     expect(纪念有前台内容(事件!)).toBe(true);
   });
 
-  it("全部181条神圣纪念详情覆盖率为100%", () => {
+  it("全部182条神圣纪念详情覆盖率为100%", () => {
     const 全部 = 获取全部神圣纪念(配置);
     const 缺失 = 全部
       .filter((纪念) => !纪念有前台内容(纪念))
       .map((纪念) => `${纪念.事件.日期.原文} ${纪念.名称}`);
-    expect(全部).toHaveLength(181);
+    expect(全部).toHaveLength(182);
     expect(缺失, `缺少详情的神圣纪念：\n${缺失.join("\n")}`).toEqual([]);
   });
 
@@ -104,6 +111,20 @@ describe("神仙资料正式配置", () => {
       .toEqual(expect.objectContaining({ 人物: expect.objectContaining({ 主名称: "南斗六司延寿星君" }) }));
     expect(全部.find((纪念) => 纪念.名称 === "诸佛下界探访善恶"))
       .toEqual(expect.objectContaining({ 人物: null, 事件: expect.objectContaining({ 纪念简介: expect.any(String) }) }));
+  });
+
+  it("许天师的正月圣诞与八月飞升日分别关联同一正式人物", () => {
+    const 许天师 = 查找神仙人物(配置.人物, "许天师");
+    const 八月初一 = 获取神圣纪念日(配置, { 年: 2026, 月: 8, 日: 1, 月名: "八月", 日名: "初一", 是否闰月: false, 显示: "八月初一" });
+    const 正月廿八 = 获取神圣纪念日(配置, { 年: 2026, 月: 1, 日: 28, 月名: "正月", 日名: "廿八", 是否闰月: false, 显示: "正月廿八" });
+    expect(许天师).toEqual(expect.objectContaining({ 宝诰标题: "许天师宝诰" }));
+    expect(八月初一).toEqual(expect.arrayContaining([
+      expect.objectContaining({ 名称: "许天师得道飞升日", 人物: expect.objectContaining({ 主名称: "许天师" }) }),
+    ]));
+    expect(八月初一.map((纪念) => 纪念.名称)).not.toContain("神功妙济真君圣诞");
+    expect(正月廿八).toEqual(expect.arrayContaining([
+      expect.objectContaining({ 名称: "许天师圣诞", 人物: expect.objectContaining({ 主名称: "许天师" }) }),
+    ]));
   });
 
   it("所有“之辰”与重点修持纪日均留在神圣纪念并有详情", () => {
