@@ -21,17 +21,17 @@ function 命中主名称(文本: string): string[] {
 describe("神仙资料正式配置", () => {
   it("完整解析全部人物块且主名称与别名均唯一", () => {
     expect(配置.错误).toEqual([]);
-    expect(配置.人物).toHaveLength(151);
-    expect(new Set(配置.人物.map((人物) => 人物.主名称)).size).toBe(151);
+    expect(配置.人物).toHaveLength(152);
+    expect(new Set(配置.人物.map((人物) => 人物.主名称)).size).toBe(152);
   });
 
   it("统一配置完整承载人物、纪念事件与全部已选定宝诰", () => {
     const 人物事件数 = 配置.人物.reduce((总数, 人物) => 总数 + 人物.纪念事件.length, 0);
-    expect(人物事件数).toBe(160);
-    expect(配置.独立纪念事件).toHaveLength(22);
+    expect(人物事件数).toBe(161);
+    expect(配置.独立纪念事件).toHaveLength(21);
     expect(配置.人物.filter((人物) => 人物.宝诰)).toHaveLength(91);
     expect(配置.人物.filter((人物) => 人物.宝诰标题 && !人物.宝诰)).toEqual([]);
-    expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(64);
+    expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(65);
     expect(配置.人物.filter((人物) => !人物.神像 && !人物.宝诰 && !人物.简介)).toHaveLength(0);
   });
 
@@ -224,10 +224,32 @@ describe("神圣纪念人物最长匹配与同神异名", () => {
   });
 
   it("葛雍、葛玄、谭处端与刘处玄严格分开", () => {
-    expect(new Set(命中主名称("中元护正真君葛雍圣诞"))).toEqual(new Set(["中元护正真君葛雍"]));
+    expect(new Set(命中主名称("中元护正丹辉妙道真君葛雍圣诞"))).toEqual(new Set(["中元护正丹辉妙道真君"]));
     expect(new Set(命中主名称("葛孝先真人葛玄圣诞"))).toEqual(new Set(["葛仙翁葛玄"]));
     expect(new Set(命中主名称("长真真人谭处端圣诞"))).toEqual(new Set(["长真真人谭处端"]));
     expect(new Set(命中主名称("长生真人刘处玄圣诞"))).toEqual(new Set(["长生真人刘处玄"]));
+  });
+
+  it("本轮确认人物以唯一正式名称、身份与原纪念日期进入展示数据", () => {
+    const 孙不二 = 查找神仙人物(配置.人物, "清静真人孙不二");
+    const 水草马明王 = 查找神仙人物(配置.人物, "水草马明王");
+    expect(孙不二).toMatchObject({
+      主名称: "清静真人孙不二",
+      纪念事件: [expect.objectContaining({ 日期: expect.objectContaining({ 月: 12, 起始日: 29 }) })],
+    });
+    expect(孙不二?.简介).toContain("清静散人姓孙，名寓春。");
+    expect(孙不二?.简介).toContain("遂开创了道教全真道之清静派。");
+    expect(水草马明王).toMatchObject({
+      主名称: "水草马明王",
+      纪念事件: [expect.objectContaining({ 日期: expect.objectContaining({ 月: 6, 起始日: 23 }) })],
+    });
+    expect(水草马明王?.主名称).not.toBe("五显华光大帝马元帅");
+    expect(查找神仙人物(配置.人物, "五显华光大帝马元帅")?.纪念事件)
+      .toEqual(expect.arrayContaining([expect.objectContaining({ 日期: expect.objectContaining({ 月: 9, 起始日: 28 }) })]));
+
+    expect(查找神仙人物(配置.人物, "上元道化明曜妙感真君")).toMatchObject({ 主名称: "上元道化明曜妙感真君" });
+    expect(查找神仙人物(配置.人物, "中元护正丹辉妙道真君")).toMatchObject({ 主名称: "中元护正丹辉妙道真君" });
+    expect(查找神仙人物(配置.人物, "下元定志符应妙道真君")).toMatchObject({ 主名称: "下元定志符应妙道真君" });
   });
 
   it("雷祖、北方雷祖与雷声天帝严格分开", () => {
