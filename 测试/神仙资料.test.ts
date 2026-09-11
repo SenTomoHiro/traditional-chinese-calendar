@@ -31,8 +31,22 @@ describe("神仙资料正式配置", () => {
     expect(配置.独立纪念事件).toHaveLength(21);
     expect(配置.人物.filter((人物) => 人物.宝诰)).toHaveLength(91);
     expect(配置.人物.filter((人物) => 人物.宝诰标题 && !人物.宝诰)).toEqual([]);
-    expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(65);
+    expect(配置.人物.filter((人物) => 人物.简介)).toHaveLength(82);
     expect(配置.人物.filter((人物) => !人物.神像 && !人物.宝诰 && !人物.简介)).toHaveLength(0);
+  });
+
+  it("新增的简介保留可追溯古籍或经典出处，并保留用户确认的孙不二正文", () => {
+    expect(查找神仙人物(配置.人物, "大成至圣先师孔子")).toMatchObject({
+      简介出处: "《史记》卷四七《孔子世家》",
+      简介: expect.stringContaining("孔子名丘"),
+    });
+    expect(查找神仙人物(配置.人物, "药王孙思邈")).toMatchObject({
+      简介出处: expect.stringContaining("《新唐书·隐逸传·孙思邈》"),
+    });
+    expect(查找神仙人物(配置.人物, "药师琉璃光如来")).toMatchObject({
+      简介出处: "《药师琉璃光如来本愿功德经》",
+    });
+    expect(查找神仙人物(配置.人物, "清静真人孙不二")?.简介).toContain("清静散人姓孙，名寓春");
   });
 
   it("正式神像只通过统一配置映射到存在的公开资源", () => {
