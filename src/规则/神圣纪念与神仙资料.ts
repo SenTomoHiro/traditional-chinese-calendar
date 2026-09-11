@@ -12,6 +12,7 @@ export interface 神圣纪念事件 {
   名称: string;
   类型: string;
   详情人物名称: string;
+  神像: string;
   纪念简介: string;
   纪念简介出处: string;
 }
@@ -79,7 +80,7 @@ function 读取单行(块: string, 字段: typeof 人物单行字段[number]): s
   return 块.match(new RegExp(`^${字段}：(.*)$`, "mu"))?.[1].trim() ?? null;
 }
 
-function 读取事件字段(块: string, 字段: "日期" | "名称" | "类型" | "详情人物" | "纪念简介出处"): string | null {
+function 读取事件字段(块: string, 字段: "日期" | "名称" | "类型" | "详情人物" | "神像" | "纪念简介出处"): string | null {
   return 块.match(new RegExp(`^${字段}：(.*)$`, "mu"))?.[1].trim() ?? null;
 }
 
@@ -119,6 +120,7 @@ function 解析纪念事件(
   const 名称 = 读取事件字段(块, "名称");
   const 类型 = 读取事件字段(块, "类型");
   const 详情人物名称 = 读取事件字段(块, "详情人物") ?? "";
+  const 神像 = 读取事件字段(块, "神像") ?? "";
   const 纪念简介 = 读取多行(块, "纪念简介开始", "纪念简介结束") ?? "";
   const 纪念简介出处 = 读取事件字段(块, "纪念简介出处") ?? "";
   const 当前行号 = 行号(全文, 块位置);
@@ -131,7 +133,7 @@ function 解析纪念事件(
     错误.push({ 文件名, 行号: 当前行号, 信息: `纪念事件日期格式无法解析：${日期文本}` });
     return null;
   }
-  return { 日期: 解析日期, 名称, 类型, 详情人物名称, 纪念简介, 纪念简介出处 };
+  return { 日期: 解析日期, 名称, 类型, 详情人物名称, 神像, 纪念简介, 纪念简介出处 };
 }
 
 function 解析人物纪念事件(

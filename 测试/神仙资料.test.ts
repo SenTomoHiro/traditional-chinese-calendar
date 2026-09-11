@@ -35,6 +35,25 @@ describe("神仙资料正式配置", () => {
     expect(配置.人物.filter((人物) => !人物.神像 && !人物.宝诰 && !人物.简介)).toHaveLength(0);
   });
 
+  it("正式神像只通过统一配置映射到存在的公开资源", () => {
+    const 人物神像 = 配置.人物.map((人物) => 人物.神像).filter(Boolean);
+    const 独立纪念神像 = 配置.独立纪念事件.map((事件) => 事件.神像).filter(Boolean);
+    const 全部神像 = [...人物神像, ...独立纪念神像];
+    expect(人物神像).toHaveLength(129);
+    expect(独立纪念神像).toHaveLength(5);
+    expect(全部神像).toHaveLength(134);
+    expect(new Set(全部神像).size).toBe(134);
+    for (const 地址 of 全部神像) {
+      expect(地址).toMatch(/^\/神像\/.+\.png$/u);
+      expect(existsSync(resolve(process.cwd(), "public", 地址.slice(1))), 地址).toBe(true);
+    }
+    expect(查找神仙人物(配置.人物, "清静真人孙不二")?.神像).toBe("/神像/清静真人孙不二.png");
+    expect(查找神仙人物(配置.人物, "水草马明王")?.神像).toBe("/神像/水草马明王.png");
+    expect(查找神仙人物(配置.人物, "上元道化明曜妙感真君")?.神像).toBe("/神像/上元道化明曜妙感真君.png");
+    expect(查找神仙人物(配置.人物, "中元护正丹辉妙道真君")?.神像).toBe("/神像/中元护正丹辉妙道真君.png");
+    expect(查找神仙人物(配置.人物, "下元定志符应妙道真君")?.神像).toBe("/神像/下元定志符应妙道真君.png");
+  });
+
   it("锁定已确定宝诰版本的关键异文", () => {
     const 正文 = (人物: string) => 查找神仙人物(配置.人物, 人物)?.宝诰 ?? "";
     expect(正文("祖天师张道陵")).toContain("泰玄上相，扶教三天");

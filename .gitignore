@@ -9,3 +9,9 @@ playwright-report/
 
 # Project-owner and AI-assistant working materials; never publish these files.
 本地资料/
+
+# User-provided prototypes, visual references, local review results and staging
+# exports are private working material. The runtime-ready formal assets live in
+# public/神像/ and are the only image set published with the application.
+/神像/
+/神像画风参考/

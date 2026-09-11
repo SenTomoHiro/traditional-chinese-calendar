@@ -381,8 +381,14 @@ function 神像地址(地址: string): string {
 
 function 神圣纪念详情内容(纪念: 当日神圣纪念): string {
   const 人物 = 纪念.人物;
-  const 神像 = 人物?.神像
-    ? `<figure class="deity-portrait"><img src="${转义属性(神像地址(人物.神像))}" alt="${转义属性(人物.主名称)}神像"></figure>`
+  const 神像路径 = 人物?.神像 || 纪念.事件.神像;
+  const 神像名称 = 人物?.主名称 || 纪念.名称;
+  const 神像 = 神像路径
+    ? `<figure class="deity-portrait">
+        <img class="deity-portrait-background" src="${转义属性(神像地址("/神像/背景.png"))}" alt="" aria-hidden="true" loading="lazy" decoding="async">
+        <img class="deity-portrait-subject" src="${转义属性(神像地址(神像路径))}" alt="${转义属性(神像名称)}神像" loading="lazy" decoding="async">
+        <img class="deity-portrait-clouds" src="${转义属性(神像地址("/神像/祥云前景.png"))}" alt="" aria-hidden="true" loading="lazy" decoding="async">
+      </figure>`
     : "";
   const 宝诰 = 人物?.宝诰
     ? `<section class="deity-section deity-proclamation"><h3>${转义HTML(人物.宝诰标题 || "宝诰")}</h3>${多行正文(人物.宝诰)}</section>`
@@ -398,7 +404,7 @@ function 神圣纪念详情内容(纪念: 当日神圣纪念): string {
     : "";
   const 标题 = 人物?.主名称 || 纪念.名称;
   return `
-    <article class="deity-dialog-card${人物?.神像 ? " has-portrait" : " is-text-only"}">
+    <article class="deity-dialog-card${神像路径 ? " has-portrait" : " is-text-only"}">
       ${神像}
       <div class="deity-dialog-content">
         <header class="deity-dialog-heading">
@@ -415,7 +421,7 @@ function 打开神圣纪念详情(纪念: 当日神圣纪念, 触发元素: HTML
   const 对话框 = 根节点.querySelector<HTMLDialogElement>("[data-deity-dialog]");
   if (!对话框) return;
   对话框.innerHTML = 神圣纪念详情内容(纪念);
-  对话框.classList.toggle("is-text-only", !纪念.人物?.神像);
+  对话框.classList.toggle("is-text-only", !(纪念.人物?.神像 || 纪念.事件.神像));
   详情触发元素 = 触发元素;
   document.body.classList.add("deity-dialog-open");
   对话框.showModal();

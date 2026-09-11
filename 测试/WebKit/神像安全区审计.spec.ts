@@ -40,17 +40,6 @@ async function 打开并注入安全区测试图(page: Page, 宽: number, 高: n
   await expect(page.locator("[data-safety-audit-portrait] img")).toHaveJSProperty("naturalWidth", 宽);
 }
 
-function cover裁切(容器宽: number, 容器高: number, 图片宽: number, 图片高: number) {
-  const 容器比 = 容器宽 / 容器高;
-  const 图片比 = 图片宽 / 图片高;
-  if (容器比 < 图片比) {
-    const 左右总裁切 = 1 - 容器比 / 图片比;
-    return { 左: 左右总裁切 / 2, 右: 左右总裁切 / 2, 上: 0, 下: 0 };
-  }
-  const 上下总裁切 = 1 - 图片比 / 容器比;
-  return { 左: 0, 右: 0, 上: 上下总裁切 / 2, 下: 上下总裁切 / 2 };
-}
-
 const 布局 = [
   { 名称: "桌面 1440", 宽: 1440, 高: 1000 },
   { 名称: "桌面 1024", 宽: 1024, 高: 900 },
@@ -61,7 +50,7 @@ const 布局 = [
   { 名称: "手机 320", 宽: 320, 高: 720 },
 ] as const;
 
-test("4:5 安全区测试图在真实弹层保持 cover、固定神像与文字独立滚动", async ({ page }) => {
+test("4:5 安全区测试图在真实弹层完整 contain、固定神像与文字独立滚动", async ({ page }) => {
   for (const 场景 of 布局) {
     await page.setViewportSize({ width: 场景.宽, height: 场景.高 });
     await 打开并注入安全区测试图(page, 1600, 2000);
@@ -80,45 +69,36 @@ test("4:5 安全区测试图在真实弹层保持 cover、固定神像与文字�
         dialogScrollTop: 对话框.scrollTop,
       };
     });
-    const 裁切 = cover裁切(测量.image.width, 测量.image.height, 1600, 2000);
-    expect(测量.objectFit).toBe("cover");
+    expect(测量.objectFit).toBe("contain");
     expect(Math.abs(测量.portraitTop - 测量.afterScrollPortraitTop)).toBeLessThanOrEqual(1);
     expect(测量.dialogScrollTop).toBe(0);
-    expect(裁切.左 + 裁切.右 + 裁切.上 + 裁切.下).toBeGreaterThanOrEqual(0);
   }
 });
 
-test("4:5、3:4、2:3 均以真实容器计算裁切，4:5 保留最大的共同核心边长", async ({ page }) => {
+test("4:5、3:4、2:3 在所有响应式容器中等比例完整显示，不依赖裁切安全区", async ({ page }) => {
   const 规格 = [
     { 名称: "4:5", 宽: 1600, 高: 2000 },
     { 名称: "3:4", 宽: 1500, 高: 2000 },
     { 名称: "2:3", 宽: 1200, 高: 1800 },
   ];
-  const 共同安全区: Array<{ 名称: string; 宽度: number; 高度: number }> = [];
   for (const 图片 of 规格) {
-    let 左 = 0; let 右 = 0; let 上 = 0; let 下 = 0;
     for (const 场景 of 布局) {
       await page.setViewportSize({ width: 场景.宽, height: 场景.高 });
       await 打开并注入安全区测试图(page, 图片.宽, 图片.高);
       const 尺寸 = await page.locator("[data-safety-audit-portrait] img").evaluate((元素) => {
         const 框 = 元素.getBoundingClientRect();
-        return { 宽: 框.width, 高: 框.height };
+        const 容器 = 元素.parentElement!.getBoundingClientRect();
+        return {
+          宽: 框.width,
+          高: 框.height,
+          容器宽: 容器.width,
+          容器高: 容器.height,
+          objectFit: getComputedStyle(元素).objectFit,
+        };
       });
-      const 裁切 = cover裁切(尺寸.宽, 尺寸.高, 图片.宽, 图片.高);
-      左 = Math.max(左, 裁切.左); 右 = Math.max(右, 裁切.右);
-      上 = Math.max(上, 裁切.上); 下 = Math.max(下, 裁切.下);
+      expect(尺寸.objectFit).toBe("contain");
+      expect(尺寸.宽).toBeLessThanOrEqual(尺寸.容器宽 + 1);
+      expect(尺寸.高).toBeLessThanOrEqual(尺寸.容器高 + 1);
     }
-    共同安全区.push({ 名称: 图片.名称, 宽度: 1 - 左 - 右, 高度: 1 - 上 - 下 });
   }
-  const 四比五 = 共同安全区.find((结果) => 结果.名称 === "4:5")!;
-  expect(四比五.宽度).toBeGreaterThan(0.8);
-  expect(四比五.高度).toBeGreaterThan(0.59);
-  expect((1 - 四比五.宽度) / 2).toBeLessThan(0.15);
-  expect((1 - 四比五.高度) / 2).toBeLessThan(0.225);
-  expect(Math.min(四比五.宽度, 四比五.高度)).toBeGreaterThan(
-    Math.min(共同安全区[1].宽度, 共同安全区[1].高度),
-  );
-  expect(Math.min(四比五.宽度, 四比五.高度)).toBeGreaterThan(
-    Math.min(共同安全区[2].宽度, 共同安全区[2].高度),
-  );
 });

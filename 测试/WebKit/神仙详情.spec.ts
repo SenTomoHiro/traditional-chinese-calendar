@@ -62,6 +62,11 @@ test("正式人物资料交互、同神异名、空详情和民俗栏目边界�
   })).toEqual(expect.objectContaining({ 下划线: "none", 下边框: "0px", 鼠标: "pointer" }));
   await 打开人物(page, "关圣帝君");
   await expect(page.locator("#deity-dialog-title")).toHaveText("关圣帝君");
+  await expect(page.locator(".deity-portrait-background")).toHaveCount(1);
+  await expect(page.locator(".deity-portrait-subject")).toHaveAttribute("src", /神像\/关圣帝君\.png/u);
+  await expect(page.locator(".deity-portrait-clouds")).toHaveCount(1);
+  await expect(page.locator(".deity-portrait-subject")).toHaveJSProperty("complete", true);
+  expect(await page.locator(".deity-portrait-subject").evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await expect(page.locator(".deity-dialog-heading > div > p")).toHaveText("神圣纪念详情");
   await expect(page.locator("body")).not.toContainText("仙真纪念");
   await expect(page.locator("body")).not.toContainText("仙真详情");
@@ -200,7 +205,7 @@ for (const 场景 of [
       };
     });
 
-    expect(测量前.objectFit).toBe("cover");
+    expect(测量前.objectFit).toBe("contain");
     expect(测量前.closeVisible).toBe(true);
     expect(测量前.pageNoHorizontalOverflow).toBe(true);
     expect(测量前.scrollHeight).toBeGreaterThan(测量前.clientHeight);
@@ -247,6 +252,12 @@ test("无神像人物取消图片区并由完整宽度文字区独立滚动", as
   await page.goto("/");
   await 选择日期(page, "2026-08-06");
   await 打开人物(page, "关圣帝君");
+  await page.locator(".deity-dialog-card").evaluate((卡片) => {
+    卡片.classList.remove("has-portrait");
+    卡片.classList.add("is-text-only");
+    卡片.querySelector(".deity-portrait")?.remove();
+    (卡片.closest("dialog") as HTMLDialogElement)?.classList.add("is-text-only");
+  });
   await expect(page.locator(".deity-dialog-card")).toHaveClass(/is-text-only/u);
   await expect(page.locator(".deity-portrait")).toHaveCount(0);
   await page.locator(".deity-proclamation p").evaluate((段落) => { 段落.textContent = `${段落.textContent ?? ""}${"无神像长宝诰。".repeat(180)}`; });
