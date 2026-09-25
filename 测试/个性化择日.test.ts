@@ -88,6 +88,22 @@ describe("择日判例 D01—D25", () => {
 });
 
 describe("个性化与择时", () => {
+  it("完整排序保留供审计，主推荐只取零至五个合格结果", () => {
+    const 结果 = 执行择日("出行", "2026-08-01", "2026-08-31", [甲], "北京时间", null, 配置);
+    expect(结果.候选).toHaveLength(31);
+    expect(结果.推荐候选.length).toBeLessThanOrEqual(5);
+    expect(结果.推荐候选).toEqual(
+      结果.候选.filter((候选) => 候选.推荐程度 !== "不优先").slice(0, 5),
+    );
+    expect(结果.推荐候选.every((候选) => 候选.推荐程度 !== "不优先")).toBe(true);
+  });
+
+  it("短范围可少于两个主推荐且不会用次等结果凑数", () => {
+    const 结果 = 执行择日("出行", "2026-08-11", "2026-08-11", [甲], "北京时间", null, 配置);
+    expect(结果.推荐候选.length).toBeLessThan(2);
+    expect(结果.候选).toHaveLength(1);
+  });
+
   it("单人关系分层且不输出分数或唯一喜用神", () => {
     const 结果 = 单日("签约", "2026-08-12");
     expect(结果.人物关系).toHaveLength(1);

@@ -203,7 +203,7 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.theme-switch,\s*\.time-basis-switch\s*\{[^}]*display:\s*inline-flex/u);
   });
 
-  it("移动端源码顺序为核心详情、右栏工具、辅助计算", () => {
+  it("扩展功能位于完整日历主体之后并保持移动端单栏", () => {
     const 详情位置 = 页面源码.indexOf('<aside class="detail-card"');
     const 右栏位置 = 页面源码.indexOf('<div class="calendar-right"');
     const 月历位置 = 页面源码.indexOf('<article class="calendar-card"');
@@ -214,11 +214,22 @@ describe("日期详情展示回归", () => {
     expect(详情位置).toBeLessThan(右栏位置);
     expect(右栏位置).toBeLessThan(月历位置);
     expect(详情位置).toBeLessThan(月历位置);
-    expect(月历位置).toBeLessThan(八字位置);
-    expect(八字位置).toBeLessThan(计算位置);
+    const 扩展位置 = 页面源码.indexOf('<section class="calendar-extensions"');
+    const 择日位置 = 页面源码.indexOf("${择日卡片()}");
+    expect(月历位置).toBeLessThan(计算位置);
+    expect(计算位置).toBeLessThan(扩展位置);
+    expect(扩展位置).toBeLessThan(八字位置);
+    expect(八字位置).toBeLessThan(择日位置);
     expect(页面样式).toContain('"detail right"');
     expect(页面样式).toContain('"calculation right"');
     expect(页面样式).toMatch(/"detail"\s+"right"\s+"calculation"/u);
+    expect(页面样式).toMatch(/\.calendar-extensions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/u);
+    expect(页面样式).toMatch(/@media \(max-width: 820px\)[\s\S]*?\.calendar-extensions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+  });
+
+  it("格局用扶抑调候使用一致的无缩进正文结构", () => {
+    expect(页面源码).toContain('<article><h3>调候</h3><p>${分析.调候.map(转义HTML).join("；")}</p></article>');
+    expect(页面样式).toMatch(/\.use-grid article > p\s*\{[^}]*padding-left:\s*0/u);
   });
 
   it("手机端将八字输入和查询时间定位控件改为上下排列", () => {

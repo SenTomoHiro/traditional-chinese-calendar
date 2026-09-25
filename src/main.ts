@@ -634,7 +634,7 @@ function 生成八字结果区(): string {
     <div class="analysis-grid use-grid">
       <article><h3>格局用</h3><p>${转义HTML(分析.三套取用说明.格局用)}</p></article>
       <article><h3>扶抑</h3><p>${转义HTML(分析.三套取用说明.扶抑)}</p></article>
-      <article><h3>调候</h3>${列表(分析.调候)}</article>
+      <article><h3>调候</h3><p>${分析.调候.map(转义HTML).join("；")}</p></article>
     </div>
     <section class="plain-summary"><h3>通俗说明</h3>${列表(分析.通俗总结)}</section>
     <ul class="bazi-time-notes">${生辰八字时间说明(查询结果.结果).map((说明) => `<li>${转义HTML(说明)}</li>`).join("")}</ul>
@@ -693,6 +693,10 @@ function 八字查询卡片(): string {
 }
 
 function 择日人物表单(索引: number, 标签: string): string {
+  if (索引 === 0) return `<fieldset class="election-person election-person-shared" data-election-person="0"><legend>${标签}</legend>
+    <p>直接沿用左侧“八字分析”的出生资料，无需重复填写。</p>
+    <dl><div><dt>出生</dt><dd>${转义HTML(八字日期)} ${转义HTML(八字时间)}</dd></div><div><dt>性别 / 依据</dt><dd>${八字性别} · ${八字时间依据}</dd></div></dl>
+  </fieldset>`;
   return `<fieldset class="election-person" data-election-person="${索引}"><legend>${标签}</legend>
     <label>出生日期<input type="date" data-person-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${八字日期}"></label>
     <label>出生时间<input type="time" data-person-time value="${八字时间}"></label>
@@ -707,9 +711,14 @@ function 状态类(状态: string): string { return 状态 === "已裁断" ? "re
 function 生成择日结果区(): string {
   if (择日错误) return `<p class="bazi-message election-error" role="alert">${转义HTML(择日错误)}</p>`;
   if (!最近择日结果) return `<p class="election-empty">填写日期范围和出生信息后开始筛选；结果不会显示数字吉凶分。</p>`;
+  const 推荐 = 最近择日结果.推荐候选;
+  const 数量说明 = 推荐.length >= 2
+    ? `从 ${最近择日结果.候选.length} 日中选出 ${推荐.length} 个相对最优结果`
+    : `仅找到 ${推荐.length} 个达到推荐条件的日期，候选不足，不以次等结果凑数`;
   return `<div class="election-results" aria-live="polite">
-    <header><strong>${转义HTML(最近择日结果.事项)} · ${最近择日结果.日期范围}</strong><span>共 ${最近择日结果.候选.length} 日，按公共日课与双方可接受度排序</span></header>
-    ${最近择日结果.候选.map((候选, 索引) => `<article class="election-day${索引 < 3 ? " is-leading" : ""}">
+    <header><strong>${转义HTML(最近择日结果.事项)} · ${最近择日结果.日期范围}</strong><span>${数量说明}；排序依次比较公共日课、古籍状态、个人关系、共同适配与择时质量</span></header>
+    ${推荐.length === 0 ? '<p class="election-empty">当前范围没有足够可靠的主推荐日期，请扩大日期范围后再试。</p>' : ""}
+    ${推荐.map((候选, 索引) => `<article class="election-day${索引 < 2 ? " is-leading" : ""}">
       <div class="election-day-heading"><div><time datetime="${候选.日期}">${候选.日期}</time><strong>${候选.推荐程度}</strong></div><p>${候选.干支} · ${候选.值星} · ${候选.黄黑道}${候选.已核事实.length ? ` · ${候选.已核事实.join("、")}` : ""}</p></div>
       <div class="verdict-row">${候选.公共日课.map((项) => `<span class="is-${状态类(项.状态)}">${项.名称}：${项.状态}</span>`).join("")}</div>
       ${候选.共同结论 ? `<p class="joint-verdict">${转义HTML(候选.共同结论)}</p>` : ""}
@@ -754,6 +763,12 @@ function 运行择日查询(): void {
     if (!事项) throw new Error("请选择事项");
     if (依据 === "真太阳时" && 经度 === null) throw new Error("候选日期使用真太阳时时，请填写候选地经度");
     const 人物 = [...根节点.querySelectorAll<HTMLElement>("[data-election-person]")].map((容器, 索引) => {
+      if (索引 === 0) {
+        const 经度数值 = 八字经度文本.trim() === "" ? null : Number(八字经度文本);
+        const 人物经度 = 经度数值 !== null && Number.isFinite(经度数值) && 经度数值 >= -180 && 经度数值 <= 180 ? 经度数值 : null;
+        if (八字时间依据 === "真太阳时" && 人物经度 === null) throw new Error(`${择日模式 === "双人" ? "甲方" : "事主"}使用真太阳时时，请在八字分析填写出生地经度`);
+        return { 标签: 择日模式 === "双人" ? "甲方" : "事主", 日期: 八字日期, 时间: 八字时间, 性别: 八字性别, 时间依据: 八字时间依据, 经度: 人物经度 };
+      }
       const 人物依据 = 容器.querySelector<HTMLSelectElement>("[data-person-basis]")?.value === "真太阳时" ? "真太阳时" : "北京时间";
       const 人物经度 = 读取可选经度(容器.querySelector<HTMLInputElement>("[data-person-longitude]"));
       if (人物依据 === "真太阳时" && 人物经度 === null) throw new Error(`${择日模式 === "双人" ? (索引 === 0 ? "甲方" : "乙方") : "事主"}使用真太阳时时，请填写出生地经度`);
@@ -963,8 +978,6 @@ function 渲染(): void {
               .join("")}
           </div>
           </article>
-          ${八字查询卡片()}
-          ${择日卡片()}
         </div>
 
         <section class="calculation-card" aria-label="时间与计算依据">
@@ -997,6 +1010,11 @@ function 渲染(): void {
             规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
           </p>
         </section>
+      </section>
+
+      <section class="calendar-extensions" aria-label="八字分析与个性化择日">
+        ${八字查询卡片()}
+        ${择日卡片()}
       </section>
 
     </main>

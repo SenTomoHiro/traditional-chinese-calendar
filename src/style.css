@@ -162,7 +162,6 @@ button:focus-visible {
   min-width: 0;
   max-width: 100%;
   padding: 22px clamp(22px, 4vw, 48px) 28px;
-  border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   color: var(--calendar-text);
 }
@@ -1076,8 +1075,22 @@ body.deity-dialog-open {
 }
 
 /* 八字分析与个性化择日 */
-.feature-card + .feature-card {
-  border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+.calendar-extensions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  align-items: start;
+  gap: 1px;
+  margin-top: 20px;
+  overflow: hidden;
+  background: var(--line);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.calendar-extensions > .feature-card {
+  height: 100%;
+  background: var(--surface);
 }
 
 .bazi-analysis {
@@ -1158,6 +1171,11 @@ body.deity-dialog-open {
   color: var(--calendar-muted);
   font-size: 10px;
   line-height: 1.65;
+}
+
+.use-grid article > p {
+  padding-left: 0;
+  overflow-wrap: anywhere;
 }
 
 .analysis-grid p,
@@ -1284,6 +1302,39 @@ body.deity-dialog-open {
   font-family: var(--serif-font);
   font-size: 12px;
 }
+
+.election-person-shared {
+  display: block;
+}
+
+.election-person-shared p {
+  margin: 0 0 9px;
+  color: var(--calendar-muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.election-person-shared dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.election-person-shared dl div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.election-person-shared dt,
+.election-person-shared dd {
+  margin: 0;
+  color: var(--calendar-muted);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.election-person-shared dd { color: var(--calendar-text); }
 
 .election-submit {
   width: 100%;
@@ -2087,6 +2138,10 @@ body.deity-dialog-open {
 
   .calculation-card {
     border-top-color: var(--panel-line);
+  }
+
+  .calendar-extensions {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
