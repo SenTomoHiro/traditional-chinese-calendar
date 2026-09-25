@@ -41,6 +41,8 @@ import {
 } from "./实时历时";
 import { 格式化时分 } from "./历法/时间";
 import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
+import { 分析八字, type 性别 } from "./八字分析";
+import { 可选事项, 执行择日, type 择日结果, type 现代事项 } from "./择日/择日";
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
@@ -75,6 +77,10 @@ function 北京日期(时间 = 从时间戳读取北京时间()): Date {
 }
 
 const 初始北京时间 = 从时间戳读取北京时间();
+function 日期文本偏移(年: number, 月: number, 日: number, 偏移: number): string {
+  const 日期 = new Date(Date.UTC(年, 月 - 1, 日 + 偏移));
+  return `${日期.getUTCFullYear()}-${String(日期.getUTCMonth() + 1).padStart(2, "0")}-${String(日期.getUTCDate()).padStart(2, "0")}`;
+}
 let 今天 = 北京日期(初始北京时间);
 let 状态: 日历状态 = 选择日期(
   { 年: 今天.getFullYear(), 月: 今天.getMonth(), 所选日期: 今天 },
@@ -99,9 +105,15 @@ let 手动查看时辰键: string | null = null;
 let 八字日期 = `${初始北京时间.年}-${String(初始北京时间.月).padStart(2, "0")}-${String(初始北京时间.日).padStart(2, "0")}`;
 let 八字时间 = 格式化时分(初始北京时间);
 let 八字时间依据: 时间依据 = "北京时间";
+let 八字性别: 性别 = "男";
 let 八字经度文本 = "";
 let 八字定位中 = false;
 let 八字定位说明 = "";
+let 择日模式: "单人" | "双人" = "单人";
+let 最近择日结果: 择日结果 | null = null;
+let 择日错误 = "";
+const 默认择日开始 = 日期文本偏移(初始北京时间.年, 初始北京时间.月, 初始北京时间.日, 1);
+const 默认择日结束 = 日期文本偏移(初始北京时间.年, 初始北京时间.月, 初始北京时间.日, 30);
 let 主日期草稿: string | null = null;
 let 主日期正在编辑 = false;
 let 主日期键盘编辑 = false;
@@ -594,13 +606,40 @@ function 生成八字结果区(): string {
     ? 经度数值
     : null;
   const 查询结果 = 查询生辰八字(八字日期, 八字时间, 八字时间依据, 有效经度);
-  return 查询结果.成功
-    ? `<div class="bazi-result" aria-live="polite">
-        <p class="bazi-pillars">${查询结果.结果.四柱}</p>
-        <p class="bazi-line"><span>八字</span><strong>${查询结果.结果.八字}</strong></p>
-        <ul>${生辰八字时间说明(查询结果.结果).map((说明) => `<li>${转义HTML(说明)}</li>`).join("")}</ul>
-      </div>`
-    : `<p class="bazi-message" aria-live="polite">${转义HTML(查询结果.提示)}</p>`;
+  if (!查询结果.成功) return `<p class="bazi-message" aria-live="polite">${转义HTML(查询结果.提示)}</p>`;
+  const 分析 = 分析八字(查询结果.结果, 八字性别);
+  const 柱 = ["年柱", "月柱", "日柱", "时柱"] as const;
+  const 列表 = (内容: string[], 空 = "未见明确证据") => `<ul>${(内容.length > 0 ? 内容 : [空]).map((项) => `<li>${转义HTML(项)}</li>`).join("")}</ul>`;
+  return `<div class="bazi-result bazi-analysis" aria-live="polite">
+    <p class="bazi-pillars">${查询结果.结果.四柱}</p>
+    <div class="bazi-chart" role="table" aria-label="四柱命盘">
+      ${柱.map((名称, 索引) => {
+        const 当前柱 = 查询结果.结果[名称]; const 藏 = 分析.藏干[索引];
+        return `<div class="bazi-chart-column" role="row"><span>${名称}</span><strong>${当前柱}</strong><small>${藏.藏干.map((项) => `${项.干}·${项.十神}`).join("　")}</small></div>`;
+      }).join("")}
+    </div>
+    <p class="bazi-line"><span>日主 / 月令</span><strong>${分析.日主} · ${分析.月令}</strong></p>
+    <div class="analysis-grid">
+      <article><h3>通根与透干</h3>${列表([...分析.通根, ...分析.透干])}</article>
+      <article><h3>得令、得地、得势</h3>${列表([...分析.得令, ...分析.得地, ...分析.得势])}</article>
+      <article><h3>生扶、克、泄、耗</h3>${列表([
+        `生扶：${分析.全局结构.生扶.join("、") || "未见"}`,
+        `克：${分析.全局结构.克.join("、") || "未见"}`,
+        `泄：${分析.全局结构.泄.join("、") || "未见"}`,
+        `耗：${分析.全局结构.耗.join("、") || "未见"}`,
+      ])}</article>
+      <article><h3>干支关系</h3>${列表([...分析.天干关系, ...分析.地支关系])}</article>
+    </div>
+    <section class="pattern-section"><h3>格局候选</h3>${分析.格局候选.map((候选) => `<details><summary><span>${候选.级别}</span>${候选.名称}</summary><dl><dt>成立依据</dt><dd>${候选.成立依据.map(转义HTML).join("；")}</dd><dt>不利条件 / 破格线索</dt><dd>${候选.不利条件.map(转义HTML).join("；") || "当前机器证据未见明确线索"}</dd><dt>需要人工复核</dt><dd>${候选.人工复核.map(转义HTML).join("；")}</dd></dl></details>`).join("") || "<p>月令暂未形成普通正格候选，需人工复核。</p>"}</section>
+    <div class="analysis-grid use-grid">
+      <article><h3>格局用</h3><p>${转义HTML(分析.三套取用说明.格局用)}</p></article>
+      <article><h3>扶抑</h3><p>${转义HTML(分析.三套取用说明.扶抑)}</p></article>
+      <article><h3>调候</h3>${列表(分析.调候)}</article>
+    </div>
+    <section class="plain-summary"><h3>通俗说明</h3>${列表(分析.通俗总结)}</section>
+    <ul class="bazi-time-notes">${生辰八字时间说明(查询结果.结果).map((说明) => `<li>${转义HTML(说明)}</li>`).join("")}</ul>
+    <details class="source-details"><summary>查看依据</summary><p>${转义HTML(分析.来源说明)}</p></details>
+  </div>`;
 }
 
 function 格式化八字日期显示(日期: string): string {
@@ -623,8 +662,8 @@ function 更新八字结果区(): void {
 
 function 八字查询卡片(): string {
   return `
-    <section class="bazi-card" aria-label="生辰八字查询">
-      <header><h2>生辰八字查询</h2><p>只查询年月日时四柱</p></header>
+    <section class="bazi-card feature-card" aria-label="生辰八字查询">
+      <header><h2>八字分析</h2><p>证据优先 · 不给伪精确分数</p></header>
       <div class="bazi-form">
         <label class="bazi-picker-field" for="bazi-birth-date">日期
           <span class="mobile-picker-shell" data-picker-shell="date">
@@ -638,6 +677,7 @@ function 八字查询卡片(): string {
             <input class="mobile-picker-native" id="bazi-birth-time" type="time" data-bazi-time aria-label="生辰时间" value="${八字时间}">
           </span>
         </label>
+        <label>性别<select data-bazi-gender><option value="男"${八字性别 === "男" ? " selected" : ""}>男</option><option value="女"${八字性别 === "女" ? " selected" : ""}>女</option></select></label>
         <label>计算依据<select data-bazi-basis>
           <option value="北京时间"${八字时间依据 === "北京时间" ? " selected" : ""}>北京时间</option>
           <option value="真太阳时"${八字时间依据 === "真太阳时" ? " selected" : ""}>真太阳时</option>
@@ -650,6 +690,90 @@ function 八字查询卡片(): string {
       ${八字定位说明 ? `<p class="bazi-location-note">${转义HTML(八字定位说明)}</p>` : ""}
       <div class="bazi-output" data-bazi-output>${生成八字结果区()}</div>
     </section>`;
+}
+
+function 择日人物表单(索引: number, 标签: string): string {
+  return `<fieldset class="election-person" data-election-person="${索引}"><legend>${标签}</legend>
+    <label>出生日期<input type="date" data-person-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${八字日期}"></label>
+    <label>出生时间<input type="time" data-person-time value="${八字时间}"></label>
+    <label>性别<select data-person-gender><option value="男">男</option><option value="女"${索引 === 1 ? " selected" : ""}>女</option></select></label>
+    <label>时间依据<select data-person-basis><option value="北京时间">北京时间</option><option value="真太阳时">真太阳时</option></select></label>
+    <label>出生地经度<input type="number" data-person-longitude min="-180" max="180" step="0.01" placeholder="真太阳时必填"></label>
+  </fieldset>`;
+}
+
+function 状态类(状态: string): string { return 状态 === "已裁断" ? "resolved" : 状态 === "资料未全" ? "pending" : 状态 === "原始宜忌并见" ? "mixed" : "neutral"; }
+
+function 生成择日结果区(): string {
+  if (择日错误) return `<p class="bazi-message election-error" role="alert">${转义HTML(择日错误)}</p>`;
+  if (!最近择日结果) return `<p class="election-empty">填写日期范围和出生信息后开始筛选；结果不会显示数字吉凶分。</p>`;
+  return `<div class="election-results" aria-live="polite">
+    <header><strong>${转义HTML(最近择日结果.事项)} · ${最近择日结果.日期范围}</strong><span>共 ${最近择日结果.候选.length} 日，按公共日课与双方可接受度排序</span></header>
+    ${最近择日结果.候选.map((候选, 索引) => `<article class="election-day${索引 < 3 ? " is-leading" : ""}">
+      <div class="election-day-heading"><div><time datetime="${候选.日期}">${候选.日期}</time><strong>${候选.推荐程度}</strong></div><p>${候选.干支} · ${候选.值星} · ${候选.黄黑道}${候选.已核事实.length ? ` · ${候选.已核事实.join("、")}` : ""}</p></div>
+      <div class="verdict-row">${候选.公共日课.map((项) => `<span class="is-${状态类(项.状态)}">${项.名称}：${项.状态}</span>`).join("")}</div>
+      ${候选.共同结论 ? `<p class="joint-verdict">${转义HTML(候选.共同结论)}</p>` : ""}
+      <div class="candidate-reasons"><div><h4>有利原因</h4>${(候选.有利原因.length ? 候选.有利原因 : ["未见明确注宜或个性有利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div><div><h4>需要注意</h4>${(候选.需要注意.length ? 候选.需要注意 : ["未见严重不利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div></div>
+      <div class="recommended-hours"><h4>推荐时辰</h4>${候选.推荐时辰.map((时辰) => `<span class="is-${时辰.等级}"><strong>${时辰.名称} ${时辰.时间范围}</strong><small>${时辰.时柱}时 · ${时辰.等级}${时辰.待校.length ? " · 有待校项" : ""}</small></span>`).join("")}</div>
+      <p class="coverage-note">${转义HTML(候选.资料完整说明)}</p>
+      <details class="source-details"><summary>查看依据</summary>${候选.公共日课.map((项) => `<section><h4>${项.名称} · ${项.状态}</h4><p>${转义HTML(项.结论)}</p><p>宜：${项.宜证据.map(转义HTML).join("、") || "无"}；忌：${项.忌证据.map(转义HTML).join("、") || "无"}</p>${项.待校.length ? `<p>待校：${项.待校.map(转义HTML).join("、")}</p>` : ""}<small>${转义HTML(项.来源)}</small></section>`).join("")}${候选.人物关系.map((关系) => `<section><h4>${转义HTML(关系.标签)}</h4>${关系.项目.map((项) => `<p>${项.层级}：${转义HTML(项.说明)} <small>（${项.来源类型}）</small></p>`).join("")}</section>`).join("")}</details>
+    </article>`).join("")}
+  </div>`;
+}
+
+function 择日卡片(): string {
+  return `<section class="bazi-card feature-card election-card" aria-label="个性化择日">
+    <header><h2>个性化择日</h2><p>公共日课 → 个人关系 → 择时</p></header>
+    <div class="election-mode" role="group" aria-label="人数"><button type="button" data-election-mode="单人" class="${择日模式 === "单人" ? "is-active" : ""}">单人</button><button type="button" data-election-mode="双人" class="${择日模式 === "双人" ? "is-active" : ""}">双人婚姻</button></div>
+    <div class="election-form">
+      <label>做什么事<select data-election-event>${可选事项().map((事项) => `<option value="${事项}">${事项}</option>`).join("")}</select></label>
+      <label>开始日期<input type="date" data-election-start value="${默认择日开始}" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}"></label>
+      <label>结束日期<input type="date" data-election-end value="${默认择日结束}" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}"></label>
+      <label>候选时间依据<select data-election-basis><option value="北京时间">北京时间</option><option value="真太阳时">真太阳时</option></select></label>
+      <label>候选地经度<input type="number" data-election-longitude min="-180" max="180" step="0.01" placeholder="真太阳时必填"></label>
+    </div>
+    <div class="election-people">${择日人物表单(0, 择日模式 === "双人" ? "甲方" : "事主")}${择日模式 === "双人" ? 择日人物表单(1, "乙方") : ""}</div>
+    <button type="button" class="election-submit" data-action="run-election">开始筛选</button>
+    <div data-election-output>${生成择日结果区()}</div>
+  </section>`;
+}
+
+function 读取可选经度(输入: HTMLInputElement | null): number | null {
+  if (!输入 || 输入.value.trim() === "") return null;
+  const 数值 = Number(输入.value);
+  return Number.isFinite(数值) && 数值 >= -180 && 数值 <= 180 ? 数值 : null;
+}
+
+function 运行择日查询(): void {
+  try {
+    const 事项 = 根节点.querySelector<HTMLSelectElement>("[data-election-event]")?.value as 现代事项 | undefined;
+    const 开始 = 根节点.querySelector<HTMLInputElement>("[data-election-start]")?.value ?? "";
+    const 结束 = 根节点.querySelector<HTMLInputElement>("[data-election-end]")?.value ?? "";
+    const 依据 = 根节点.querySelector<HTMLSelectElement>("[data-election-basis]")?.value === "真太阳时" ? "真太阳时" : "北京时间";
+    const 经度 = 读取可选经度(根节点.querySelector<HTMLInputElement>("[data-election-longitude]"));
+    if (!事项) throw new Error("请选择事项");
+    if (依据 === "真太阳时" && 经度 === null) throw new Error("候选日期使用真太阳时时，请填写候选地经度");
+    const 人物 = [...根节点.querySelectorAll<HTMLElement>("[data-election-person]")].map((容器, 索引) => {
+      const 人物依据 = 容器.querySelector<HTMLSelectElement>("[data-person-basis]")?.value === "真太阳时" ? "真太阳时" : "北京时间";
+      const 人物经度 = 读取可选经度(容器.querySelector<HTMLInputElement>("[data-person-longitude]"));
+      if (人物依据 === "真太阳时" && 人物经度 === null) throw new Error(`${择日模式 === "双人" ? (索引 === 0 ? "甲方" : "乙方") : "事主"}使用真太阳时时，请填写出生地经度`);
+      return {
+        标签: 择日模式 === "双人" ? (索引 === 0 ? "甲方" : "乙方") : "事主",
+        日期: 容器.querySelector<HTMLInputElement>("[data-person-date]")?.value ?? "",
+        时间: 容器.querySelector<HTMLInputElement>("[data-person-time]")?.value ?? "",
+        性别: (容器.querySelector<HTMLSelectElement>("[data-person-gender]")?.value === "女" ? "女" : "男") as 性别,
+        时间依据: 人物依据 as 时间依据,
+        经度: 人物经度,
+      };
+    });
+    最近择日结果 = 执行择日(事项, 开始, 结束, 人物, 依据, 经度, 配置结果);
+    择日错误 = "";
+  } catch (错误) {
+    最近择日结果 = null;
+    择日错误 = 错误 instanceof Error ? 错误.message : "择日查询失败";
+  }
+  const 输出 = 根节点.querySelector<HTMLElement>("[data-election-output]");
+  if (输出) 输出.innerHTML = 生成择日结果区();
 }
 
 function 时辰展开详情(时段: 时辰概览段 | undefined): string {
@@ -840,6 +964,7 @@ function 渲染(): void {
           </div>
           </article>
           ${八字查询卡片()}
+          ${择日卡片()}
         </div>
 
         <section class="calculation-card" aria-label="时间与计算依据">
@@ -906,6 +1031,9 @@ function 渲染(): void {
     八字时间依据 = 目标.value === "真太阳时" ? "真太阳时" : "北京时间";
     八字定位说明 = "";
     渲染();
+  } else if (目标.matches("[data-bazi-gender]")) {
+    八字性别 = 目标.value === "女" ? "女" : "男";
+    更新八字结果区();
   } else if (目标.matches("[data-bazi-longitude]")) {
     八字经度文本 = 目标.value;
     八字定位说明 = "";
@@ -1042,6 +1170,20 @@ function 完成月历滑动(事件: PointerEvent): void {
 
   if (目标.dataset.action === "bazi-locate") {
     await 请求八字定位();
+    return;
+  }
+
+  const 人数模式 = 目标.dataset.electionMode;
+  if (人数模式 === "单人" || 人数模式 === "双人") {
+    择日模式 = 人数模式;
+    最近择日结果 = null;
+    择日错误 = "";
+    渲染();
+    return;
+  }
+
+  if (目标.dataset.action === "run-election") {
+    运行择日查询();
     return;
   }
 
