@@ -11,7 +11,7 @@ for (const 场景 of [
   { 名称: "PC", 宽: 1440, 高: 1000 },
   { 名称: "手机", 宽: 390, 高: 844 },
 ] as const) {
-  test(`${场景.名称}可预览并下载 4:5 高清分享图`, async ({ page }) => {
+  test(`${场景.名称}可预览并下载竖向主视觉分享图`, async ({ page }) => {
     const 错误: string[] = [];
     const 资源404: string[] = [];
     page.on("pageerror", (项) => 错误.push(项.message));
@@ -23,7 +23,10 @@ for (const 场景 of [
     const 预览 = page.locator(".deity-share-panel > img");
     await expect(预览).toBeVisible();
     await expect(预览).toHaveJSProperty("complete", true);
-    expect(await 预览.evaluate((图片) => ({ 宽: (图片 as HTMLImageElement).naturalWidth, 高: (图片 as HTMLImageElement).naturalHeight }))).toEqual({ 宽: 1080, 高: 1350 });
+    const 尺寸 = await 预览.evaluate((图片) => ({ 宽: (图片 as HTMLImageElement).naturalWidth, 高: (图片 as HTMLImageElement).naturalHeight }));
+    expect(尺寸.宽).toBe(1080);
+    expect(尺寸.高).toBeGreaterThan(1440);
+    expect(尺寸.高).not.toBe(1350);
     const 下载 = page.waitForEvent("download");
     await page.getByRole("link", { name: "下载 PNG" }).click();
     const 文件 = await 下载;
@@ -40,12 +43,23 @@ test("无神像的独立纪念仍可生成分享图", async ({ page }) => {
   await expect(page.getByAltText("天腊之辰朋友圈分享图预览")).toBeVisible();
 });
 
-test("短正文保持 4:5，长正文按内容适度加高且完整导出", async ({ page }) => {
+test("上方 3:4 主视觉固定，文字区随实际正文增长并完整导出", async ({ page }) => {
   await 打开纪念(page, "2026-07-02", "湛然天师");
   await page.getByRole("button", { name: "生成分享图" }).click();
   const 短图 = page.locator(".deity-share-panel > img");
   await expect(短图).toHaveJSProperty("complete", true);
-  expect(await 短图.evaluate((图片) => (图片 as HTMLImageElement).naturalHeight)).toBe(1350);
+  const 短高 = await 短图.evaluate((图片) => (图片 as HTMLImageElement).naturalHeight);
+  expect(短高).toBeGreaterThan(1440);
+  const 拼接处 = await 短图.evaluate((图片) => {
+    const 画布 = document.createElement("canvas");
+    画布.width = (图片 as HTMLImageElement).naturalWidth;
+    画布.height = (图片 as HTMLImageElement).naturalHeight;
+    const 画笔 = 画布.getContext("2d")!;
+    画笔.drawImage(图片 as HTMLImageElement, 0, 0);
+    return [1438, 1450].map((y) => Array.from(画笔.getImageData(540, y, 1, 1).data));
+  });
+  expect(拼接处[0]).not.toEqual(拼接处[1]);
+  expect(拼接处[1][0]).toBeGreaterThan(240);
   await page.getByRole("button", { name: "关闭分享图预览" }).click();
   await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
 
@@ -54,8 +68,7 @@ test("短正文保持 4:5，长正文按内容适度加高且完整导出", asyn
   const 长图 = page.locator(".deity-share-panel > img");
   await expect(长图).toHaveJSProperty("complete", true);
   const 高 = await 长图.evaluate((图片) => (图片 as HTMLImageElement).naturalHeight);
-  expect(高).toBeGreaterThan(1350);
-  expect(高).toBeLessThan(1650);
+  expect(高).toBeGreaterThan(短高);
   await expect(page.locator(".deity-share-heading")).toContainText(`1080 × ${高}`);
   const 下载 = page.waitForEvent("download");
   await page.getByRole("link", { name: "下载 PNG" }).click();
