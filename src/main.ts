@@ -42,7 +42,14 @@ import {
 import { 格式化时分 } from "./历法/时间";
 import { 八字支持范围, 查询生辰八字, 生辰八字时间说明 } from "./生辰八字";
 import { 分析八字, type 性别 } from "./八字分析";
-import { 可选事项, 执行择日, type 择日结果, type 现代事项 } from "./择日/择日";
+import {
+  可选事项大类,
+  获取分类事项,
+  执行择日,
+  type 事项大类,
+  type 择日结果,
+  type 现代事项,
+} from "./择日/择日";
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
@@ -110,6 +117,8 @@ let 八字经度文本 = "";
 let 八字定位中 = false;
 let 八字定位说明 = "";
 let 择日模式: "单人" | "双人" = "单人";
+let 择日事项大类: 事项大类 = "婚姻类";
+let 择日事项: 现代事项 = "订婚";
 let 最近择日结果: 择日结果 | null = null;
 let 择日错误 = "";
 const 默认择日开始 = 日期文本偏移(初始北京时间.年, 初始北京时间.月, 初始北京时间.日, 1);
@@ -787,12 +796,19 @@ function 生成择日结果区(): string {
   </div>`;
 }
 
+function 择日事项选项(大类: 事项大类, 当前事项: 现代事项): string {
+  return 获取分类事项(大类)
+    .map((事项) => `<option value="${事项}"${事项 === 当前事项 ? " selected" : ""}>${事项}</option>`)
+    .join("");
+}
+
 function 择日卡片(): string {
   return `<section class="bazi-card feature-card election-card" aria-label="个性化择日">
     <header><h2>个性化择日</h2><p>公共日课 → 个人关系 → 择时</p></header>
     <div class="election-mode" role="group" aria-label="人数"><button type="button" data-election-mode="单人" class="${择日模式 === "单人" ? "is-active" : ""}">单人</button><button type="button" data-election-mode="双人" class="${择日模式 === "双人" ? "is-active" : ""}">双人婚姻</button></div>
     <div class="election-form">
-      <label>做什么事<select data-election-event>${可选事项().map((事项) => `<option value="${事项}">${事项}</option>`).join("")}</select></label>
+      <label>事项大类<select data-election-category>${可选事项大类().map((大类) => `<option value="${大类}"${大类 === 择日事项大类 ? " selected" : ""}>${大类}</option>`).join("")}</select></label>
+      <label>具体事项<select data-election-event>${择日事项选项(择日事项大类, 择日事项)}</select></label>
       <label>开始日期<input type="date" data-election-start value="${默认择日开始}" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}"></label>
       <label>结束日期<input type="date" data-election-end value="${默认择日结束}" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}"></label>
       <label>候选时间依据<select data-election-basis><option value="北京时间">北京时间</option><option value="真太阳时">真太阳时</option></select></label>
@@ -818,6 +834,7 @@ function 运行择日查询(): void {
     const 依据 = 根节点.querySelector<HTMLSelectElement>("[data-election-basis]")?.value === "真太阳时" ? "真太阳时" : "北京时间";
     const 经度 = 读取可选经度(根节点.querySelector<HTMLInputElement>("[data-election-longitude]"));
     if (!事项) throw new Error("请选择事项");
+    择日事项 = 事项;
     if (依据 === "真太阳时" && 经度 === null) throw new Error("候选日期使用真太阳时时，请填写候选地经度");
     const 人物 = [...根节点.querySelectorAll<HTMLElement>("[data-election-person]")].map((容器, 索引) => {
       if (索引 === 0) {
@@ -938,7 +955,6 @@ function 渲染(): void {
     <main class="page-shell">
       <section class="calendar-layout" aria-label="日期核心详情与公历月历">
         <aside class="detail-card" aria-label="所选日期核心详情" aria-live="polite">
-          <div class="detail-accent" aria-hidden="true"></div>
           <div class="detail-topbar">
             <p class="detail-kicker">农历</p>
             ${主题切换控件()}
@@ -984,36 +1000,6 @@ function 渲染(): void {
             ${北斗.斗降日.命中 ? `<p class="beidou-source">来源：${转义HTML(北斗.斗降日.来源显示)}</p>` : ""}
           </section>
 
-          <section class="calculation-card" aria-label="时间与计算依据">
-            <div class="time-controls">
-              <div class="time-display-field">
-                <span>查询时间 · ${时间模式说明}</span>
-                <output class="current-time-display" data-time-output aria-label="当前查询时间">${时间查询.时间}</output>
-              </div>
-              <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
-                ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
-              </button>
-              <p class="location-status is-${当前定位状态}" aria-live="polite">${定位说明}</p>
-            </div>
-
-            <details class="calculation-details">
-              <summary>计算详情</summary>
-              <dl class="calculation-list">
-                <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
-                <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
-                <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
-                <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
-                <div><dt>节气</dt><dd>${节气显示}</dd></div>
-                <div><dt>定位环境</dt><dd>${定位诊断详情()}</dd></div>
-                <div><dt>版本</dt><dd data-app-version>${__APP_VERSION__}</dd></div>
-              </dl>
-              <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
-            </details>
-
-            <p class="config-status${错误总数 > 0 ? " has-error" : ""}">
-              规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
-            </p>
-          </section>
         </aside>
 
         <div class="calendar-right">
@@ -1057,6 +1043,37 @@ function 渲染(): void {
               .join("")}
           </div>
           </article>
+
+          <section class="calculation-card" aria-label="时间与计算依据">
+            <div class="time-controls">
+              <div class="time-display-field">
+                <span>查询时间 · ${时间模式说明}</span>
+                <output class="current-time-display" data-time-output aria-label="当前查询时间">${时间查询.时间}</output>
+              </div>
+              <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
+                ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
+              </button>
+              <p class="location-status is-${当前定位状态}" aria-live="polite">${定位说明}</p>
+            </div>
+
+            <details class="calculation-details">
+              <summary>计算详情</summary>
+              <dl class="calculation-list">
+                <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
+                <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
+                <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
+                <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
+                <div><dt>节气</dt><dd>${节气显示}</dd></div>
+                <div><dt>定位环境</dt><dd>${定位诊断详情()}</dd></div>
+                <div><dt>版本</dt><dd data-app-version>${__APP_VERSION__}</dd></div>
+              </dl>
+              <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
+            </details>
+
+            <p class="config-status${错误总数 > 0 ? " has-error" : ""}">
+              规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
+            </p>
+          </section>
         </div>
 
       </section>
@@ -1114,6 +1131,25 @@ function 渲染(): void {
     八字经度文本 = 目标.value;
     八字定位说明 = "";
     更新八字结果区();
+  } else if (目标.matches("[data-election-category]")) {
+    const 大类 = 目标.value as 事项大类;
+    if (!可选事项大类().includes(大类)) return;
+    择日事项大类 = 大类;
+    择日事项 = 获取分类事项(大类)[0];
+    最近择日结果 = null;
+    择日错误 = "";
+    const 事项选择 = 根节点.querySelector<HTMLSelectElement>("[data-election-event]");
+    if (事项选择) 事项选择.innerHTML = 择日事项选项(择日事项大类, 择日事项);
+    const 输出 = 根节点.querySelector<HTMLElement>("[data-election-output]");
+    if (输出) 输出.innerHTML = 生成择日结果区();
+  } else if (目标.matches("[data-election-event]")) {
+    const 事项 = 目标.value as 现代事项;
+    if (!获取分类事项(择日事项大类).includes(事项)) return;
+    择日事项 = 事项;
+    最近择日结果 = null;
+    择日错误 = "";
+    const 输出 = 根节点.querySelector<HTMLElement>("[data-election-output]");
+    if (输出) 输出.innerHTML = 生成择日结果区();
   } else return;
 });
 

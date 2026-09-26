@@ -217,9 +217,10 @@ describe("日期详情展示回归", () => {
     const 扩展位置 = 页面源码.indexOf('<section class="calendar-extensions"');
     const 择日位置 = 页面源码.indexOf("${择日卡片()}");
     const 时辰位置 = 页面源码.indexOf('class="hour-overview hour-section"');
-    expect(详情位置).toBeLessThan(计算位置);
-    expect(计算位置).toBeLessThan(月历位置);
-    expect(月历位置).toBeLessThan(时辰位置);
+    expect(月历位置).toBeLessThan(计算位置);
+    expect(计算位置).toBeLessThan(时辰位置);
+    expect(页面源码).not.toContain('class="detail-accent"');
+    expect(页面样式).not.toContain(".calculation-card::before");
     expect(时辰位置).toBeLessThan(扩展位置);
     expect(扩展位置).toBeLessThan(八字位置);
     expect(八字位置).toBeLessThan(择日位置);
@@ -483,8 +484,18 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("${时段.时柱}时");
     expect(页面源码).toContain("${时段.值神}");
     expect(页面源码).toContain("${时段.吉凶}");
+    expect(页面样式).toContain("grid-template-columns: repeat(6, minmax(0, 1fr))");
+    expect(页面样式).toContain("grid-template-columns: repeat(4, minmax(0, 1fr))");
     expect(页面样式).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
     expect(页面样式).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+  });
+
+  it("择日使用大类与具体事项两级下拉并保留选择状态", () => {
+    expect(页面源码).toContain("事项大类<select data-election-category>");
+    expect(页面源码).toContain("具体事项<select data-election-event>");
+    expect(页面源码).toContain("可选事项大类()");
+    expect(页面源码).toContain("获取分类事项(大类)[0]");
+    expect(页面源码).toContain("事项选择.innerHTML = 择日事项选项(择日事项大类, 择日事项)");
   });
 
   it("十二时辰详情默认常驻于概览之前且不可收起", () => {

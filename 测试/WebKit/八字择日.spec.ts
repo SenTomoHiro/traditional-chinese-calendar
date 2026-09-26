@@ -1,4 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function 选择择日事项(page: Page, 大类: string, 事项: string): Promise<void> {
+  await page.locator("[data-election-category]").selectOption(大类);
+  await page.locator("[data-election-event]").selectOption(事项);
+}
 
 test("八字分析默认展示通俗说明，详细证据统一折叠后可展开", async ({ page }) => {
   await page.goto("/");
@@ -22,9 +27,29 @@ test("八字分析默认展示通俗说明，详细证据统一折叠后可展�
   await expect(输出).not.toContainText(/\d+%/u);
 });
 
+test("事项大类与具体事项两级联动且八类内容完整", async ({ page }) => {
+  await page.goto("/");
+  const 分类 = {
+    婚姻类: ["订婚", "结婚"],
+    居宅类: ["搬家", "移徙", "入宅", "安床", "归火", "搬家全套"],
+    商业类: ["开市/开业", "立券/签约", "纳财", "开仓库", "出货财"],
+    日常事务: ["出行", "祭祀", "祈福", "求嗣", "入学", "会亲友", "进人口", "疗病", "裁衣"],
+    工程营造: ["修造", "动土", "竖柱上梁", "开渠穿井"],
+    农事: ["栽种", "牧养"],
+    丧葬: ["破土", "安葬"],
+    官事: ["上官赴任"],
+  } as const;
+  await expect(page.locator("[data-election-category] option")).toHaveText(Object.keys(分类));
+  for (const [大类, 事项] of Object.entries(分类)) {
+    await page.locator("[data-election-category]").selectOption(大类);
+    await expect(page.locator("[data-election-event] option")).toHaveText([...事项]);
+    await expect(page.locator("[data-election-event]")).toHaveValue(事项[0]);
+  }
+});
+
 test("单人及双人婚姻择日均可完成并分别展示个人关系", async ({ page }) => {
   await page.goto("/");
-  await page.locator("[data-election-event]").selectOption("出行");
+  await 选择择日事项(page, "日常事务", "出行");
   await page.locator("[data-election-start]").fill("2026-08-09");
   await page.locator("[data-election-end]").fill("2026-08-13");
   await page.locator("[data-bazi-date]").fill("1990-05-20");
@@ -36,7 +61,7 @@ test("单人及双人婚姻择日均可完成并分别展示个人关系", async
   await expect(page.locator("[data-election-output]")).toContainText("事主：");
 
   await page.getByRole("button", { name: "双人婚姻" }).click();
-  await page.locator("[data-election-event]").selectOption("结婚");
+  await 选择择日事项(page, "婚姻类", "结婚");
   await page.locator("[data-election-start]").fill("2026-08-09");
   await page.locator("[data-election-end]").fill("2026-08-13");
   const 乙方 = page.locator('[data-election-person="1"]');
@@ -50,10 +75,13 @@ test("单人及双人婚姻择日均可完成并分别展示个人关系", async
   await expect(双人输出).toContainText(/双方均有有利关系|至少一方有需要注意|对.+存在重要不利关系/u);
 });
 
-test("十一个现代入口均可真实运行并显示正式铺注状态", async ({ page }) => {
+test("八类代表事项均可真实运行并显示正式铺注状态", async ({ page }) => {
   await page.goto("/");
-  for (const 事项 of ["订婚", "结婚", "搬家", "搬家＋安床", "入宅", "归火", "安床", "开业", "签约", "出行", "祈福"]) {
-    await page.locator("[data-election-event]").selectOption(事项);
+  for (const [大类, 事项] of [
+    ["婚姻类", "订婚"], ["居宅类", "搬家全套"], ["商业类", "纳财"], ["日常事务", "疗病"],
+    ["工程营造", "竖柱上梁"], ["农事", "栽种"], ["丧葬", "安葬"], ["官事", "上官赴任"],
+  ]) {
+    await 选择择日事项(page, 大类, 事项);
     await page.locator("[data-election-start]").fill("2026-08-09");
     await page.locator("[data-election-end]").fill("2026-08-20");
     await page.getByRole("button", { name: "开始筛选" }).click();
@@ -86,6 +114,12 @@ test("PC 时辰为独立圆角卡片，扩展模块位于其后并保持左右�
       时辰在主体后: 时辰.top > 主体.bottom,
       扩展在时辰后: 扩展.top > 时辰.bottom,
       时辰圆角: getComputedStyle(document.querySelector<HTMLElement>(".hour-section")!).borderRadius === "24px",
+      时辰列数: getComputedStyle(document.querySelector<HTMLElement>(".hour-grid")!).gridTemplateColumns.split(" ").length,
+      时辰无溢出: [...document.querySelectorAll<HTMLElement>(".hour-card")].every((卡片) => 卡片.scrollWidth <= 卡片.clientWidth + 1),
+      查询时间在月历: document.querySelector(".calendar-right")!.contains(document.querySelector(".calculation-card")),
+      左侧没有查询时间: !document.querySelector(".detail-card .calculation-card"),
+      左侧没有红线: !document.querySelector(".detail-accent")
+        && getComputedStyle(document.querySelector<HTMLElement>(".calculation-card")!, "::before").content === "none",
       正文左界: 正文.map((元素) => 元素.getBoundingClientRect().left),
       正文内边距: 正文.map((元素) => getComputedStyle(元素).paddingLeft),
     };
@@ -96,8 +130,29 @@ test("PC 时辰为独立圆角卡片，扩展模块位于其后并保持左右�
   expect(布局.时辰在主体后).toBe(true);
   expect(布局.扩展在时辰后).toBe(true);
   expect(布局.时辰圆角).toBe(true);
+  expect(布局.时辰列数).toBe(6);
+  expect(布局.时辰无溢出).toBe(true);
+  expect(布局.查询时间在月历).toBe(true);
+  expect(布局.左侧没有查询时间).toBe(true);
+  expect(布局.左侧没有红线).toBe(true);
   expect(new Set(布局.正文左界.map(Math.round)).size).toBe(3);
   expect(布局.正文内边距).toEqual(["0px", "0px", "0px"]);
+});
+
+test("常见 PC 宽度自动降为四列且时辰文字不重叠", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto("/");
+  const 结果 = await page.evaluate(() => {
+    const 卡片 = [...document.querySelectorAll<HTMLElement>(".hour-card")];
+    return {
+      列数: getComputedStyle(document.querySelector<HTMLElement>(".hour-grid")!).gridTemplateColumns.split(" ").length,
+      无溢出: 卡片.every((元素) => 元素.scrollWidth <= 元素.clientWidth + 1),
+      行内不重叠: [...document.querySelectorAll<HTMLElement>(".hour-time, .hour-meta")].every((行) =>
+        [...行.children].every((子项, 索引, 子项们) => 索引 === 0 || 子项.getBoundingClientRect().left >= 子项们[索引 - 1].getBoundingClientRect().right - 1),
+      ),
+    };
+  });
+  expect(结果).toEqual({ 列数: 4, 无溢出: true, 行内不重叠: true });
 });
 
 test("PC 日期总览与月历同段，时辰独立成卡且择日背景铺满右列", async ({ page }) => {
@@ -127,7 +182,7 @@ test("PC 日期总览与月历同段，时辰独立成卡且择日背景铺满�
     时辰独立于主日历: true,
   });
 
-  await page.locator("[data-election-event]").selectOption("出行");
+  await 选择择日事项(page, "日常事务", "出行");
   await page.locator("[data-election-start]").fill("2026-08-01");
   await page.locator("[data-election-end]").fill("2026-08-31");
   await page.getByRole("button", { name: "开始筛选" }).click();
@@ -179,7 +234,7 @@ for (const width of [768, 390, 320]) {
 
 test("主推荐不超过五项并展示实际筛选数量", async ({ page }) => {
   await page.goto("/");
-  await page.locator("[data-election-event]").selectOption("出行");
+  await 选择择日事项(page, "日常事务", "出行");
   await page.locator("[data-election-start]").fill("2026-08-01");
   await page.locator("[data-election-end]").fill("2026-08-31");
   await page.getByRole("button", { name: "开始筛选" }).click();
@@ -195,12 +250,12 @@ test("X63 普通月、两个闰月及交节前后均可真实运行且无资料�
   page.on("response", (响应) => { if (响应.status() === 404) 资源404.push(响应.url()); });
   await page.goto("/");
   for (const [事项, 开始, 结束] of [
-    ["开业", "2026-02-20", "2026-02-28"],
-    ["开业", "2023-03-22", "2023-04-08"],
-    ["签约", "2025-08-01", "2025-08-18"],
-    ["开业", "2025-08-06", "2025-08-08"],
+    ["开市/开业", "2026-02-20", "2026-02-28"],
+    ["开市/开业", "2023-03-22", "2023-04-08"],
+    ["立券/签约", "2025-08-01", "2025-08-18"],
+    ["开市/开业", "2025-08-06", "2025-08-08"],
   ] as const) {
-    await page.locator("[data-election-event]").selectOption(事项);
+    await 选择择日事项(page, "商业类", 事项);
     await page.locator("[data-election-start]").fill(开始);
     await page.locator("[data-election-end]").fill(结束);
     await page.getByRole("button", { name: "开始筛选" }).click();
