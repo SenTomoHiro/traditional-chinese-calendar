@@ -203,7 +203,7 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.theme-switch,\s*\.time-basis-switch\s*\{[^}]*display:\s*inline-flex/u);
   });
 
-  it("日历按总览月历、全宽时辰、扩展功能三段排列，并在移动端调整顺序", () => {
+  it("日历按总览月历、独立时辰卡片、扩展功能三段排列", () => {
     const 详情位置 = 页面源码.indexOf('<aside class="detail-card"');
     const 右栏位置 = 页面源码.indexOf('<div class="calendar-right"');
     const 月历位置 = 页面源码.indexOf('<article class="calendar-card"');
@@ -224,10 +224,9 @@ describe("日期详情展示回归", () => {
     expect(扩展位置).toBeLessThan(八字位置);
     expect(八字位置).toBeLessThan(择日位置);
     expect(页面样式).toContain('"detail right"');
-    expect(页面样式).toContain('"hours hours"');
-    expect(页面样式).toMatch(/"detail"\s+"hours"\s+"right"/u);
+    expect(页面样式).toMatch(/\.hour-section\s*\{[^}]*margin-top:\s*20px[^}]*border-radius:\s*24px/u);
+    expect(页面样式).not.toMatch(/\.hour-section\s*\{[^}]*grid-area:\s*hours/u);
     expect(页面样式).toMatch(/\.calendar-extensions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/u);
-    expect(页面样式).toMatch(/\.hour-section\s*\{[^}]*grid-area:\s*hours/u);
     expect(页面样式).not.toMatch(/\.calendar-extensions > \.feature-card\s*\{[^}]*height:\s*100%/u);
     expect(页面样式).toMatch(/@media \(max-width: 820px\)[\s\S]*?\.calendar-extensions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
   });

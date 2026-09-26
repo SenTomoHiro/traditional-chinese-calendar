@@ -600,6 +600,58 @@ function 现代时辰宜忌(时段: 时辰概览段): string {
     </section>`;
 }
 
+function 通俗八字说明(分析: ReturnType<typeof 分析八字>): string {
+  const 线索 = [
+    {
+      数量: 分析.全局结构.生扶.length,
+      特点: "重视积累、学习和可靠的支持",
+      优势: "在熟悉领域中容易形成稳定的判断和韧性",
+      留意: "准备充分时更有把握，也要避免因反复斟酌错过行动时机",
+      风格: "倾向先理解背景、打好基础，再稳步推进",
+      方向: "适合在需要专业沉淀、长期投入或协作支持的环境里发展",
+    },
+    {
+      数量: 分析.全局结构.克.length,
+      特点: "对目标、责任和规则较为敏感",
+      优势: "面对明确标准时，通常能保持执行力和责任感",
+      留意: "压力较大时容易把要求放得过高，需要给自己留出调整空间",
+      风格: "做事会在意边界、质量和结果是否经得起检验",
+      方向: "适合把责任感用在有清晰目标、规范或需要解决问题的工作中",
+    },
+    {
+      数量: 分析.全局结构.泄.length,
+      特点: "有把想法转化为表达、作品或实际产出的倾向",
+      优势: "善于把观察和经验整理成能被他人理解、采用的内容",
+      留意: "表达欲较强时，要兼顾节奏与他人的感受",
+      风格: "通常愿意边做边调整，用成果验证想法",
+      方向: "适合把沟通、创作、策划或解决方案沉淀成具体成果",
+    },
+    {
+      数量: 分析.全局结构.耗.length,
+      特点: "会把注意力放在资源、回报和现实安排上",
+      优势: "对机会、效率和资源配置往往有较强的实际感",
+      留意: "追求结果时，要避免把短期得失当成唯一尺度",
+      风格: "做决定会考虑投入产出，也愿意为目标调动资源",
+      方向: "适合在需要统筹资源、推进项目或创造实际价值的场景中积累",
+    },
+  ].filter((项) => 项.数量 > 0).sort((甲, 乙) => 乙.数量 - 甲.数量);
+  const 主要 = 线索[0] ?? {
+    特点: "整体线索较为均衡，需要结合现实经历慢慢观察",
+    优势: "能够在不同情境中调整自己的节奏",
+    留意: "不宜只凭一项信息作结论",
+    风格: "适合先确定目标，再逐步积累经验",
+    方向: "可结合兴趣、能力与现实条件选择长期方向",
+  };
+  const 次要 = 线索[1];
+  return `<dl class="bazi-plain-list">
+    <div><dt>整体类型</dt><dd>${转义HTML(主要.特点)}${次要 ? `，同时也带有${转义HTML(次要.特点)}的特点` : ""}。</dd></div>
+    <div><dt>优势</dt><dd>${转义HTML(主要.优势)}。</dd></div>
+    <div><dt>需要留意</dt><dd>${转义HTML(主要.留意)}。</dd></div>
+    <div><dt>做事风格</dt><dd>${转义HTML(主要.风格)}。</dd></div>
+    <div><dt>发展倾向</dt><dd>${转义HTML(主要.方向)}。具体选择仍应结合个人经历、兴趣和现实条件。</dd></div>
+  </dl>`;
+}
+
 function 生成八字结果区(): string {
   const 经度数值 = 八字经度文本.trim() === "" ? null : Number(八字经度文本);
   const 有效经度 = 经度数值 !== null && Number.isFinite(经度数值) && 经度数值 >= -180 && 经度数值 <= 180
@@ -618,27 +670,32 @@ function 生成八字结果区(): string {
         return `<div class="bazi-chart-column" role="row"><span>${名称}</span><strong>${当前柱}</strong><small>${藏.藏干.map((项) => `${项.干}·${项.十神}`).join("　")}</small></div>`;
       }).join("")}
     </div>
-    <p class="bazi-line"><span>日主 / 月令</span><strong>${分析.日主} · ${分析.月令}</strong></p>
-    <div class="analysis-grid">
-      <article><h3>通根与透干</h3>${列表([...分析.通根, ...分析.透干])}</article>
-      <article><h3>得令、得地、得势</h3>${列表([...分析.得令, ...分析.得地, ...分析.得势])}</article>
-      <article><h3>生扶、克、泄、耗</h3>${列表([
-        `生扶：${分析.全局结构.生扶.join("、") || "未见"}`,
-        `克：${分析.全局结构.克.join("、") || "未见"}`,
-        `泄：${分析.全局结构.泄.join("、") || "未见"}`,
-        `耗：${分析.全局结构.耗.join("、") || "未见"}`,
-      ])}</article>
-      <article><h3>干支关系</h3>${列表([...分析.天干关系, ...分析.地支关系])}</article>
-    </div>
-    <section class="pattern-section"><h3>格局候选</h3>${分析.格局候选.map((候选) => `<details><summary><span>${候选.级别}</span>${候选.名称}</summary><dl><dt>成立依据</dt><dd>${候选.成立依据.map(转义HTML).join("；")}</dd><dt>不利条件 / 破格线索</dt><dd>${候选.不利条件.map(转义HTML).join("；") || "当前机器证据未见明确线索"}</dd><dt>需要人工复核</dt><dd>${候选.人工复核.map(转义HTML).join("；")}</dd></dl></details>`).join("") || "<p>月令暂未形成普通正格候选，需人工复核。</p>"}</section>
-    <div class="analysis-grid use-grid">
-      <article><h3>格局用</h3><p>${转义HTML(分析.三套取用说明.格局用)}</p></article>
-      <article><h3>扶抑</h3><p>${转义HTML(分析.三套取用说明.扶抑)}</p></article>
-      <article><h3>调候</h3><p>${分析.调候.map(转义HTML).join("；")}</p></article>
-    </div>
-    <section class="plain-summary"><h3>通俗说明</h3>${列表(分析.通俗总结)}</section>
-    <ul class="bazi-time-notes">${生辰八字时间说明(查询结果.结果).map((说明) => `<li>${转义HTML(说明)}</li>`).join("")}</ul>
-    <details class="source-details"><summary>查看依据</summary><p>${转义HTML(分析.来源说明)}</p></details>
+    <section class="plain-summary bazi-plain-summary"><h3>通俗说明</h3>${通俗八字说明(分析)}</section>
+    <details class="bazi-analysis-details">
+      <summary>展开详细分析与依据</summary>
+      <div class="bazi-analysis-details-content">
+        <p class="bazi-line"><span>日主 / 月令</span><strong>${分析.日主} · ${分析.月令}</strong></p>
+        <div class="analysis-grid">
+          <article><h3>通根与透干</h3>${列表([...分析.通根, ...分析.透干])}</article>
+          <article><h3>得令、得地、得势</h3>${列表([...分析.得令, ...分析.得地, ...分析.得势])}</article>
+          <article><h3>生扶、克、泄、耗</h3>${列表([
+            `生扶：${分析.全局结构.生扶.join("、") || "未见"}`,
+            `克：${分析.全局结构.克.join("、") || "未见"}`,
+            `泄：${分析.全局结构.泄.join("、") || "未见"}`,
+            `耗：${分析.全局结构.耗.join("、") || "未见"}`,
+          ])}</article>
+          <article><h3>干支关系</h3>${列表([...分析.天干关系, ...分析.地支关系])}</article>
+        </div>
+        <section class="pattern-section"><h3>格局候选</h3>${分析.格局候选.map((候选) => `<details><summary><span>${候选.级别}</span>${候选.名称}</summary><dl><dt>成立依据</dt><dd>${候选.成立依据.map(转义HTML).join("；")}</dd><dt>不利条件 / 破格线索</dt><dd>${候选.不利条件.map(转义HTML).join("；") || "当前机器证据未见明确线索"}</dd><dt>需要人工复核</dt><dd>${候选.人工复核.map(转义HTML).join("；")}</dd></dl></details>`).join("") || "<p>月令暂未形成普通正格候选，需人工复核。</p>"}</section>
+        <div class="analysis-grid use-grid">
+          <article><h3>格局用</h3><p>${转义HTML(分析.三套取用说明.格局用)}</p></article>
+          <article><h3>扶抑</h3><p>${转义HTML(分析.三套取用说明.扶抑)}</p></article>
+          <article><h3>调候</h3><p>${分析.调候.map(转义HTML).join("；")}</p></article>
+        </div>
+        <ul class="bazi-time-notes">${生辰八字时间说明(查询结果.结果).map((说明) => `<li>${转义HTML(说明)}</li>`).join("")}</ul>
+        <details class="source-details"><summary>查看依据</summary><p>${转义HTML(分析.来源说明)}</p></details>
+      </div>
+    </details>
   </div>`;
 }
 
@@ -1002,14 +1059,15 @@ function 渲染(): void {
           </article>
         </div>
 
-        <section class="hour-overview hour-section" aria-label="十二时辰">
-          <div class="hour-overview-heading">
-            <h3>十二时辰</h3>
-            <button type="button" class="current-hour-button" data-action="current-hour">当前时辰</button>
-          </div>
-          ${时辰展开详情(查看时辰)}
-          <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
-        </section>
+      </section>
+
+      <section class="hour-overview hour-section" aria-label="十二时辰">
+        <div class="hour-overview-heading">
+          <h3>十二时辰</h3>
+          <button type="button" class="current-hour-button" data-action="current-hour">当前时辰</button>
+        </div>
+        ${时辰展开详情(查看时辰)}
+        <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
       </section>
 
       <section class="calendar-extensions" aria-label="八字分析与个性化择日">

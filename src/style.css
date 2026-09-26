@@ -133,9 +133,7 @@ button:focus-visible {
 
 .calendar-layout {
   display: grid;
-  grid-template-areas:
-    "detail right"
-    "hours hours";
+  grid-template-areas: "detail right";
   grid-template-columns: minmax(0, 1.38fr) minmax(360px, 1fr);
   align-items: start;
   overflow: hidden;
@@ -1078,10 +1076,10 @@ body.deity-dialog-open {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   align-items: start;
-  gap: 1px;
+  gap: 0;
   margin-top: 20px;
   overflow: hidden;
-  background: var(--line);
+  background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: 24px;
   box-shadow: var(--shadow);
@@ -1089,7 +1087,61 @@ body.deity-dialog-open {
 
 .calendar-extensions > .feature-card {
   align-self: start;
-  background: var(--surface);
+  background: transparent;
+}
+
+.calendar-extensions > .election-card {
+  align-self: stretch;
+  border-left: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+}
+
+.bazi-plain-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.bazi-plain-list > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+}
+
+.bazi-plain-list dt {
+  color: var(--gold-strong);
+  font-weight: 650;
+}
+
+.bazi-plain-list dd {
+  margin: 0;
+  color: var(--calendar-muted);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.bazi-analysis-details {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-radius: 12px;
+}
+
+.bazi-analysis-details > summary {
+  padding: 10px 12px;
+  color: var(--gold-strong);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.bazi-analysis-details[open] > summary {
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.bazi-analysis-details-content {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
 }
 
 .bazi-analysis {
@@ -1160,16 +1212,26 @@ body.deity-dialog-open {
 }
 
 .analysis-grid p,
-.analysis-grid ul,
-.plain-summary ul,
 .pattern-section p,
 .pattern-section dl,
 .bazi-time-notes {
   margin: 0;
-  padding-left: 17px;
+  padding: 0;
   color: var(--calendar-muted);
   font-size: 10px;
   line-height: 1.65;
+}
+
+.analysis-grid ul,
+.bazi-time-notes {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.analysis-grid li,
+.bazi-time-notes li {
+  overflow-wrap: anywhere;
 }
 
 .use-grid article > p {
@@ -1715,12 +1777,15 @@ body.deity-dialog-open {
 }
 
 .hour-section {
-  grid-area: hours;
   min-width: 0;
+  margin-top: 20px;
   padding: 20px clamp(28px, 3.5vw, 42px) clamp(28px, 3.5vw, 36px);
   color: var(--panel-ink);
   background: var(--panel);
-  border-top: 1px solid var(--panel-line);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .hour-card {
@@ -2133,7 +2198,6 @@ body.deity-dialog-open {
   .calendar-layout {
     grid-template-areas:
       "detail"
-      "hours"
       "right";
     grid-template-columns: 1fr;
     grid-template-rows: auto;
@@ -2150,6 +2214,11 @@ body.deity-dialog-open {
 
   .calendar-extensions {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .calendar-extensions > .election-card {
+    border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+    border-left: 0;
   }
 }
 

@@ -1,12 +1,19 @@
 import { expect, test } from "@playwright/test";
 
-test("八字分析真实输入后显示命盘、旺衰证据、格局候选与三套取用", async ({ page }) => {
+test("八字分析默认展示通俗说明，详细证据统一折叠后可展开", async ({ page }) => {
   await page.goto("/");
   await page.locator("[data-bazi-date]").fill("2026-08-09");
   await page.locator("[data-bazi-time]").fill("12:00");
   await page.locator("[data-bazi-gender]").selectOption("女");
   const 输出 = page.locator("[data-bazi-output]");
   await expect(输出).toContainText("丙午年　丙申月　乙卯日　壬午时");
+  await expect(输出.getByText("整体类型")).toBeVisible();
+  await expect(输出.getByText("做事风格")).toBeVisible();
+  const 详细分析 = 输出.locator(".bazi-analysis-details");
+  await expect(详细分析).not.toHaveAttribute("open", "");
+  await expect(输出.locator(".analysis-grid").first()).toBeHidden();
+  await 详细分析.locator(":scope > summary").click();
+  await expect(详细分析).toHaveAttribute("open", "");
   await expect(输出).toContainText("得令、得地、得势");
   await expect(输出).toContainText("正官格候选");
   await expect(输出).toContainText("格局用");
@@ -59,32 +66,41 @@ test("十一个现代入口均可真实运行并显示正式铺注状态", async
   }
 });
 
-test("PC 扩展模块位于日历主体下方并左右双栏，调候正文无额外缩进", async ({ page }) => {
+test("PC 时辰为独立圆角卡片，扩展模块位于其后并保持左右双栏", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   const 布局 = await page.evaluate(() => {
     const 主体 = document.querySelector<HTMLElement>(".calendar-layout")!.getBoundingClientRect();
+    const 时辰 = document.querySelector<HTMLElement>(".hour-section")!.getBoundingClientRect();
     const 扩展 = document.querySelector<HTMLElement>(".calendar-extensions")!.getBoundingClientRect();
     const 八字 = document.querySelector<HTMLElement>('[aria-label="生辰八字查询"]')!.getBoundingClientRect();
     const 择日 = document.querySelector<HTMLElement>('[aria-label="个性化择日"]')!.getBoundingClientRect();
     const 正文 = [...document.querySelectorAll<HTMLElement>(".use-grid article > p")];
     return {
       主体底: 主体.bottom,
+      时辰顶: 时辰.top,
+      时辰底: 时辰.bottom,
       扩展顶: 扩展.top,
       同边界: Math.abs(主体.left - 扩展.left) < 1 && Math.abs(主体.right - 扩展.right) < 1,
       双栏: Math.abs(八字.top - 择日.top) < 1 && 八字.right <= 择日.left + 1,
+      时辰在主体后: 时辰.top > 主体.bottom,
+      扩展在时辰后: 扩展.top > 时辰.bottom,
+      时辰圆角: getComputedStyle(document.querySelector<HTMLElement>(".hour-section")!).borderRadius === "24px",
       正文左界: 正文.map((元素) => 元素.getBoundingClientRect().left),
       正文内边距: 正文.map((元素) => getComputedStyle(元素).paddingLeft),
     };
   });
-  expect(布局.扩展顶).toBeGreaterThan(布局.主体底);
+  expect(布局.扩展顶).toBeGreaterThan(布局.时辰底);
   expect(布局.同边界).toBe(true);
   expect(布局.双栏).toBe(true);
+  expect(布局.时辰在主体后).toBe(true);
+  expect(布局.扩展在时辰后).toBe(true);
+  expect(布局.时辰圆角).toBe(true);
   expect(new Set(布局.正文左界.map(Math.round)).size).toBe(3);
   expect(布局.正文内边距).toEqual(["0px", "0px", "0px"]);
 });
 
-test("PC 日期总览与月历同段，时辰独占第二段且扩展卡片不再等高拉伸", async ({ page }) => {
+test("PC 日期总览与月历同段，时辰独立成卡且择日背景铺满右列", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
 
@@ -97,10 +113,10 @@ test("PC 日期总览与月历同段，时辰独占第二段且扩展卡片不�
     const 扩展 = 矩形(".calendar-extensions");
     return {
       概要月历同段: Math.abs(概要.top - 月历.top) < 1,
-      时辰在首段后: 时辰.top >= Math.max(概要.bottom, 月历.bottom) - 1,
+      时辰在首段后: 时辰.top >= 主体.bottom,
       时辰全宽: Math.abs(时辰.left - 主体.left) < 2 && Math.abs(时辰.right - 主体.right) < 2,
       扩展在时辰后: 扩展.top >= 时辰.bottom,
-      月历未被时辰撑高: 月历.bottom < 时辰.top - 1,
+      时辰独立于主日历: 时辰.top > 主体.bottom,
     };
   });
   expect(初始布局).toEqual({
@@ -108,7 +124,7 @@ test("PC 日期总览与月历同段，时辰独占第二段且扩展卡片不�
     时辰在首段后: true,
     时辰全宽: true,
     扩展在时辰后: true,
-    月历未被时辰撑高: true,
+    时辰独立于主日历: true,
   });
 
   await page.locator("[data-election-event]").selectOption("出行");
@@ -126,13 +142,14 @@ test("PC 日期总览与月历同段，时辰独占第二段且扩展卡片不�
       择日更长: 择日.bottom > 八字.bottom + 1,
       短栏未被拉伸: 八字.bottom < 扩展.bottom - 1,
       容器随长栏结束: Math.abs(扩展.bottom - 择日.bottom) <= 2,
+      择日背景铺满右列: getComputedStyle(document.querySelector<HTMLElement>('[aria-label="个性化择日"]')!).alignSelf === "stretch",
     };
   });
-  expect(扩展布局).toEqual({ 择日更长: true, 短栏未被拉伸: true, 容器随长栏结束: true });
+  expect(扩展布局).toEqual({ 择日更长: true, 短栏未被拉伸: true, 容器随长栏结束: true, 择日背景铺满右列: true });
 });
 
 for (const width of [768, 390, 320]) {
-  test(`${width}px 窄屏严格按概要、时辰、月历、八字、择日显示`, async ({ page }) => {
+  test(`${width}px 窄屏按概要、月历、时辰、八字、择日显示`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/");
     const 顺序 = await page.evaluate(() => {
@@ -143,17 +160,17 @@ for (const width of [768, 390, 320]) {
       const 八字 = 矩形('[aria-label="生辰八字查询"]');
       const 择日 = 矩形('[aria-label="个性化择日"]');
       return {
-        概要后时辰: 时辰.top >= 概要.bottom - 1,
-        时辰后月历: 月历.top >= 时辰.bottom - 1,
-        月历后八字: 八字.top >= 月历.bottom - 1,
+        概要后月历: 月历.top >= 概要.bottom - 1,
+        月历后时辰: 时辰.top >= 月历.bottom - 1,
+        时辰后八字: 八字.top >= 时辰.bottom - 1,
         八字后择日: 择日.top >= 八字.bottom - 1,
         无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
       };
     });
     expect(顺序).toEqual({
-      概要后时辰: true,
-      时辰后月历: true,
-      月历后八字: true,
+      概要后月历: true,
+      月历后时辰: true,
+      时辰后八字: true,
       八字后择日: true,
       无横向滚动: true,
     });
