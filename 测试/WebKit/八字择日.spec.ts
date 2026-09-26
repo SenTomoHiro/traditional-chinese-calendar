@@ -5,6 +5,27 @@ async function 选择择日事项(page: Page, 大类: string, 事项: string): P
   await page.locator("[data-election-event]").selectOption(事项);
 }
 
+test("择日四档均可真实显示且徽标颜色互异", async ({ page }) => {
+  await page.goto("/");
+  await 选择择日事项(page, "日常事务", "出行");
+  await page.locator("[data-bazi-date]").fill("1990-05-20");
+  await page.locator("[data-bazi-time]").fill("14:35");
+  await page.locator("[data-election-start]").fill("2026-08-01");
+  await page.locator("[data-election-end]").fill("2026-08-31");
+  await page.getByRole("button", { name: "开始筛选" }).click();
+  const 徽标 = page.locator(".election-grade");
+  await expect(徽标.first()).toHaveText("优先推荐");
+  await expect(徽标.nth(1)).toHaveText("推荐");
+  await expect(徽标.nth(2)).toHaveText("可以考虑");
+  const 颜色 = await 徽标.evaluateAll((元素) => 元素.slice(0, 3).map((项) => getComputedStyle(项).backgroundColor));
+  await page.locator("[data-election-start]").fill("2026-08-10");
+  await page.locator("[data-election-end]").fill("2026-08-10");
+  await page.getByRole("button", { name: "开始筛选" }).click();
+  await expect(徽标.first()).toHaveText("谨慎选择");
+  颜色.push(await 徽标.first().evaluate((项) => getComputedStyle(项).backgroundColor));
+  expect(new Set(颜色).size).toBe(4);
+});
+
 test("八字分析默认展示通俗说明，详细证据统一折叠后可展开", async ({ page }) => {
   await page.goto("/");
   await page.locator("[data-bazi-date]").fill("2026-08-09");

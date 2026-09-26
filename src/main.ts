@@ -51,6 +51,9 @@ import {
   type 现代事项,
 } from "./择日/择日";
 import { 创建每日宜忌展示 } from "./界面/每日宜忌展示";
+import { 生成神圣纪念分享图, type 分享图内容 } from "./界面/神圣纪念分享图";
+import { 映射择日展示等级 } from "./择日/结果等级";
+import { 转换为农历 } from "./历法/农历";
 import { 更新手动查看键, 清除手动查看时辰, 选出查看时辰 } from "./界面/时辰查看";
 import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
 import { 格式化主日期值, 解析主日期值, 移动主日期, 移动主日期月份 } from "./界面/主日期输入";
@@ -144,6 +147,8 @@ const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 
   + 神圣纪念资料配置.错误.length;
 let 详情触发元素: HTMLElement | null = null;
 let 当前神圣纪念详情: 当日神圣纪念[] = [];
+let 当前详情纪念: 当日神圣纪念 | null = null;
+let 当前分享图地址: string | null = null;
 
 function 开始定位任务(): Promise<定位结果> {
   定位诊断 = {
@@ -433,6 +438,7 @@ function 神圣纪念详情内容(纪念: 当日神圣纪念): string {
           <button type="button" class="deity-dialog-close" data-action="close-deity" aria-label="关闭神圣纪念详情">×</button>
         </header>
         <div class="deity-dialog-scroll">${宝诰}${简介}${纪念简介}${出处}</div>
+        <div class="deity-dialog-actions"><button type="button" data-action="generate-deity-share">生成分享图</button></div>
       </div>
     </article>`;
 }
@@ -444,9 +450,54 @@ function 打开神圣纪念详情(纪念: 当日神圣纪念, 触发元素: HTML
   对话框.innerHTML = 神圣纪念详情内容(纪念);
   对话框.classList.toggle("is-text-only", !(纪念.人物?.神像 || 纪念.事件.神像));
   详情触发元素 = 触发元素;
+  当前详情纪念 = 纪念;
   document.body.classList.add("deity-dialog-open");
   对话框.showModal();
   对话框.querySelector<HTMLButtonElement>("[data-action='close-deity']")?.focus();
+}
+
+function 分享图数据(纪念: 当日神圣纪念): 分享图内容 {
+  const 人物 = 纪念.人物;
+  const 日期 = 状态.所选日期;
+  const 农历 = 转换为农历(创建北京时间(日期.getFullYear(), 日期.getMonth() + 1, 日期.getDate(), 12));
+  const 段落: 分享图内容["段落"] = [];
+  if (人物?.简介) 段落.push({ 标题: "人物简介", 正文: 人物.简介 });
+  if (纪念.事件.纪念简介) 段落.push({ 标题: "纪念说明", 正文: 纪念.事件.纪念简介 });
+  if (人物?.宝诰) 段落.push({ 标题: 人物.宝诰标题 || "宝诰", 正文: 人物.宝诰 });
+  if (人物?.宝诰出处) 段落.push({ 标题: "相关说明", 正文: `宝诰出处：${人物.宝诰出处}` });
+  return {
+    神名: 人物?.主名称 || 纪念.名称,
+    纪念类型: 纪念.类型 || 纪念.事件.类型 || 纪念.名称,
+    农历日期: `农历${农历.显示}`,
+    公历日期: 格式化公历日期(日期),
+    神像地址: 神像地址(人物?.神像 || 纪念.事件.神像),
+    背景地址: 神像地址("/神像/背景.png"),
+    祥云地址: 神像地址("/神像/祥云前景.png"),
+    段落,
+  };
+}
+
+async function 显示神圣纪念分享图(按钮: HTMLButtonElement): Promise<void> {
+  const 纪念 = 当前详情纪念;
+  const 对话框 = 按钮.closest<HTMLDialogElement>("[data-deity-dialog]");
+  if (!纪念 || !对话框) return;
+  按钮.disabled = true;
+  按钮.textContent = "正在生成…";
+  try {
+    const 画布 = await 生成神圣纪念分享图(分享图数据(纪念));
+    const 文件 = await new Promise<Blob>((resolve, reject) => 画布.toBlob((结果) => 结果 ? resolve(结果) : reject(new Error("PNG 导出失败")), "image/png"));
+    if (!对话框.open) return;
+    if (当前分享图地址) URL.revokeObjectURL(当前分享图地址);
+    当前分享图地址 = URL.createObjectURL(文件);
+    const 文件名 = `神圣纪念-${纪念.人物?.主名称 || 纪念.名称}-${格式化公历日期(状态.所选日期)}.png`;
+    对话框.insertAdjacentHTML("beforeend", `<div class="deity-share-overlay" data-deity-share-overlay><div class="deity-share-panel"><div class="deity-share-heading"><strong>朋友圈分享图 · 1080 × 1350</strong><button type="button" data-action="close-deity-share" aria-label="关闭分享图预览">×</button></div><img src="${转义属性(当前分享图地址)}" alt="${转义属性(纪念.名称)}朋友圈分享图预览"><div class="deity-share-actions"><span>手机端可长按图片保存</span><a href="${转义属性(当前分享图地址)}" download="${转义属性(文件名)}">下载 PNG</a></div></div></div>`);
+    对话框.querySelector<HTMLButtonElement>("[data-action='close-deity-share']")?.focus();
+  } catch (错误) {
+    按钮.insertAdjacentHTML("afterend", `<span class="deity-share-error" role="alert">${转义HTML(错误 instanceof Error ? 错误.message : "分享图生成失败")}</span>`);
+  } finally {
+    按钮.disabled = false;
+    按钮.textContent = "生成分享图";
+  }
 }
 
 function 关闭人物详情(对话框: HTMLDialogElement): void {
@@ -778,14 +829,15 @@ function 生成择日结果区(): string {
   if (择日错误) return `<p class="bazi-message election-error" role="alert">${转义HTML(择日错误)}</p>`;
   if (!最近择日结果) return `<p class="election-empty">填写日期范围和出生信息后开始筛选；结果不会显示数字吉凶分。</p>`;
   const 推荐 = 最近择日结果.推荐候选;
+  const 展示等级 = 映射择日展示等级(推荐);
   const 数量说明 = 推荐.length >= 2
     ? `从 ${最近择日结果.候选.length} 日中选出 ${推荐.length} 个相对最优结果`
     : `仅找到 ${推荐.length} 个达到推荐条件的日期，候选不足，不以次等结果凑数`;
   return `<div class="election-results" aria-live="polite">
     <header><strong>${转义HTML(最近择日结果.事项)} · ${最近择日结果.日期范围}</strong><span>${数量说明}；排序依次比较公共日课、古籍状态、个人关系、共同适配与择时质量</span></header>
     ${推荐.length === 0 ? '<p class="election-empty">当前范围没有足够可靠的主推荐日期，请扩大日期范围后再试。</p>' : ""}
-    ${推荐.map((候选, 索引) => `<article class="election-day${索引 < 2 ? " is-leading" : ""}">
-      <div class="election-day-heading"><div><time datetime="${候选.日期}">${候选.日期}</time><strong>${候选.推荐程度}</strong></div><p>${候选.干支} · ${候选.值星} · ${候选.黄黑道}${候选.已核事实.length ? ` · ${候选.已核事实.join("、")}` : ""}</p></div>
+    ${推荐.map((候选, 索引) => `<article class="election-day${["优先推荐", "推荐"].includes(展示等级[索引]) ? " is-leading" : ""}">
+      <div class="election-day-heading"><div><time datetime="${候选.日期}">${候选.日期}</time><strong class="election-grade is-${展示等级[索引]}">${展示等级[索引]}</strong></div><p>${候选.干支} · ${候选.值星} · ${候选.黄黑道}${候选.已核事实.length ? ` · ${候选.已核事实.join("、")}` : ""}</p></div>
       <div class="verdict-row">${候选.公共日课.map((项) => `<span class="is-${状态类(项.状态)}">${项.名称}：${项.铺注状态}</span>`).join("")}</div>
       ${候选.共同结论 ? `<p class="joint-verdict">${转义HTML(候选.共同结论)}</p>` : ""}
       <div class="candidate-reasons"><div><h4>有利原因</h4>${(候选.有利原因.length ? 候选.有利原因 : ["未见明确注宜或个性有利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div><div><h4>需要注意</h4>${(候选.需要注意.length ? 候选.需要注意 : ["未见严重不利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div></div>
@@ -1249,6 +1301,17 @@ function 完成月历滑动(事件: PointerEvent): void {
     return;
   }
 
+  if (目标.dataset.action === "generate-deity-share") {
+    await 显示神圣纪念分享图(目标);
+    return;
+  }
+  if (目标.dataset.action === "close-deity-share") {
+    const 当前对话框 = 目标.closest<HTMLDialogElement>("[data-deity-dialog]");
+    目标.closest("[data-deity-share-overlay]")?.remove();
+    当前对话框?.querySelector<HTMLButtonElement>("[data-action='generate-deity-share']")?.focus();
+    return;
+  }
+
   const 纪念索引文本 = 目标.dataset.sacredCommemoration;
   if (纪念索引文本 !== undefined) {
     const 纪念 = 当前神圣纪念详情[Number(纪念索引文本)];
@@ -1350,6 +1413,9 @@ function 完成月历滑动(事件: PointerEvent): void {
 根节点.addEventListener("close", (事件) => {
   if (!(事件.target instanceof HTMLDialogElement) || !事件.target.matches("[data-deity-dialog]")) return;
   document.body.classList.remove("deity-dialog-open");
+  当前详情纪念 = null;
+  if (当前分享图地址) URL.revokeObjectURL(当前分享图地址);
+  当前分享图地址 = null;
   详情触发元素?.focus();
   详情触发元素 = null;
 }, true);
