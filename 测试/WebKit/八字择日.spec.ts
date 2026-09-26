@@ -95,6 +95,30 @@ test("主推荐不超过五项并展示实际筛选数量", async ({ page }) => 
   await expect(page.locator(".election-results > header")).toContainText(/选出 \d+ 个相对最优结果|候选不足/u);
 });
 
+test("X63 普通月、两个闰月及交节前后均可真实运行且无资料缺口", async ({ page }) => {
+  const 控制台错误: string[] = [];
+  const 资源404: string[] = [];
+  page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
+  page.on("response", (响应) => { if (响应.status() === 404) 资源404.push(响应.url()); });
+  await page.goto("/");
+  for (const [事项, 开始, 结束] of [
+    ["开业", "2026-02-20", "2026-02-28"],
+    ["开业", "2023-03-22", "2023-04-08"],
+    ["签约", "2025-08-01", "2025-08-18"],
+    ["开业", "2025-08-06", "2025-08-08"],
+  ] as const) {
+    await page.locator("[data-election-event]").selectOption(事项);
+    await page.locator("[data-election-start]").fill(开始);
+    await page.locator("[data-election-end]").fill(结束);
+    await page.getByRole("button", { name: "开始筛选" }).click();
+    const 输出 = page.locator("[data-election-output]");
+    await expect(输出).toContainText(`${事项} · ${开始} 至 ${结束}`);
+    await expect(输出).not.toContainText("资料未全");
+  }
+  expect(控制台错误).toEqual([]);
+  expect(资源404).toEqual([]);
+});
+
 for (const width of [390, 320]) {
   test(`${width}px 八字与择日卡片无横向滚动且深浅主题可用`, async ({ page }) => {
     const 控制台错误: string[] = [];
