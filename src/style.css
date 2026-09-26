@@ -1299,14 +1299,18 @@ body.deity-dialog-open {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .election-form label,
 .election-person label {
   display: grid;
   gap: 4px;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
   color: var(--calendar-muted);
   font-size: 9px;
 }
@@ -1315,9 +1319,13 @@ body.deity-dialog-open {
 .election-form select,
 .election-person input,
 .election-person select {
+  display: block;
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   min-height: 36px;
+  margin: 0;
   padding: 6px 8px;
   color: var(--calendar-text);
   background: color-mix(in srgb, var(--gold-soft) 10%, transparent);
@@ -1325,6 +1333,15 @@ body.deity-dialog-open {
   border-radius: 8px;
   font: inherit;
   font-size: 10px;
+}
+
+.election-form input[type="date"] {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  -webkit-appearance: auto;
+  appearance: auto;
 }
 
 .election-people {
@@ -2233,6 +2250,23 @@ body.deity-dialog-open {
 
   .bazi-form {
     gap: 12px;
+  }
+
+  .election-form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .election-form label {
+    gap: 5px;
+  }
+
+  .election-form input,
+  .election-form select {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
   }
 
   .time-controls button {

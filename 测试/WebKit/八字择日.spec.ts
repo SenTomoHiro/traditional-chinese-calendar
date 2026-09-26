@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { devices, expect, test, type Page } from "@playwright/test";
 
 async function 选择择日事项(page: Page, 大类: string, 事项: string): Promise<void> {
   await page.locator("[data-election-category]").selectOption(大类);
@@ -282,6 +282,105 @@ for (const width of [390, 320]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
     expect(控制台错误).toEqual([]);
     expect(资源404).toEqual([]);
+  });
+}
+
+for (const width of [390, 320]) {
+  test(`${width}px iPhone 择日表单为单列且原生日期框不重叠、不裁边`, async ({ page }) => {
+    const 控制台错误: string[] = [];
+    page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+
+    const 布局 = await page.locator(".election-form").evaluate((表单) => {
+      const 矩形 = (选择器: string) => 表单.querySelector<HTMLElement>(选择器)!.getBoundingClientRect();
+      const 开始 = 矩形("[data-election-start]");
+      const 结束 = 矩形("[data-election-end]");
+      const 开始标签 = 表单.querySelector<HTMLElement>("[data-election-start]")!.parentElement!.getBoundingClientRect();
+      const 结束标签 = 表单.querySelector<HTMLElement>("[data-election-end]")!.parentElement!.getBoundingClientRect();
+      const 表单框 = 表单.getBoundingClientRect();
+      const 控件 = [...表单.querySelectorAll<HTMLElement>("input, select")].map((元素) => {
+        const 框 = 元素.getBoundingClientRect();
+        const 样式 = getComputedStyle(元素);
+        return {
+          类型: 元素.getAttribute("type") ?? 元素.tagName.toLowerCase(),
+          左侧在内: 框.left >= 表单框.left - 0.5,
+          右侧在内: 框.right <= 表单框.right + 0.5,
+          宽度吻合: Math.abs(框.width - 元素.parentElement!.getBoundingClientRect().width) <= 0.5,
+          boxSizing: 样式.boxSizing,
+          minWidth: 样式.minWidth,
+          maxWidth: 样式.maxWidth,
+          上边框: 样式.borderTopWidth,
+        };
+      });
+      return {
+        单列: getComputedStyle(表单).gridTemplateColumns.split(" ").length === 1,
+        日期上下排列: 结束标签.top >= 开始标签.bottom + 11,
+        日期不重叠: 结束.top >= 开始.bottom + 11,
+        标签输入有留白: 开始.top > 开始标签.top && 结束.top > 结束标签.top,
+        控件,
+        无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      };
+    });
+
+    expect(布局.单列).toBe(true);
+    expect(布局.日期上下排列).toBe(true);
+    expect(布局.日期不重叠).toBe(true);
+    expect(布局.标签输入有留白).toBe(true);
+    expect(布局.控件.every((控件) => 控件.左侧在内 && 控件.右侧在内 && 控件.宽度吻合)).toBe(true);
+    expect(布局.控件.every((控件) => 控件.boxSizing === "border-box" && 控件.minWidth === "0px" && 控件.maxWidth !== "none")).toBe(true);
+    expect(布局.控件.filter((控件) => 控件.类型 === "date").every((控件) => 控件.上边框 === "1px")).toBe(true);
+    expect(布局.无横向滚动).toBe(true);
+    expect(控制台错误).toEqual([]);
+  });
+}
+
+test("iPhone Safari 移动环境下择日日期框保持单列和完整边框", async ({ browser }) => {
+  const context = await browser.newContext({ ...devices["iPhone 13"] });
+  const page = await context.newPage();
+  const 控制台错误: string[] = [];
+  page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
+  await page.goto("/");
+  const 结果 = await page.locator(".election-form").evaluate((表单) => {
+    const 开始 = 表单.querySelector<HTMLInputElement>("[data-election-start]")!;
+    const 结束 = 表单.querySelector<HTMLInputElement>("[data-election-end]")!;
+    const 开始框 = 开始.getBoundingClientRect();
+    const 结束框 = 结束.getBoundingClientRect();
+    const 表单框 = 表单.getBoundingClientRect();
+    return {
+      单列: 结束框.top > 开始框.bottom,
+      等宽: Math.abs(开始框.width - 表单框.width) <= 0.5 && Math.abs(结束框.width - 表单框.width) <= 0.5,
+      完整边框: [开始, 结束].every((输入) => {
+        const 样式 = getComputedStyle(输入);
+        return 样式.borderTopWidth === "1px" && 样式.borderRightWidth === "1px"
+          && 样式.borderBottomWidth === "1px" && 样式.borderLeftWidth === "1px";
+      }),
+      无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+    };
+  });
+  expect(结果).toEqual({ 单列: true, 等宽: true, 完整边框: true, 无横向滚动: true });
+  expect(控制台错误).toEqual([]);
+  await context.close();
+});
+
+for (const width of [1440, 1024, 768]) {
+  test(`${width}px 择日表单在宽屏保持双列且控件完整`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const 布局 = await page.locator(".election-form").evaluate((表单) => {
+      const 表单框 = 表单.getBoundingClientRect();
+      const 开始 = 表单.querySelector<HTMLElement>("[data-election-start]")!.getBoundingClientRect();
+      const 结束 = 表单.querySelector<HTMLElement>("[data-election-end]")!.getBoundingClientRect();
+      return {
+        双列: Math.abs(开始.top - 结束.top) < 1 && 开始.right <= 结束.left,
+        控件在内: [...表单.querySelectorAll<HTMLElement>("input, select")].every((元素) => {
+          const 框 = 元素.getBoundingClientRect();
+          return 框.left >= 表单框.left - 0.5 && 框.right <= 表单框.right + 0.5;
+        }),
+        无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      };
+    });
+    expect(布局).toEqual({ 双列: true, 控件在内: true, 无横向滚动: true });
   });
 }
 
