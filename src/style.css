@@ -135,9 +135,9 @@ button:focus-visible {
   display: grid;
   grid-template-areas:
     "detail right"
-    "calculation right";
+    "hours hours";
   grid-template-columns: minmax(0, 1.38fr) minmax(360px, 1fr);
-  grid-template-rows: auto 1fr;
+  align-items: start;
   overflow: hidden;
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
@@ -595,7 +595,6 @@ button:focus-visible {
 
 .calculation-card {
   position: relative;
-  grid-area: calculation;
   min-width: 0;
   max-width: 100%;
   padding: 16px clamp(28px, 3.5vw, 42px) 20px;
@@ -1089,7 +1088,7 @@ body.deity-dialog-open {
 }
 
 .calendar-extensions > .feature-card {
-  height: 100%;
+  align-self: start;
   background: var(--surface);
 }
 
@@ -1715,6 +1714,15 @@ body.deity-dialog-open {
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
+.hour-section {
+  grid-area: hours;
+  min-width: 0;
+  padding: 20px clamp(28px, 3.5vw, 42px) clamp(28px, 3.5vw, 36px);
+  color: var(--panel-ink);
+  background: var(--panel);
+  border-top: 1px solid var(--panel-line);
+}
+
 .hour-card {
   min-width: 0;
   padding: 8px;
@@ -2125,8 +2133,8 @@ body.deity-dialog-open {
   .calendar-layout {
     grid-template-areas:
       "detail"
-      "right"
-      "calculation";
+      "hours"
+      "right";
     grid-template-columns: 1fr;
     grid-template-rows: auto;
   }

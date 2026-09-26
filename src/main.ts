@@ -927,13 +927,35 @@ function 渲染(): void {
             ${北斗.斗降日.命中 ? `<p class="beidou-source">来源：${转义HTML(北斗.斗降日.来源显示)}</p>` : ""}
           </section>
 
-          <section class="hour-overview" aria-label="十二时辰">
-            <div class="hour-overview-heading">
-              <h3>十二时辰</h3>
-              <button type="button" class="current-hour-button" data-action="current-hour">当前时辰</button>
+          <section class="calculation-card" aria-label="时间与计算依据">
+            <div class="time-controls">
+              <div class="time-display-field">
+                <span>查询时间 · ${时间模式说明}</span>
+                <output class="current-time-display" data-time-output aria-label="当前查询时间">${时间查询.时间}</output>
+              </div>
+              <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
+                ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
+              </button>
+              <p class="location-status is-${当前定位状态}" aria-live="polite">${定位说明}</p>
             </div>
-            ${时辰展开详情(查看时辰)}
-            <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
+
+            <details class="calculation-details">
+              <summary>计算详情</summary>
+              <dl class="calculation-list">
+                <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
+                <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
+                <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
+                <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
+                <div><dt>节气</dt><dd>${节气显示}</dd></div>
+                <div><dt>定位环境</dt><dd>${定位诊断详情()}</dd></div>
+                <div><dt>版本</dt><dd data-app-version>${__APP_VERSION__}</dd></div>
+              </dl>
+              <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
+            </details>
+
+            <p class="config-status${错误总数 > 0 ? " has-error" : ""}">
+              规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
+            </p>
           </section>
         </aside>
 
@@ -980,35 +1002,13 @@ function 渲染(): void {
           </article>
         </div>
 
-        <section class="calculation-card" aria-label="时间与计算依据">
-          <div class="time-controls">
-            <div class="time-display-field">
-              <span>查询时间 · ${时间模式说明}</span>
-              <output class="current-time-display" data-time-output aria-label="当前查询时间">${时间查询.时间}</output>
-            </div>
-            <button type="button" data-action="locate" ${当前定位状态 === "定位中" ? "disabled" : ""}>
-              ${当前定位状态 === "定位中" ? "正在定位…" : 当前定位状态 === "成功" ? "重新定位" : "获取定位"}
-            </button>
-            <p class="location-status is-${当前定位状态}" aria-live="polite">${定位说明}</p>
+        <section class="hour-overview hour-section" aria-label="十二时辰">
+          <div class="hour-overview-heading">
+            <h3>十二时辰</h3>
+            <button type="button" class="current-hour-button" data-action="current-hour">当前时辰</button>
           </div>
-
-          <details class="calculation-details">
-            <summary>计算详情</summary>
-            <dl class="calculation-list">
-              <div><dt>北京时间</dt><dd>${格式化日期时间(最终.北京时间)}</dd></div>
-              <div><dt>真太阳时</dt><dd>${真太阳时显示}</dd></div>
-              <div><dt>计算依据</dt><dd>${当前时间依据}（${时间模式说明}）</dd></div>
-              <div><dt>历法日</dt><dd>${最终日期提示}</dd></div>
-              <div><dt>节气</dt><dd>${节气显示}</dd></div>
-              <div><dt>定位环境</dt><dd>${定位诊断详情()}</dd></div>
-              <div><dt>版本</dt><dd data-app-version>${__APP_VERSION__}</dd></div>
-            </dl>
-            <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
-          </details>
-
-          <p class="config-status${错误总数 > 0 ? " has-error" : ""}">
-            规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
-          </p>
+          ${时辰展开详情(查看时辰)}
+          <div class="hour-grid">${十二时辰.项目.map(时辰概览卡片).join("")}</div>
         </section>
       </section>
 

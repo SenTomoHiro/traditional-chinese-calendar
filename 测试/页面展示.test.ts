@@ -203,7 +203,7 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/\.theme-switch,\s*\.time-basis-switch\s*\{[^}]*display:\s*inline-flex/u);
   });
 
-  it("扩展功能位于完整日历主体之后并保持移动端单栏", () => {
+  it("日历按总览月历、全宽时辰、扩展功能三段排列，并在移动端调整顺序", () => {
     const 详情位置 = 页面源码.indexOf('<aside class="detail-card"');
     const 右栏位置 = 页面源码.indexOf('<div class="calendar-right"');
     const 月历位置 = 页面源码.indexOf('<article class="calendar-card"');
@@ -216,14 +216,19 @@ describe("日期详情展示回归", () => {
     expect(详情位置).toBeLessThan(月历位置);
     const 扩展位置 = 页面源码.indexOf('<section class="calendar-extensions"');
     const 择日位置 = 页面源码.indexOf("${择日卡片()}");
-    expect(月历位置).toBeLessThan(计算位置);
-    expect(计算位置).toBeLessThan(扩展位置);
+    const 时辰位置 = 页面源码.indexOf('class="hour-overview hour-section"');
+    expect(详情位置).toBeLessThan(计算位置);
+    expect(计算位置).toBeLessThan(月历位置);
+    expect(月历位置).toBeLessThan(时辰位置);
+    expect(时辰位置).toBeLessThan(扩展位置);
     expect(扩展位置).toBeLessThan(八字位置);
     expect(八字位置).toBeLessThan(择日位置);
     expect(页面样式).toContain('"detail right"');
-    expect(页面样式).toContain('"calculation right"');
-    expect(页面样式).toMatch(/"detail"\s+"right"\s+"calculation"/u);
+    expect(页面样式).toContain('"hours hours"');
+    expect(页面样式).toMatch(/"detail"\s+"hours"\s+"right"/u);
     expect(页面样式).toMatch(/\.calendar-extensions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/u);
+    expect(页面样式).toMatch(/\.hour-section\s*\{[^}]*grid-area:\s*hours/u);
+    expect(页面样式).not.toMatch(/\.calendar-extensions > \.feature-card\s*\{[^}]*height:\s*100%/u);
     expect(页面样式).toMatch(/@media \(max-width: 820px\)[\s\S]*?\.calendar-extensions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
   });
 
@@ -385,10 +390,10 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toContain("repeat(auto-fit, minmax(148px, 1fr))");
   });
 
-  it("北斗三类信息位于四项信息模块之后、十二时辰之前", () => {
+  it("北斗三类信息位于四项信息模块之后、全宽时辰之前", () => {
     const 信息位置 = 页面源码.indexOf('class="calendar-info-grid"');
     const 北斗位置 = 页面源码.indexOf('class="beidou-panel"');
-    const 时辰位置 = 页面源码.indexOf('class="hour-overview"');
+    const 时辰位置 = 页面源码.indexOf('class="hour-overview hour-section"');
     expect(信息位置).toBeLessThan(北斗位置);
     expect(北斗位置).toBeLessThan(时辰位置);
     expect(页面源码).toContain("北斗.斗降日.来源显示");
@@ -469,7 +474,7 @@ describe("日期详情展示回归", () => {
 
   it("十二时辰成为唯一外层模块并使用响应式多列布局", () => {
     const 风水位置 = 页面源码.indexOf('aria-label="风水禁忌速查"');
-    const 时辰位置 = 页面源码.indexOf('class="hour-overview"');
+    const 时辰位置 = 页面源码.indexOf('class="hour-overview hour-section"');
     expect(时辰位置).toBeGreaterThan(-1);
     expect(风水位置).toBeGreaterThan(-1);
     expect(页面源码).toContain('<h3>十二时辰</h3>');

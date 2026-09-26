@@ -84,6 +84,82 @@ test("PC 扩展模块位于日历主体下方并左右双栏，调候正文无�
   expect(布局.正文内边距).toEqual(["0px", "0px", "0px"]);
 });
 
+test("PC 日期总览与月历同段，时辰独占第二段且扩展卡片不再等高拉伸", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+
+  const 初始布局 = await page.evaluate(() => {
+    const 矩形 = (选择器: string) => document.querySelector<HTMLElement>(选择器)!.getBoundingClientRect();
+    const 主体 = 矩形(".calendar-layout");
+    const 概要 = 矩形(".detail-card");
+    const 月历 = 矩形(".calendar-right");
+    const 时辰 = 矩形(".hour-section");
+    const 扩展 = 矩形(".calendar-extensions");
+    return {
+      概要月历同段: Math.abs(概要.top - 月历.top) < 1,
+      时辰在首段后: 时辰.top >= Math.max(概要.bottom, 月历.bottom) - 1,
+      时辰全宽: Math.abs(时辰.left - 主体.left) < 2 && Math.abs(时辰.right - 主体.right) < 2,
+      扩展在时辰后: 扩展.top >= 时辰.bottom,
+      月历未被时辰撑高: 月历.bottom < 时辰.top - 1,
+    };
+  });
+  expect(初始布局).toEqual({
+    概要月历同段: true,
+    时辰在首段后: true,
+    时辰全宽: true,
+    扩展在时辰后: true,
+    月历未被时辰撑高: true,
+  });
+
+  await page.locator("[data-election-event]").selectOption("出行");
+  await page.locator("[data-election-start]").fill("2026-08-01");
+  await page.locator("[data-election-end]").fill("2026-08-31");
+  await page.getByRole("button", { name: "开始筛选" }).click();
+  await expect(page.locator("[data-election-output]")).toContainText("出行 · 2026-08-01 至 2026-08-31");
+
+  const 扩展布局 = await page.evaluate(() => {
+    const 矩形 = (选择器: string) => document.querySelector<HTMLElement>(选择器)!.getBoundingClientRect();
+    const 扩展 = 矩形(".calendar-extensions");
+    const 八字 = 矩形('[aria-label="生辰八字查询"]');
+    const 择日 = 矩形('[aria-label="个性化择日"]');
+    return {
+      择日更长: 择日.bottom > 八字.bottom + 1,
+      短栏未被拉伸: 八字.bottom < 扩展.bottom - 1,
+      容器随长栏结束: Math.abs(扩展.bottom - 择日.bottom) <= 2,
+    };
+  });
+  expect(扩展布局).toEqual({ 择日更长: true, 短栏未被拉伸: true, 容器随长栏结束: true });
+});
+
+for (const width of [768, 390, 320]) {
+  test(`${width}px 窄屏严格按概要、时辰、月历、八字、择日显示`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/");
+    const 顺序 = await page.evaluate(() => {
+      const 矩形 = (选择器: string) => document.querySelector<HTMLElement>(选择器)!.getBoundingClientRect();
+      const 概要 = 矩形(".detail-card");
+      const 时辰 = 矩形(".hour-section");
+      const 月历 = 矩形(".calendar-right");
+      const 八字 = 矩形('[aria-label="生辰八字查询"]');
+      const 择日 = 矩形('[aria-label="个性化择日"]');
+      return {
+        概要后时辰: 时辰.top >= 概要.bottom - 1,
+        时辰后月历: 月历.top >= 时辰.bottom - 1,
+        月历后八字: 八字.top >= 月历.bottom - 1,
+        八字后择日: 择日.top >= 八字.bottom - 1,
+        无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      };
+    });
+    expect(顺序).toEqual({
+      概要后时辰: true,
+      时辰后月历: true,
+      月历后八字: true,
+      八字后择日: true,
+      无横向滚动: true,
+    });
+  });
+}
+
 test("主推荐不超过五项并展示实际筛选数量", async ({ page }) => {
   await page.goto("/");
   await page.locator("[data-election-event]").selectOption("出行");
