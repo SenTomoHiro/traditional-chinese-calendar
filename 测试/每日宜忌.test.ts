@@ -56,13 +56,13 @@ describe("自主每日宜忌", () => {
     expect(计算每日宜忌(时刻(2026, 8, 9)).宜.length).toBeGreaterThan(0);
   });
 
-  it("2026-08-13底层并非完整全忌，但展示层按日宜为空压缩为诸事不宜", () => {
+  it("2026-08-13只表示当前已计算事项无宜，不冒充古籍诸事不宜", () => {
     const 结果 = 计算每日宜忌(时刻(2026, 8, 13));
-    expect(结果).toMatchObject({ 支持事项数: 60, 诸事不宜: false, 诸事皆宜: false });
+    expect(结果).toMatchObject({ 支持事项数: 60, 当前已计算事项无宜: true, 诸事不宜: false, 诸事皆宜: false });
     expect(结果.宜).toEqual([]);
     expect(结果.忌.length).toBeLessThan(结果.支持事项数);
     expect(结果.忌.length).toBeGreaterThan(0);
-    expect(创建每日宜忌展示(结果)).toEqual({ 日宜: [], 日忌: ["诸事不宜"] });
+    expect(创建每日宜忌展示(结果)).toEqual({ 日宜: [], 日忌: 结果.忌 });
     expect(计算每日宜忌(时刻(2026, 8, 13)).忌).toEqual(结果.忌);
   });
 
@@ -75,7 +75,7 @@ describe("自主每日宜忌", () => {
     const 部分宜 = { 宜: ["事项甲"], 忌: [] as string[], 诸事不宜: false, 诸事皆宜: false };
     expect(创建每日宜忌展示(全忌)).toEqual({ 日宜: [], 日忌: ["诸事不宜"] });
     expect(创建每日宜忌展示(全宜)).toEqual({ 日宜: ["诸事皆宜"], 日忌: [] });
-    expect(创建每日宜忌展示(部分忌)).toEqual({ 日宜: [], 日忌: ["诸事不宜"] });
+    expect(创建每日宜忌展示(部分忌)).toEqual({ 日宜: [], 日忌: ["事项甲"] });
     expect(创建每日宜忌展示(有宜有忌)).toEqual({ 日宜: ["事项甲"], 日忌: ["事项乙"] });
     expect(创建每日宜忌展示(双空)).toEqual({ 日宜: [], 日忌: [] });
     expect(创建每日宜忌展示(部分宜)).toEqual({ 日宜: ["事项甲"], 日忌: [] });

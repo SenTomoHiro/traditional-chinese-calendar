@@ -720,12 +720,12 @@ function 生成择日结果区(): string {
     ${推荐.length === 0 ? '<p class="election-empty">当前范围没有足够可靠的主推荐日期，请扩大日期范围后再试。</p>' : ""}
     ${推荐.map((候选, 索引) => `<article class="election-day${索引 < 2 ? " is-leading" : ""}">
       <div class="election-day-heading"><div><time datetime="${候选.日期}">${候选.日期}</time><strong>${候选.推荐程度}</strong></div><p>${候选.干支} · ${候选.值星} · ${候选.黄黑道}${候选.已核事实.length ? ` · ${候选.已核事实.join("、")}` : ""}</p></div>
-      <div class="verdict-row">${候选.公共日课.map((项) => `<span class="is-${状态类(项.状态)}">${项.名称}：${项.状态}</span>`).join("")}</div>
+      <div class="verdict-row">${候选.公共日课.map((项) => `<span class="is-${状态类(项.状态)}">${项.名称}：${项.铺注状态}</span>`).join("")}</div>
       ${候选.共同结论 ? `<p class="joint-verdict">${转义HTML(候选.共同结论)}</p>` : ""}
       <div class="candidate-reasons"><div><h4>有利原因</h4>${(候选.有利原因.length ? 候选.有利原因 : ["未见明确注宜或个性有利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div><div><h4>需要注意</h4>${(候选.需要注意.length ? 候选.需要注意 : ["未见严重不利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div></div>
       <div class="recommended-hours"><h4>推荐时辰</h4>${候选.推荐时辰.map((时辰) => `<span class="is-${时辰.等级}"><strong>${时辰.名称} ${时辰.时间范围}</strong><small>${时辰.时柱}时 · ${时辰.等级}${时辰.待校.length ? " · 有待校项" : ""}</small></span>`).join("")}</div>
       <p class="coverage-note">${转义HTML(候选.资料完整说明)}</p>
-      <details class="source-details"><summary>查看依据</summary>${候选.公共日课.map((项) => `<section><h4>${项.名称} · ${项.状态}</h4><p>${转义HTML(项.结论)}</p><p>宜：${项.宜证据.map(转义HTML).join("、") || "无"}；忌：${项.忌证据.map(转义HTML).join("、") || "无"}</p>${项.待校.length ? `<p>待校：${项.待校.map(转义HTML).join("、")}</p>` : ""}<small>${转义HTML(项.来源)}</small></section>`).join("")}${候选.人物关系.map((关系) => `<section><h4>${转义HTML(关系.标签)}</h4>${关系.项目.map((项) => `<p>${项.层级}：${转义HTML(项.说明)} <small>（${项.来源类型}）</small></p>`).join("")}</section>`).join("")}</details>
+      <details class="source-details"><summary>查看依据</summary>${候选.公共日课.map((项) => `<section><h4>${项.名称} · ${项.铺注状态}</h4><p>${转义HTML(项.结论)}</p><p>宜：${项.宜证据.map(转义HTML).join("、") || "无"}；忌：${项.忌证据.map(转义HTML).join("、") || "无"}</p>${项.待校.length ? `<p>待校：${项.待校.map(转义HTML).join("、")}</p>` : ""}<small>${转义HTML(项.来源)}</small></section>`).join("")}${候选.人物关系.map((关系) => `<section><h4>${转义HTML(关系.标签)}</h4>${关系.项目.map((项) => `<p>${项.层级}：${转义HTML(项.说明)} <small>（${项.来源类型}）</small></p>`).join("")}</section>`).join("")}</details>
     </article>`).join("")}
   </div>`;
 }

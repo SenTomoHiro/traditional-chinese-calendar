@@ -40,7 +40,23 @@ test("单人及双人婚姻择日均可完成并分别展示个人关系", async
   await expect(双人输出).toContainText("结婚 · 2026-08-09 至 2026-08-13");
   await expect(双人输出).toContainText("甲方：");
   await expect(双人输出).toContainText("乙方：");
-  await expect(双人输出).toContainText(/双方均有有利关系|至少一方有需要注意|对.+存在明显冲突/u);
+  await expect(双人输出).toContainText(/双方均有有利关系|至少一方有需要注意|对.+存在重要不利关系/u);
+});
+
+test("九个现代入口均可真实运行并显示正式铺注状态", async ({ page }) => {
+  await page.goto("/");
+  for (const 事项 of ["订婚", "结婚", "搬家", "入宅", "安床", "开业", "签约", "出行", "祈福"]) {
+    await page.locator("[data-election-event]").selectOption(事项);
+    await page.locator("[data-election-start]").fill("2026-08-09");
+    await page.locator("[data-election-end]").fill("2026-08-20");
+    await page.getByRole("button", { name: "开始筛选" }).click();
+    const 输出 = page.locator("[data-election-output]");
+    await expect(输出).toContainText(`${事项} · 2026-08-09 至 2026-08-20`);
+    if (await 输出.locator(".election-day").count()) {
+      await expect(输出.locator(".verdict-row").first()).toContainText(/注宜|注忌|宜忌并注|宜忌皆不注|诸事皆忌|资料未全/u);
+      await expect(输出.locator(".recommended-hours").first()).toContainText("推荐时辰");
+    }
+  }
 });
 
 test("PC 扩展模块位于日历主体下方并左右双栏，调候正文无额外缩进", async ({ page }) => {

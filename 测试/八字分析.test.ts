@@ -35,6 +35,7 @@ describe("八字分析 B01—B11", () => {
     const 结果 = 分析日(2026, 2, 10);
     expect(结果.通根.some((项) => 项.includes("日柱卯中本气乙"))).toBe(true);
     expect(结果.格局候选.some((项) => 项.名称 === "月刃候选")).toBe(false);
+    expect(结果.格局候选.some((项) => 项.名称 === "月劫候选")).toBe(true);
   });
 
   it("B06 杀印并见不靠名称编造", () => {
