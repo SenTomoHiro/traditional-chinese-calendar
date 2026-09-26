@@ -43,9 +43,9 @@ test("单人及双人婚姻择日均可完成并分别展示个人关系", async
   await expect(双人输出).toContainText(/双方均有有利关系|至少一方有需要注意|对.+存在重要不利关系/u);
 });
 
-test("九个现代入口均可真实运行并显示正式铺注状态", async ({ page }) => {
+test("十一个现代入口均可真实运行并显示正式铺注状态", async ({ page }) => {
   await page.goto("/");
-  for (const 事项 of ["订婚", "结婚", "搬家", "入宅", "安床", "开业", "签约", "出行", "祈福"]) {
+  for (const 事项 of ["订婚", "结婚", "搬家", "搬家＋安床", "入宅", "归火", "安床", "开业", "签约", "出行", "祈福"]) {
     await page.locator("[data-election-event]").selectOption(事项);
     await page.locator("[data-election-start]").fill("2026-08-09");
     await page.locator("[data-election-end]").fill("2026-08-20");

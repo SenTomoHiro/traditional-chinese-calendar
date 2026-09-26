@@ -706,7 +706,7 @@ function 择日人物表单(索引: number, 标签: string): string {
   </fieldset>`;
 }
 
-function 状态类(状态: string): string { return 状态 === "已裁断" ? "resolved" : 状态 === "资料未全" ? "pending" : 状态 === "原始宜忌并见" ? "mixed" : "neutral"; }
+function 状态类(状态: string): string { return 状态 === "已裁断" ? "resolved" : 状态 === "资料未全" ? "pending" : "neutral"; }
 
 function 生成择日结果区(): string {
   if (择日错误) return `<p class="bazi-message election-error" role="alert">${转义HTML(择日错误)}</p>`;
