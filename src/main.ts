@@ -490,7 +490,7 @@ async function 显示神圣纪念分享图(按钮: HTMLButtonElement): Promise<v
     if (当前分享图地址) URL.revokeObjectURL(当前分享图地址);
     当前分享图地址 = URL.createObjectURL(文件);
     const 文件名 = `神圣纪念-${纪念.人物?.主名称 || 纪念.名称}-${格式化公历日期(状态.所选日期)}.png`;
-    对话框.insertAdjacentHTML("beforeend", `<div class="deity-share-overlay" data-deity-share-overlay><div class="deity-share-panel"><div class="deity-share-heading"><strong>朋友圈分享图 · 1080 × 1350</strong><button type="button" data-action="close-deity-share" aria-label="关闭分享图预览">×</button></div><img src="${转义属性(当前分享图地址)}" alt="${转义属性(纪念.名称)}朋友圈分享图预览"><div class="deity-share-actions"><span>手机端可长按图片保存</span><a href="${转义属性(当前分享图地址)}" download="${转义属性(文件名)}">下载 PNG</a></div></div></div>`);
+    对话框.insertAdjacentHTML("beforeend", `<div class="deity-share-overlay" data-deity-share-overlay><div class="deity-share-panel"><div class="deity-share-heading"><strong>朋友圈分享图 · ${画布.width} × ${画布.height}</strong><button type="button" data-action="close-deity-share" aria-label="关闭分享图预览">×</button></div><img src="${转义属性(当前分享图地址)}" alt="${转义属性(纪念.名称)}朋友圈分享图预览"><div class="deity-share-actions"><span>手机端可长按图片保存</span><a href="${转义属性(当前分享图地址)}" download="${转义属性(文件名)}">下载 PNG</a></div></div></div>`);
     对话框.querySelector<HTMLButtonElement>("[data-action='close-deity-share']")?.focus();
   } catch (错误) {
     按钮.insertAdjacentHTML("afterend", `<span class="deity-share-error" role="alert">${转义HTML(错误 instanceof Error ? 错误.message : "分享图生成失败")}</span>`);

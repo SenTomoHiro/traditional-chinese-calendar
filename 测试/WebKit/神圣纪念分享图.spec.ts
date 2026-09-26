@@ -39,3 +39,25 @@ test("无神像的独立纪念仍可生成分享图", async ({ page }) => {
   await page.getByRole("button", { name: "生成分享图" }).click();
   await expect(page.getByAltText("天腊之辰朋友圈分享图预览")).toBeVisible();
 });
+
+test("短正文保持 4:5，长正文按内容适度加高且完整导出", async ({ page }) => {
+  await 打开纪念(page, "2026-07-02", "湛然天师");
+  await page.getByRole("button", { name: "生成分享图" }).click();
+  const 短图 = page.locator(".deity-share-panel > img");
+  await expect(短图).toHaveJSProperty("complete", true);
+  expect(await 短图.evaluate((图片) => (图片 as HTMLImageElement).naturalHeight)).toBe(1350);
+  await page.getByRole("button", { name: "关闭分享图预览" }).click();
+  await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
+
+  await 打开纪念(page, "2027-02-05", "清静真人孙不二");
+  await page.getByRole("button", { name: "生成分享图" }).click();
+  const 长图 = page.locator(".deity-share-panel > img");
+  await expect(长图).toHaveJSProperty("complete", true);
+  const 高 = await 长图.evaluate((图片) => (图片 as HTMLImageElement).naturalHeight);
+  expect(高).toBeGreaterThan(1350);
+  expect(高).toBeLessThan(1650);
+  await expect(page.locator(".deity-share-heading")).toContainText(`1080 × ${高}`);
+  const 下载 = page.waitForEvent("download");
+  await page.getByRole("link", { name: "下载 PNG" }).click();
+  expect((await 下载).suggestedFilename()).toContain("清静真人孙不二");
+});
