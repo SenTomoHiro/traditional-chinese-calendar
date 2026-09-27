@@ -82,6 +82,16 @@ function 应用英文标签(): void {
   根节点.querySelectorAll<HTMLElement>("h2, h3, span, dt, summary, button, label").forEach((元素) => { const 译文 = 英文标签[元素.textContent?.trim() ?? ""]; if (译文 && 元素.children.length === 0) 元素.textContent = 译文; });
 }
 function 语言切换控件(): string { return `<div class="locale-switch" role="group" aria-label="Language"><button type="button" data-locale="zh-CN" aria-pressed="${当前语言 === "zh-CN"}">中文</button><button type="button" data-locale="en" aria-pressed="${当前语言 === "en"}">English</button></div>`; }
+function 页脚导航(): string {
+  const 英文 = 当前语言 === "en";
+  const 关于 = 英文
+    ? "The maintainer reviews sources, rule decisions, and final results. GPT and Codex assist with engineering, testing, and maintenance; they are not a source of traditional facts."
+    : "维护者负责资料核对、规则判断和最终审核；GPT 与 Codex 协助工程实现、测试和维护，不作为传统文化事实来源。";
+  const 来源 = 英文
+    ? "Chinese configuration files are the formal source of rules. Source notes and third-party notices document auditable material and version differences."
+    : "中文配置为正式规则来源；资料来源说明与第三方资料声明记录可审阅材料和版本差异。";
+  return `<footer id="sources" class="site-footer"><nav aria-label="${英文 ? "Project links" : "项目链接"}"><details id="about"><summary>${英文 ? "About" : "关于本项目"}</summary><p>${关于}</p></details><details id="source-notes"><summary>${英文 ? "Sources" : "资料来源"}</summary><p>${来源}</p><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar/blob/main/%E8%B5%84%E6%96%99%E6%9D%A5%E6%BA%90%E8%AF%B4%E6%98%8E.md">${英文 ? "Source notes" : "查看资料来源说明"}</a></details><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar">GitHub</a></nav></footer>`;
+}
 
 type 定位状态 = "未定位" | "定位中" | "成功" | "失败";
 type 定位诊断请求状态 = "未请求" | "请求中" | "成功" | "失败";
@@ -1161,7 +1171,7 @@ function 渲染(): void {
         <div id="date-selection">${择日卡片()}</div>
       </section>
 
-      <section id="sources" class="sources-note"><h2>${当前语言 === "en" ? "Sources and scope" : "资料与范围"}</h2><p>${当前语言 === "en" ? "The maintainer reviews sources, rule decisions, and final results. GPT and Codex assist with engineering, testing, and maintenance; they are not a source of traditional facts. See the repository’s Chinese configuration files, source notes, and third-party notices for auditable material and version differences." : "传统规则以项目中文配置与资料说明为准；维护者负责资料核对、规则判断和最终审核。"}</p><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar">GitHub</a> · <a href="https://github.com/SenTomoHiro/traditional-chinese-calendar/blob/main/%E8%B5%84%E6%96%99%E6%9D%A5%E6%BA%90%E8%AF%B4%E6%98%8E.md">${当前语言 === "en" ? "Source notes" : "资料来源说明"}</a></section>
+      ${页脚导航()}
 
     </main>
     <button type="button" class="back-to-top" data-action="back-to-top" aria-label="返回顶部" title="返回顶部">↑</button>

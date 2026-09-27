@@ -61,8 +61,7 @@ button:focus-visible {
 }
 
 .site-header,
-.international-guide,
-.sources-note {
+.international-guide {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--surface);
@@ -82,16 +81,21 @@ button:focus-visible {
 .locale-switch button { border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); padding: 5px 9px; cursor: pointer; }
 .locale-switch button[aria-pressed="true"] { background: var(--panel); color: var(--panel-ink); border-color: var(--panel); }
 .international-guide { display: grid; grid-template-columns: 1fr 1.35fr; gap: 18px; padding: 22px; margin-bottom: 20px; }
-.international-guide h1, .international-guide h2, .sources-note h2 { margin: 0 0 8px; font-family: ui-sans-serif, system-ui, sans-serif; }
-.international-guide p, .sources-note p { margin: 0; line-height: 1.55; color: var(--muted); font-family: ui-sans-serif, system-ui, sans-serif; }
+.international-guide h1, .international-guide h2 { margin: 0 0 8px; font-family: ui-sans-serif, system-ui, sans-serif; }
+.international-guide p { margin: 0; line-height: 1.55; color: var(--muted); font-family: ui-sans-serif, system-ui, sans-serif; }
 .international-guide nav { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 14px; }
-.international-guide a, .sources-note a { color: var(--accent-strong); font-weight: 700; }
-.sources-note { margin-top: 20px; padding: 20px; }
-.sources-note p { margin-bottom: 10px; }
+.international-guide a, .site-footer a { color: var(--accent-strong); font-weight: 700; }
+.site-footer { margin: 22px 0 4px; padding: 12px 2px 0; border-top: 1px solid color-mix(in srgb, var(--line) 68%, transparent); color: var(--muted); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; }
+.site-footer nav { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+.site-footer details { position: relative; }
+.site-footer summary { cursor: pointer; color: var(--accent-strong); font-weight: 700; }
+.site-footer details p { max-width: 42rem; margin: 8px 0 6px; line-height: 1.55; }
+.site-footer details[open] { flex-basis: 100%; }
 
 @media (max-width: 640px) {
   .site-header { align-items: flex-start; }
   .international-guide { grid-template-columns: 1fr; padding: 18px; }
+  .site-footer nav { gap: 8px 12px; }
 }
 
 .detail-kicker {

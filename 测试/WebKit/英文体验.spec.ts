@@ -8,7 +8,9 @@ test("英文体验可切换、保留计算结果并在刷新后恢复", async ({
   await expect(page.locator(".international-guide")).toContainText("Traditional Chinese Calendar");
   await expect(page.locator(".international-guide")).toContainText("not a Western zodiac");
   await expect(page.locator(".pillar-core strong")).toHaveText(四柱 ?? "");
-  await expect(page.locator("#sources")).toContainText("GPT and Codex assist");
+  await expect(page.locator("#sources")).toContainText("About");
+  await page.locator("#about").getByText("About", { exact: true }).click();
+  await expect(page.locator("#about")).toContainText("GPT and Codex assist");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.setViewportSize({ width: 390, height: 844 });
