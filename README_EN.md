@@ -14,11 +14,9 @@ This project aims to use AI-assisted software development to lower the technical
 
 ## Live Demo
 
-Try the current GitHub Pages deployment: [Open the calendar](https://sentomohiro.github.io/0f25bcf2bbb8a869e712/).
+Try the current GitHub Pages deployment: [Open the calendar](https://sentomohiro.github.io/traditional-chinese-calendar/).
 
 The project is under active maintenance; the page and its results evolve with releases.
-
-The Pages URL uses the deployment repository identifier required by the current GitHub Pages setup; it is the live deployment of this source repository, not a separate calendar project.
 
 ## English Interface Scope
 

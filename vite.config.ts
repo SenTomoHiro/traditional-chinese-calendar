@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import { execFileSync } from "node:child_process";
 
-const pagesRepository = process.env.PAGES_REPOSITORY?.trim();
+const pagesBase = "/traditional-chinese-calendar/";
 
 function 读取版本号(): string {
   const 环境版本 = process.env.APP_VERSION?.trim();
@@ -13,12 +13,8 @@ function 读取版本号(): string {
   }
 }
 
-if (pagesRepository && !/^[a-z0-9]{16,24}$/u.test(pagesRepository)) {
-  throw new Error("PAGES_REPOSITORY 必须是 16 至 24 位小写字母或数字");
-}
-
 export default defineConfig({
-  base: pagesRepository ? `/${pagesRepository}/` : "/",
+  base: process.env.GITHUB_ACTIONS ? pagesBase : "/",
   define: {
     __APP_VERSION__: JSON.stringify(读取版本号()),
   },

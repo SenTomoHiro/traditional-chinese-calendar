@@ -14,7 +14,7 @@
 
 ## 在线体验
 
-当前 GitHub Pages 部署：[打开日历](https://sentomohiro.github.io/0f25bcf2bbb8a869e712/)。
+当前 GitHub Pages 部署：[打开日历](https://sentomohiro.github.io/traditional-chinese-calendar/)。
 
 项目仍在持续维护中，页面和结果会随发布更新。
 

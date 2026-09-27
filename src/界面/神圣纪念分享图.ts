@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 import { 合成完整神像, 读取神像图片 } from "./神像合成";
 
 export const 分享图尺寸 = { 宽: 1080, 主视觉高: 1440 } as const;
-export const 分享图二维码地址 = "https://sentomohiro.github.io/0f25bcf2bbb8a869e712/";
+export const 分享图二维码地址 = "https://sentomohiro.github.io/traditional-chinese-calendar/";
 
 export interface 分享图内容 {
   神名: string;
