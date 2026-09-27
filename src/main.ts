@@ -59,6 +59,7 @@ import { 刷新主日期实时时钟 } from "./界面/主日期实时时钟";
 import { 格式化主日期值, 解析主日期值, 移动主日期, 移动主日期月份 } from "./界面/主日期输入";
 import { 解析北斗配置 } from "./规则/北斗";
 import { 创建浏览器主题控制器, 是主题偏好, type 主题偏好 } from "./界面/主题";
+import { 保存界面语言, 读取界面语言, type 界面语言 } from "./界面/语言";
 import type { 日级风水禁忌结果 } from "./规则/日级风水禁忌";
 
 declare const __APP_VERSION__: string;
@@ -67,6 +68,20 @@ const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
 const 根节点: HTMLDivElement = 应用容器;
 const 主题控制器 = 创建浏览器主题控制器();
+let 当前语言: 界面语言 = 读取界面语言();
+const 英文标签: Readonly<Record<string, string>> = {
+  "农历": "Chinese Lunisolar Calendar", "四柱": "Four Pillars (BaZi)", "日吉凶": "Daily auspiciousness", "值日": "Twelve Day Officer", "风水禁忌": "Feng-shui cautions", "日宜": "Suitable", "日忌": "Unsuitable", "节气": "24 Solar Terms", "神圣纪念": "Sacred commemorations", "传统节日": "Traditional festivals", "北斗": "Beidou", "十二时辰": "Twelve double-hours", "八字分析": "BaZi / Four Pillars", "个性化择日": "Traditional Date Selection", "北京时间": "Beijing Time", "真太阳时": "True Solar Time", "计算详情": "Calculation details", "规则配置": "Rule configuration", "当前时辰": "Current double-hour", "浅色": "Light", "自动": "System", "深色": "Dark", "获取定位": "Use location", "重新定位": "Refresh location", "开始筛选": "Find dates", "出生日期": "Birth date", "出生时间": "Birth time", "性别": "Gender", "事项大类": "Category", "具体事项": "Activity", "开始日期": "Start date", "结束日期": "End date",
+};
+function 英文说明层(): string {
+  if (当前语言 !== "en") return "";
+  return `<section class="international-guide" aria-label="About this calendar"><div><p class="detail-kicker">OPEN & REVIEWABLE</p><h1>Traditional Chinese Calendar</h1><p>An astronomical calendar and almanac for Chinese lunisolar dates, Ganzhi, 24 Solar Terms, true solar time, BaZi (Four Pillars), and Traditional Date Selection.</p></div><div><h2>How to read this page</h2><p><strong>Ganzhi</strong> means the Heavenly Stems and Earthly Branches cycle. <strong>BaZi / Four Pillars</strong> is a traditional Chinese birth-time system, not a Western zodiac. <strong>Traditional Date Selection</strong> has a purpose comparable to electional astrology, but uses a distinct Chinese calendrical tradition.</p><p>Chinese rule files remain the single source of truth. English is a presentation and explanation layer; source terminology and deeper traditional material intentionally remain in Chinese.</p></div><nav aria-label="Calendar sections"><a href="#calendar">Calendar</a><a href="#hours">Hours</a><a href="#bazi">BaZi</a><a href="#date-selection">Date Selection</a><a href="#sources">Sources</a><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar">GitHub</a></nav></section>`;
+}
+function 应用英文标签(): void {
+  document.documentElement.lang = 当前语言; document.documentElement.dataset.locale = 当前语言;
+  if (当前语言 !== "en") return;
+  根节点.querySelectorAll<HTMLElement>("h2, h3, span, dt, summary, button, label").forEach((元素) => { const 译文 = 英文标签[元素.textContent?.trim() ?? ""]; if (译文 && 元素.children.length === 0) 元素.textContent = 译文; });
+}
+function 语言切换控件(): string { return `<div class="locale-switch" role="group" aria-label="Language"><button type="button" data-locale="zh-CN" aria-pressed="${当前语言 === "zh-CN"}">中文</button><button type="button" data-locale="en" aria-pressed="${当前语言 === "en"}">English</button></div>`; }
 
 type 定位状态 = "未定位" | "定位中" | "成功" | "失败";
 type 定位诊断请求状态 = "未请求" | "请求中" | "成功" | "失败";
@@ -1005,7 +1020,9 @@ function 渲染(): void {
 
   根节点.innerHTML = `
     <main class="page-shell">
-      <section class="calendar-layout" aria-label="日期核心详情与公历月历">
+      <header class="site-header"><div><p class="detail-kicker">OPEN CALENDAR</p><strong>传统历法系统</strong></div>${语言切换控件()}</header>
+      ${英文说明层()}
+      <section id="calendar" class="calendar-layout" aria-label="日期核心详情与公历月历">
         <aside class="detail-card" aria-label="所选日期核心详情" aria-live="polite">
           <div class="detail-topbar">
             <p class="detail-kicker">农历</p>
@@ -1130,7 +1147,7 @@ function 渲染(): void {
 
       </section>
 
-      <section class="hour-overview hour-section" aria-label="十二时辰">
+      <section id="hours" class="hour-overview hour-section" aria-label="十二时辰">
         <div class="hour-overview-heading">
           <h3>十二时辰</h3>
           <button type="button" class="current-hour-button" data-action="current-hour">当前时辰</button>
@@ -1140,14 +1157,17 @@ function 渲染(): void {
       </section>
 
       <section class="calendar-extensions" aria-label="八字分析与个性化择日">
-        ${八字查询卡片()}
-        ${择日卡片()}
+        <div id="bazi">${八字查询卡片()}</div>
+        <div id="date-selection">${择日卡片()}</div>
       </section>
+
+      <section id="sources" class="sources-note"><h2>${当前语言 === "en" ? "Sources and scope" : "资料与范围"}</h2><p>${当前语言 === "en" ? "The maintainer reviews sources, rule decisions, and final results. GPT and Codex assist with engineering, testing, and maintenance; they are not a source of traditional facts. See the repository’s Chinese configuration files, source notes, and third-party notices for auditable material and version differences." : "传统规则以项目中文配置与资料说明为准；维护者负责资料核对、规则判断和最终审核。"}</p><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar">GitHub</a> · <a href="https://github.com/SenTomoHiro/traditional-chinese-calendar/blob/main/%E8%B5%84%E6%96%99%E6%9D%A5%E6%BA%90%E8%AF%B4%E6%98%8E.md">${当前语言 === "en" ? "Source notes" : "资料来源说明"}</a></section>
 
     </main>
     <button type="button" class="back-to-top" data-action="back-to-top" aria-label="返回顶部" title="返回顶部">↑</button>
     <dialog class="deity-dialog" data-deity-dialog aria-labelledby="deity-dialog-title"></dialog>
   `;
+  应用英文标签();
 }
 
 根节点.addEventListener("input", (事件) => {
@@ -1294,6 +1314,14 @@ function 完成月历滑动(事件: PointerEvent): void {
   }
   const 目标 = 事件目标.closest<HTMLButtonElement>("button");
   if (!目标) return;
+
+  const locale = 目标.dataset.locale;
+  if (locale === "zh-CN" || locale === "en") {
+    当前语言 = locale;
+    保存界面语言(当前语言);
+    渲染();
+    return;
+  }
 
   if (目标.dataset.action === "close-deity") {
     const 当前对话框 = 目标.closest<HTMLDialogElement>("[data-deity-dialog]");

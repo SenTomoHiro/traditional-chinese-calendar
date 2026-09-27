@@ -18,6 +18,14 @@ Try the current GitHub Pages deployment: [Open the calendar](https://sentomohiro
 
 The project is under active maintenance; the page and its results evolve with releases.
 
+The Pages URL uses the deployment repository identifier required by the current GitHub Pages setup; it is the live deployment of this source repository, not a separate calendar project.
+
+## English Interface Scope
+
+The optional **English** switch is a lightweight reviewer and visitor layer, not a second ruleset or a full translation of traditional source material. It covers navigation, calendar and time concepts, Four Pillars / BaZi, and the first-level Traditional Date Selection experience. Chinese configuration files remain the sole formal source for rules and calculations. Where a specialist traditional term has no stable English equivalent, the interface retains the Chinese term and provides only a limited category explanation.
+
+The English About and Sources panels explain the project’s cultural scope, the distinction from Western zodiac or electional astrology, and the maintainer’s source-review role. They do not claim that AI-generated wording is a traditional authority.
+
 ## Project Background
 
 This project is initiated and maintained by a Taoist priest without a formal software engineering background. The maintainer is responsible for calendrical and Taoist source material, product requirements, rule decisions, source review, and final validation. Software implementation, code changes, testing, debugging, refactoring, and iterative maintenance are carried out primarily in collaboration with OpenAI GPT and Codex.

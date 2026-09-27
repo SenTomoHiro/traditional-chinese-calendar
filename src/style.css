@@ -60,6 +60,40 @@ button:focus-visible {
   padding: 24px 0;
 }
 
+.site-header,
+.international-guide,
+.sources-note {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
+.locale-switch { display: flex; gap: 4px; }
+.locale-switch button { border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); padding: 5px 9px; cursor: pointer; }
+.locale-switch button[aria-pressed="true"] { background: var(--panel); color: var(--panel-ink); border-color: var(--panel); }
+.international-guide { display: grid; grid-template-columns: 1fr 1.35fr; gap: 18px; padding: 22px; margin-bottom: 20px; }
+.international-guide h1, .international-guide h2, .sources-note h2 { margin: 0 0 8px; font-family: ui-sans-serif, system-ui, sans-serif; }
+.international-guide p, .sources-note p { margin: 0; line-height: 1.55; color: var(--muted); font-family: ui-sans-serif, system-ui, sans-serif; }
+.international-guide nav { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.international-guide a, .sources-note a { color: var(--accent-strong); font-weight: 700; }
+.sources-note { margin-top: 20px; padding: 20px; }
+.sources-note p { margin-bottom: 10px; }
+
+@media (max-width: 640px) {
+  .site-header { align-items: flex-start; }
+  .international-guide { grid-template-columns: 1fr; padding: 18px; }
+}
+
 .detail-kicker {
   margin: 0 0 4px;
   color: var(--gold-strong);
@@ -1068,12 +1102,12 @@ body.deity-dialog-open {
   box-shadow: var(--shadow);
 }
 
-.calendar-extensions > .feature-card {
+.calendar-extensions > div > .feature-card {
   align-self: start;
   background: transparent;
 }
 
-.calendar-extensions > .election-card {
+.calendar-extensions > div > .election-card {
   align-self: stretch;
   border-left: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
 }
@@ -2279,7 +2313,7 @@ body.deity-dialog-open {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .calendar-extensions > .election-card {
+  .calendar-extensions > div > .election-card {
     border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
     border-left: 0;
   }
