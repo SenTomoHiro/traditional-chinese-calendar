@@ -1030,6 +1030,7 @@ function 渲染(): void {
 
   根节点.innerHTML = `
     <main class="page-shell">
+      <i class="cloud-corner cloud-corner--tl" aria-hidden="true"></i><i class="cloud-corner cloud-corner--tr" aria-hidden="true"></i><i class="cloud-corner cloud-corner--bl" aria-hidden="true"></i><i class="cloud-corner cloud-corner--br" aria-hidden="true"></i>
       <header class="site-header"><div class="brand-lockup"><img src="${import.meta.env.BASE_URL}品牌/道人言吉印章.png" alt="道人言吉" /><div><p class="detail-kicker">道人言吉 · 传统历法</p><strong>${当前语言 === "en" ? "Traditional Chinese Calendar" : "传统历法系统"}</strong></div></div>${语言切换控件()}</header>
       ${英文说明层()}
       <section id="calendar" class="calendar-layout" aria-label="日期核心详情与公历月历">
