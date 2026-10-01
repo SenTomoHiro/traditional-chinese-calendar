@@ -2638,6 +2638,90 @@ body.deity-dialog-open {
   color: #25170d;
 }
 
+/* Brand almanac refinement: neutral paper, cinnabar emphasis, and restrained gold linework. */
+:root {
+  --page: #f7f6f2;
+  --surface: #fffefa;
+  --surface-strong: #ffffff;
+  --panel: #8f2d20;
+  --panel-ink: #fffaf0;
+  --panel-muted: #9a6a2e;
+  --panel-line: rgba(181, 132, 50, .32);
+  --ink: #704315;
+  --muted: #8c6631;
+  --line: #dec58d;
+  --gold: #9c681d;
+  --gold-strong: #78450f;
+  --gold-soft: #e7d3a4;
+  --accent: #b33a28;
+  --accent-strong: #8f2619;
+  --accent-soft: #f4dfd2;
+  --calendar-text: #704315;
+  --calendar-muted: #936d35;
+  --shadow: 0 18px 54px rgba(124, 83, 25, .09);
+}
+
+body {
+  background: var(--page);
+}
+
+.page-shell { width: min(1400px, calc(100% - 56px)); padding-top: 18px; }
+.site-header, .international-guide, .calendar-layout { border-radius: 0; box-shadow: none; }
+.site-header { min-height: 78px; padding: 13px 20px; border-width: 0 0 1px; }
+.brand-lockup { display: flex; align-items: center; gap: 12px; }
+.brand-lockup img { width: 48px; height: 48px; object-fit: contain; }
+.brand-lockup strong { color: var(--accent-strong); font-size: 20px; letter-spacing: .1em; }
+.site-header .detail-kicker { color: var(--gold-strong); margin-bottom: 2px; letter-spacing: .15em; }
+.locale-switch { gap: 0; border: 1px solid var(--line); }
+.locale-switch button { border: 0; border-radius: 0; min-width: 70px; padding: 9px 12px; color: var(--gold-strong); }
+.locale-switch button[aria-pressed="true"] { background: var(--accent); color: #fffaf0; }
+.calendar-layout { border-color: var(--line); }
+.calendar-right { border-left-color: var(--line); }
+.calendar-card { padding-top: clamp(24px, 3vw, 42px); }
+.detail-card { background: transparent; }
+.days-grid { border-color: var(--line); border-radius: 10px; overflow: hidden; }
+.day-button, .empty-day { border-color: color-mix(in srgb, var(--line) 74%, transparent); }
+.day-button.is-selected { background: linear-gradient(145deg, #b83f2c, #932a1c); color: #fff8e8; box-shadow: none; }
+.day-button.is-selected .day-lunar, .day-button.is-selected .day-event { color: #fff2d6; }
+.day-button:hover { background: #f9efe5; }
+.detail-card, .calendar-card, .bazi-card, .election-card { border-radius: 0; }
+
+:root[data-theme="dark"] {
+  --page: #2a100e;
+  --surface: #3a1714;
+  --surface-strong: #491e18;
+  --panel: #8f2d20;
+  --panel-ink: #fff3d7;
+  --panel-muted: #d8b86e;
+  --panel-line: rgba(232, 193, 109, .32);
+  --ink: #f5dca5;
+  --muted: #d5b77f;
+  --line: #9a6a36;
+  --gold: #e0b65d;
+  --gold-strong: #f0ca78;
+  --gold-soft: #765126;
+  --accent: #d14b35;
+  --accent-strong: #f06a50;
+  --accent-soft: #5b201a;
+  --calendar-text: #f2d9a4;
+  --calendar-muted: #d5b77f;
+  --shadow: 0 20px 58px rgba(32, 4, 4, .24);
+}
+
+:root[data-theme="dark"] body { background: var(--page); }
+
+@media (max-width: 700px) {
+  .page-shell { width: min(100% - 24px, 680px); padding-top: 8px; }
+  .site-header { min-height: 68px; padding: 9px 4px; align-items: center; }
+  .brand-lockup { gap: 7px; }
+  .brand-lockup img { width: 38px; height: 38px; }
+  .brand-lockup strong { font-size: 14px; letter-spacing: .04em; }
+  .site-header .detail-kicker { font-size: 8px; }
+  .locale-switch button { min-width: 54px; padding: 7px 8px; font-size: 12px; }
+  .calendar-layout { border-radius: 0; }
+  .calendar-right { border-left: 0; border-top: 1px solid var(--line); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
