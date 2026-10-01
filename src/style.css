@@ -2678,7 +2678,23 @@ body {
 .calendar-layout { border-color: var(--line); }
 .calendar-right { border-left-color: var(--line); }
 .calendar-card { padding-top: clamp(24px, 3vw, 42px); }
-.detail-card { background: transparent; }
+.detail-card {
+  color: var(--ink);
+  background: var(--surface);
+}
+.detail-card .detail-kicker,
+.detail-card .core-fact > span,
+.detail-card .almanac-core-item h3,
+.detail-card .day-action-group h3,
+.detail-card .calendar-info-item h3,
+.detail-card .beidou-panel > h3 { color: var(--gold-strong); }
+.detail-card .lunar-title,
+.detail-card .pillar-core strong,
+.detail-card .calendar-info-values span,
+.detail-card .beidou-item strong { color: var(--ink); }
+.detail-card .almanac-core-item strong,
+.detail-card .deity-link { color: var(--gold-strong); }
+.detail-card .beidou-item > span { color: var(--muted); }
 .days-grid { border-color: var(--line); border-radius: 10px; overflow: hidden; }
 .day-button, .empty-day { border-color: color-mix(in srgb, var(--line) 74%, transparent); }
 .day-button.is-selected { background: linear-gradient(145deg, #b83f2c, #932a1c); color: #fff8e8; box-shadow: none; }
