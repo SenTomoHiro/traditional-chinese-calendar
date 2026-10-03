@@ -2413,7 +2413,7 @@ body.deity-dialog-open {
     opacity: 0;
     color: transparent;
     background: transparent;
-    border: 0;
+    border: 1px solid transparent;
     border-radius: inherit;
     font-size: 16px;
     cursor: pointer;
