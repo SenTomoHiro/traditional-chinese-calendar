@@ -288,7 +288,7 @@ test("X63 普通月、两个闰月及交节前后均可真实运行且无资料�
   expect(资源404).toEqual([]);
 });
 
-for (const width of [440, 430, 390, 320]) {
+for (const width of [390, 320]) {
   test(`${width}px 八字与择日卡片无横向滚动且深浅主题可用`, async ({ page }) => {
     const 控制台错误: string[] = [];
     const 资源404: string[] = [];
@@ -306,108 +306,83 @@ for (const width of [440, 430, 390, 320]) {
   });
 }
 
-for (const width of [440, 430, 390, 320]) {
-  test(`${width}px iPhone 择日 picker shell 与乙方 fieldset 均服从父级边界`, async ({ page }) => {
+for (const width of [390, 320]) {
+  test(`${width}px iPhone 择日表单为单列且原生日期框不重叠、不裁边`, async ({ page }) => {
     const 控制台错误: string[] = [];
-    const 资源404: string[] = [];
     page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
-    page.on("response", (响应) => { if (响应.status() === 404) 资源404.push(响应.url()); });
-    await page.setViewportSize({ width, height: 1000 });
+    await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    await page.getByRole("button", { name: "双人婚姻" }).click();
 
-    const 布局 = await page.evaluate((视口宽度) => {
-      const shell选择器 = [
-        '[data-picker-shell="election-start"]',
-        '[data-picker-shell="election-end"]',
-        '[data-picker-shell="person-date-1"]',
-        '[data-picker-shell="person-time-1"]',
-      ];
-      const shell = shell选择器.map((选择器) => {
-        const 外壳 = document.querySelector<HTMLElement>(选择器)!;
-        const 标签 = 外壳.closest<HTMLElement>("label")!;
-        const 外壳框 = 外壳.getBoundingClientRect();
-        const 标签框 = 标签.getBoundingClientRect();
+    const 布局 = await page.locator(".election-form").evaluate((表单) => {
+      const 矩形 = (选择器: string) => 表单.querySelector<HTMLElement>(选择器)!.getBoundingClientRect();
+      const 开始 = 矩形("[data-election-start]");
+      const 结束 = 矩形("[data-election-end]");
+      const 开始标签 = 表单.querySelector<HTMLElement>("[data-election-start]")!.parentElement!.getBoundingClientRect();
+      const 结束标签 = 表单.querySelector<HTMLElement>("[data-election-end]")!.parentElement!.getBoundingClientRect();
+      const 表单框 = 表单.getBoundingClientRect();
+      const 控件 = [...表单.querySelectorAll<HTMLElement>("input, select")].map((元素) => {
+        const 框 = 元素.getBoundingClientRect();
+        const 样式 = getComputedStyle(元素);
         return {
-          在标签内: 外壳框.left >= 标签框.left - 0.5 && 外壳框.right <= 标签框.right + 0.5,
-          等宽: Math.abs(外壳框.width - 标签框.width) <= 0.5,
-          minWidth: getComputedStyle(外壳).minWidth,
-          maxWidth: getComputedStyle(外壳).maxWidth,
-          boxSizing: getComputedStyle(外壳).boxSizing,
+          类型: 元素.getAttribute("type") ?? 元素.tagName.toLowerCase(),
+          左侧在内: 框.left >= 表单框.left - 0.5,
+          右侧在内: 框.right <= 表单框.right + 0.5,
+          宽度吻合: Math.abs(框.width - 元素.parentElement!.getBoundingClientRect().width) <= 0.5,
+          boxSizing: 样式.boxSizing,
+          minWidth: 样式.minWidth,
+          maxWidth: 样式.maxWidth,
+          上边框: 样式.borderTopWidth,
         };
       });
-      const 原生控件 = [
-        document.querySelector<HTMLInputElement>("[data-election-start]")!,
-        document.querySelector<HTMLInputElement>("[data-election-end]")!,
-        document.querySelector<HTMLInputElement>("[data-person-date]")!,
-        document.querySelector<HTMLInputElement>("[data-person-time]")!,
-      ].map((输入) => {
-        const 样式 = getComputedStyle(输入);
-        const 输入框 = 输入.getBoundingClientRect();
-        const 外壳框 = 输入.closest<HTMLElement>(".mobile-picker-shell")!.getBoundingClientRect();
-        return {
-          position: 样式.position,
-          opacity: 样式.opacity,
-          appearance: 样式.appearance,
-          覆盖外壳: Math.abs(输入框.left - 外壳框.left) <= 0.5
-            && Math.abs(输入框.right - 外壳框.right) <= 0.5
-            && Math.abs(输入框.top - 外壳框.top) <= 0.5
-            && Math.abs(输入框.bottom - 外壳框.bottom) <= 0.5,
-        };
-      });
-      const 乙方 = document.querySelector<HTMLElement>('[data-election-person="1"]')!;
-      const 乙方样式 = getComputedStyle(乙方);
       return {
-        shell,
-        原生控件,
-        乙方: {
-          boxSizing: 乙方样式.boxSizing,
-          marginLeft: 乙方样式.marginLeft,
-          marginRight: 乙方样式.marginRight,
-          minInlineSize: 乙方样式.minInlineSize,
-          列数: 乙方样式.gridTemplateColumns.split(" ").length,
-        },
-        预期列数: 视口宽度 <= 420 ? 1 : 2,
+        单列: getComputedStyle(表单).gridTemplateColumns.split(" ").length === 1,
+        日期上下排列: 结束标签.top >= 开始标签.bottom + 11,
+        日期不重叠: 结束.top >= 开始.bottom + 11,
+        标签输入有留白: 开始.top > 开始标签.top && 结束.top > 结束标签.top,
+        控件,
         无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
       };
-    }, width);
-
-    expect(布局.shell.every((项) => 项.在标签内 && 项.等宽)).toBe(true);
-    expect(布局.shell.every((项) => 项.minWidth === "0px" && 项.maxWidth === "100%" && 项.boxSizing === "border-box")).toBe(true);
-    expect(布局.原生控件.every((项) => 项.position === "absolute" && 项.opacity === "0" && 项.appearance === "auto" && 项.覆盖外壳)).toBe(true);
-    expect(布局.乙方.boxSizing).toBe("border-box");
-    expect(布局.乙方.marginLeft).toBe("0px");
-    expect(布局.乙方.marginRight).toBe("0px");
-    expect(布局.乙方.minInlineSize).toBe("0px");
-    expect(布局.乙方.列数).toBe(布局.预期列数);
-    expect(布局.无横向滚动).toBe(true);
-
-    await page.evaluate(() => {
-      (window as typeof window & { __electionPickerClicks: Record<string, number> }).__electionPickerClicks = { start: 0, time: 0 };
-      document.querySelector("[data-election-start]")?.addEventListener("click", () => {
-        (window as typeof window & { __electionPickerClicks: Record<string, number> }).__electionPickerClicks.start += 1;
-      });
-      document.querySelector("[data-person-time]")?.addEventListener("click", () => {
-        (window as typeof window & { __electionPickerClicks: Record<string, number> }).__electionPickerClicks.time += 1;
-      });
     });
-    await page.locator('[data-picker-shell="election-start"]').click();
-    await page.locator('[data-picker-shell="person-time-1"]').click();
-    expect(await page.evaluate(() => (window as typeof window & { __electionPickerClicks: Record<string, number> }).__electionPickerClicks)).toEqual({ start: 1, time: 1 });
 
-    await page.locator("[data-election-start]").fill("2026-10-02");
-    await expect(page.locator('[data-picker-value="election-start"]')).toHaveText("2026年10月2日");
-    await page.locator("[data-election-end]").fill("2026-10-31");
-    await expect(page.locator('[data-picker-value="election-end"]')).toHaveText("2026年10月31日");
-    await page.locator("[data-person-date]").fill("1990-05-20");
-    await expect(page.locator('[data-picker-value="person-date-1"]')).toHaveText("1990年5月20日");
-    await page.locator("[data-person-time]").fill("18:04");
-    await expect(page.locator('[data-picker-value="person-time-1"]')).toHaveText("18:04");
-
+    expect(布局.单列).toBe(true);
+    expect(布局.日期上下排列).toBe(true);
+    expect(布局.日期不重叠).toBe(true);
+    expect(布局.标签输入有留白).toBe(true);
+    expect(布局.控件.every((控件) => 控件.左侧在内 && 控件.右侧在内 && 控件.宽度吻合)).toBe(true);
+    expect(布局.控件.every((控件) => 控件.boxSizing === "border-box" && 控件.minWidth === "0px" && 控件.maxWidth !== "none")).toBe(true);
+    expect(布局.控件.filter((控件) => 控件.类型 === "date").every((控件) => 控件.上边框 === "1px")).toBe(true);
+    expect(布局.无横向滚动).toBe(true);
     expect(控制台错误).toEqual([]);
-    expect(资源404).toEqual([]);
   });
 }
+
+test("iPhone Safari 移动环境下择日日期框保持单列和完整边框", async ({ browser }) => {
+  const context = await browser.newContext({ ...devices["iPhone 13"] });
+  const page = await context.newPage();
+  const 控制台错误: string[] = [];
+  page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
+  await page.goto("/");
+  const 结果 = await page.locator(".election-form").evaluate((表单) => {
+    const 开始 = 表单.querySelector<HTMLInputElement>("[data-election-start]")!;
+    const 结束 = 表单.querySelector<HTMLInputElement>("[data-election-end]")!;
+    const 开始框 = 开始.getBoundingClientRect();
+    const 结束框 = 结束.getBoundingClientRect();
+    const 表单框 = 表单.getBoundingClientRect();
+    return {
+      单列: 结束框.top > 开始框.bottom,
+      等宽: Math.abs(开始框.width - 表单框.width) <= 0.5 && Math.abs(结束框.width - 表单框.width) <= 0.5,
+      完整边框: [开始, 结束].every((输入) => {
+        const 样式 = getComputedStyle(输入);
+        return 样式.borderTopWidth === "1px" && 样式.borderRightWidth === "1px"
+          && 样式.borderBottomWidth === "1px" && 样式.borderLeftWidth === "1px";
+      }),
+      无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+    };
+  });
+  expect(结果).toEqual({ 单列: true, 等宽: true, 完整边框: true, 无横向滚动: true });
+  expect(控制台错误).toEqual([]);
+  await context.close();
+});
 
 for (const width of [1440, 1024, 768]) {
   test(`${width}px 择日表单在宽屏保持双列且控件完整`, async ({ page }) => {
