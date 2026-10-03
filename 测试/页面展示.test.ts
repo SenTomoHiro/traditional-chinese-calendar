@@ -252,7 +252,12 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('class="mobile-picker-value" data-picker-value="date"');
     expect(页面源码).toContain('class="mobile-picker-value" data-picker-value="time"');
     expect(手机断点).toMatch(/\.mobile-picker-shell\s*\{[^}]*position:\s*relative[^}]*min-height:\s*38px[^}]*padding:\s*7px 9px[^}]*border:/u);
-    expect(手机断点).toMatch(/\.bazi-form \.mobile-picker-native\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*opacity:\s*0[^}]*appearance:\s*auto/u);
+    expect(手机断点).toMatch(/\.bazi-form \.mobile-picker-native,\s*\.election-form \.mobile-picker-native,\s*\.election-person \.mobile-picker-native\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*opacity:\s*0[^}]*appearance:\s*auto/u);
+    expect(页面源码).toContain('data-picker-shell="election-start"');
+    expect(页面源码).toContain('data-picker-shell="election-end"');
+    expect(页面源码).toContain('data-picker-shell="person-date-${索引}"');
+    expect(页面源码).toContain('data-picker-shell="person-time-${索引}"');
+    expect(页面样式).toMatch(/\.election-person\s*\{[^}]*box-sizing:\s*border-box[^}]*min-inline-size:\s*0[^}]*margin:\s*0/u);
     expect(手机断点).not.toMatch(/\.mobile-picker-shell\s*\{[^}]*overflow:\s*hidden/u);
     expect(页面样式).toMatch(/\.bazi-card\s*\{[^}]*min-width:\s*0/u);
     expect(页面样式).toMatch(/\.calculation-card\s*\{[^}]*min-width:\s*0/u);
