@@ -74,7 +74,7 @@ const 英文标签: Readonly<Record<string, string>> = {
 };
 function 英文说明层(): string {
   if (当前语言 !== "en") return "";
-  return `<section class="international-guide" aria-label="About this calendar"><div><p class="detail-kicker">OPEN & REVIEWABLE</p><h1>Traditional Chinese Calendar</h1><p>An astronomical calendar and almanac for Chinese lunisolar dates, Ganzhi, 24 Solar Terms, true solar time, BaZi (Four Pillars), and Traditional Date Selection.</p></div><div><h2>How to read this page</h2><p><strong>Ganzhi</strong> means the Heavenly Stems and Earthly Branches cycle. <strong>BaZi / Four Pillars</strong> is a traditional Chinese birth-time system, not a Western zodiac. <strong>Traditional Date Selection</strong> has a purpose comparable to electional astrology, but uses a distinct Chinese calendrical tradition.</p><p>Chinese rule files remain the single source of truth. English is a presentation and explanation layer; source terminology and deeper traditional material intentionally remain in Chinese.</p></div><nav aria-label="Calendar sections"><a href="#calendar">Calendar</a><a href="#hours">Hours</a><a href="#bazi">BaZi</a><a href="#date-selection">Date Selection</a><a href="#sources">Sources</a><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar">GitHub</a></nav></section>`;
+  return `<section class="international-guide" aria-label="About this calendar"><div><p class="detail-kicker">OPEN & REVIEWABLE</p><h1>Traditional Chinese Calendar</h1><p>An astronomical calendar and almanac for Chinese lunisolar dates, Ganzhi, 24 Solar Terms, true solar time, BaZi (Four Pillars), and Traditional Date Selection.</p></div><div><h2>How to read this page</h2><p><strong>Ganzhi</strong> means the Heavenly Stems and Earthly Branches cycle. <strong>BaZi / Four Pillars</strong> is a traditional Chinese birth-time system, not a Western zodiac. <strong>Traditional Date Selection</strong> has a purpose comparable to electional astrology, but uses a distinct Chinese calendrical tradition.</p><p>Traditional source terms and titles remain in Chinese where no concise English equivalent is available.</p></div><nav aria-label="Calendar sections"><a href="#calendar">Calendar</a><a href="#hours">Hours</a><a href="#bazi">BaZi</a><a href="#date-selection">Date Selection</a><a href="#sources">Sources</a><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar">GitHub</a></nav></section>`;
 }
 function 应用英文标签(): void {
   document.documentElement.lang = 当前语言; document.documentElement.dataset.locale = 当前语言;
@@ -85,11 +85,11 @@ function 语言切换控件(): string { return `<div class="locale-switch" role=
 function 页脚导航(): string {
   const 英文 = 当前语言 === "en";
   const 关于 = 英文
-    ? "The maintainer reviews sources, rule decisions, and final results. GPT and Codex assist with engineering, testing, and maintenance; they are not a source of traditional facts."
-    : "维护者负责资料核对、规则判断和最终审核；GPT 与 Codex 协助工程实现、测试和维护，不作为传统文化事实来源。";
+    ? "A calendar and almanac for Chinese lunisolar dates, solar terms, Ganzhi, and traditional date selection."
+    : "面向中国农历、节气、干支与传统择日的日历与通书。";
   const 来源 = 英文
-    ? "Chinese configuration files are the formal source of rules. Source notes and third-party notices document auditable material and version differences."
-    : "中文配置为正式规则来源；资料来源说明与第三方资料声明记录可审阅材料和版本差异。";
+    ? "Source notes and third-party notices provide reference information for this calendar."
+    : "资料来源说明与第三方资料声明提供本日历的参考资料。";
   return `<footer id="sources" class="site-footer"><nav aria-label="${英文 ? "Project links" : "项目链接"}"><details id="about"><summary>${英文 ? "About" : "关于本项目"}</summary><p>${关于}</p></details><details id="source-notes"><summary>${英文 ? "Sources" : "资料来源"}</summary><p>${来源}</p><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar/blob/main/%E8%B5%84%E6%96%99%E6%9D%A5%E6%BA%90%E8%AF%B4%E6%98%8E.md">${英文 ? "Source notes" : "查看资料来源说明"}</a></details><a href="https://github.com/SenTomoHiro/traditional-chinese-calendar">GitHub</a></nav></footer>`;
 }
 
@@ -164,12 +164,6 @@ const 神圣纪念资料配置 = 解析神圣纪念与神仙资料(
 );
 const 已解析时辰配置 = 初始化时辰配置(配置结果);
 const 北斗配置结果 = 解析北斗配置(配置结果);
-const 神圣纪念事件总数 = 神圣纪念资料配置.人物.reduce((总数, 人物) => 总数 + 人物.纪念事件.length, 0)
-  + 神圣纪念资料配置.独立纪念事件.length;
-const 规则总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.规则.length, 0)
-  + 神圣纪念资料配置.人物.length + 神圣纪念事件总数;
-const 基础配置错误总数 = 配置结果.reduce((总数, 文件) => 总数 + 文件.错误.length, 0)
-  + 神圣纪念资料配置.错误.length;
 let 详情触发元素: HTMLElement | null = null;
 let 当前神圣纪念详情: 当日神圣纪念[] = [];
 let 当前详情纪念: 当日神圣纪念 | null = null;
@@ -367,10 +361,35 @@ function 纪念详情按钮(内容: string, 索引: number): string {
   return `<button type="button" class="deity-link" data-sacred-commemoration="${索引}">${内容}</button>`;
 }
 
+function 分离纪念名称(纪念: 当日神圣纪念): { 人物名称: string; 纪念性质: string } | null {
+  const 名称 = 纪念.名称;
+  const 候选后缀 = [
+    纪念.类型,
+    `${纪念.类型}日`,
+    `${纪念.类型}之日`,
+    `${纪念.类型}之辰`,
+    "圣诞",
+    "飞升日",
+    "得道日",
+    "成道日",
+    "纪念日",
+  ].filter((后缀, 索引, 全部) => 后缀 && 全部.indexOf(后缀) === 索引)
+    .sort((左, 右) => 右.length - 左.length);
+  const 纪念性质 = 候选后缀.find((后缀) => 名称.endsWith(后缀));
+  if (!纪念性质 || 名称.length === 纪念性质.length) return null;
+  return { 人物名称: 名称.slice(0, -纪念性质.length), 纪念性质 };
+}
+
 function 神圣纪念文本(纪念: 当日神圣纪念, 索引: number): string {
   const 纪念文本 = 纪念.名称;
   if (!纪念有前台内容(纪念)) return 转义HTML(纪念文本);
-  if (!纪念.人物) return 纪念详情按钮(转义HTML(纪念文本), 索引);
+  const 分离结果 = 分离纪念名称(纪念);
+  if (!纪念.人物) {
+    if (分离结果) {
+      return `${纪念详情按钮(转义HTML(分离结果.人物名称), 索引)}${转义HTML(分离结果.纪念性质)}`;
+    }
+    return 纪念详情按钮(转义HTML(纪念文本), 索引);
+  }
   const 候选名称 = [...new Set([纪念.人物.主名称, ...纪念.人物.匹配名称])]
     .sort((左, 右) => 右.length - 左.length || 左.localeCompare(右, "zh-CN"));
   const 匹配结果: Array<{ 开始: number; 结束: number }> = [];
@@ -384,6 +403,9 @@ function 神圣纪念文本(纪念: 当日神圣纪念, 索引: number): string 
     位置 += 名称.length;
   }
   if (匹配结果.length === 0) {
+    if (分离结果) {
+      return `${纪念详情按钮(转义HTML(分离结果.人物名称), 索引)}${转义HTML(分离结果.纪念性质)}`;
+    }
     return 纪念详情按钮(转义HTML(纪念文本), 索引);
   }
   let 位置 = 0;
@@ -591,7 +613,7 @@ function 时辰详情依据(依据: string): string {
   return `
     <footer class="hour-detail-source" aria-label="时辰详情依据">
       <strong>时辰详情依据：</strong>
-      <span>${转义HTML(古籍依据)}；风水禁忌另据项目中文风水规则配置。</span>
+      <span>${转义HTML(古籍依据)}；风水禁忌参见相关传统风水资料。</span>
     </footer>`;
 }
 
@@ -771,7 +793,7 @@ function 生成八字结果区(): string {
           ])}</article>
           <article><h3>干支关系</h3>${列表([...分析.天干关系, ...分析.地支关系])}</article>
         </div>
-        <section class="pattern-section"><h3>格局候选</h3>${分析.格局候选.map((候选) => `<details><summary><span>${候选.级别}</span>${候选.名称}</summary><dl><dt>成立依据</dt><dd>${候选.成立依据.map(转义HTML).join("；")}</dd><dt>不利条件 / 破格线索</dt><dd>${候选.不利条件.map(转义HTML).join("；") || "当前机器证据未见明确线索"}</dd><dt>需要人工复核</dt><dd>${候选.人工复核.map(转义HTML).join("；")}</dd></dl></details>`).join("") || "<p>月令暂未形成普通正格候选，需人工复核。</p>"}</section>
+        <section class="pattern-section"><h3>格局候选</h3>${分析.格局候选.map((候选) => `<details><summary><span>${候选.级别}</span>${候选.名称}</summary><dl><dt>成立依据</dt><dd>${候选.成立依据.map(转义HTML).join("；")}</dd><dt>不利条件 / 破格线索</dt><dd>${候选.不利条件.map(转义HTML).join("；") || "未见明确破格线索"}</dd><dt>需要人工复核</dt><dd>${候选.人工复核.map(转义HTML).join("；")}</dd></dl></details>`).join("") || "<p>月令未形成普通正格候选，宜结合全局辨析。</p>"}</section>
         <div class="analysis-grid use-grid">
           <article><h3>格局用</h3><p>${转义HTML(分析.三套取用说明.格局用)}</p></article>
           <article><h3>扶抑</h3><p>${转义HTML(分析.三套取用说明.扶抑)}</p></article>
@@ -805,7 +827,7 @@ function 更新八字结果区(): void {
 function 八字查询卡片(): string {
   return `
     <section class="bazi-card feature-card" aria-label="生辰八字查询">
-      <header><h2>八字分析</h2><p>证据优先 · 不给伪精确分数</p></header>
+      <header><h2>八字分析</h2><p>四柱关系与五行辨析</p></header>
       <div class="bazi-form">
         <label class="bazi-picker-field" for="bazi-birth-date">日期
           <span class="mobile-picker-shell" data-picker-shell="date">
@@ -852,23 +874,22 @@ function 状态类(状态: string): string { return 状态 === "已裁断" ? "re
 
 function 生成择日结果区(): string {
   if (择日错误) return `<p class="bazi-message election-error" role="alert">${转义HTML(择日错误)}</p>`;
-  if (!最近择日结果) return `<p class="election-empty">填写日期范围和出生信息后开始筛选；结果不会显示数字吉凶分。</p>`;
+  if (!最近择日结果) return `<p class="election-empty">填写日期范围和出生信息后开始筛选。</p>`;
   const 推荐 = 最近择日结果.推荐候选;
   const 展示等级 = 映射择日展示等级(推荐);
   const 数量说明 = 推荐.length >= 2
     ? `从 ${最近择日结果.候选.length} 日中选出 ${推荐.length} 个相对最优结果`
     : `仅找到 ${推荐.length} 个达到推荐条件的日期，候选不足，不以次等结果凑数`;
   return `<div class="election-results" aria-live="polite">
-    <header><strong>${转义HTML(最近择日结果.事项)} · ${最近择日结果.日期范围}</strong><span>${数量说明}；排序依次比较公共日课、古籍状态、个人关系、共同适配与择时质量</span></header>
+    <header><strong>${转义HTML(最近择日结果.事项)} · ${最近择日结果.日期范围}</strong><span>${数量说明}</span></header>
     ${推荐.length === 0 ? '<p class="election-empty">当前范围没有足够可靠的主推荐日期，请扩大日期范围后再试。</p>' : ""}
     ${推荐.map((候选, 索引) => `<article class="election-day${["优先推荐", "推荐"].includes(展示等级[索引]) ? " is-leading" : ""}">
       <div class="election-day-heading"><div><time datetime="${候选.日期}">${候选.日期}</time><strong class="election-grade is-${展示等级[索引]}">${展示等级[索引]}</strong></div><p>${候选.干支} · ${候选.值星} · ${候选.黄黑道}${候选.已核事实.length ? ` · ${候选.已核事实.join("、")}` : ""}</p></div>
       <div class="verdict-row">${候选.公共日课.map((项) => `<span class="is-${状态类(项.状态)}">${项.名称}：${项.铺注状态}</span>`).join("")}</div>
       ${候选.共同结论 ? `<p class="joint-verdict">${转义HTML(候选.共同结论)}</p>` : ""}
       <div class="candidate-reasons"><div><h4>有利原因</h4>${(候选.有利原因.length ? 候选.有利原因 : ["未见明确注宜或个性有利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div><div><h4>需要注意</h4>${(候选.需要注意.length ? 候选.需要注意 : ["未见严重不利关系"]).map((项) => `<p>${转义HTML(项)}</p>`).join("")}</div></div>
-      <div class="recommended-hours"><h4>推荐时辰</h4>${候选.推荐时辰.map((时辰) => `<span class="is-${时辰.等级}"><strong>${时辰.名称} ${时辰.时间范围}</strong><small>${时辰.时柱}时 · ${时辰.等级}${时辰.待校.length ? " · 有待校项" : ""}</small></span>`).join("")}</div>
-      <p class="coverage-note">${转义HTML(候选.资料完整说明)}</p>
-      <details class="source-details"><summary>查看依据</summary>${候选.公共日课.map((项) => `<section><h4>${项.名称} · ${项.铺注状态}</h4><p>${转义HTML(项.结论)}</p><p>宜：${项.宜证据.map(转义HTML).join("、") || "无"}；忌：${项.忌证据.map(转义HTML).join("、") || "无"}</p>${项.待校.length ? `<p>待校：${项.待校.map(转义HTML).join("、")}</p>` : ""}<small>${转义HTML(项.来源)}</small></section>`).join("")}${候选.人物关系.map((关系) => `<section><h4>${转义HTML(关系.标签)}</h4>${关系.项目.map((项) => `<p>${项.层级}：${转义HTML(项.说明)} <small>（${项.来源类型}）</small></p>`).join("")}</section>`).join("")}</details>
+      <div class="recommended-hours"><h4>推荐时辰</h4>${候选.推荐时辰.map((时辰) => `<span class="is-${时辰.等级}"><strong>${时辰.名称} ${时辰.时间范围}</strong><small>${时辰.时柱}时 · ${时辰.等级}</small></span>`).join("")}</div>
+      <details class="source-details"><summary>查看依据</summary>${候选.公共日课.map((项) => `<section><h4>${项.名称} · ${项.铺注状态}</h4><p>${转义HTML(项.结论)}</p><p>宜：${项.宜证据.map(转义HTML).join("、") || "无"}；忌：${项.忌证据.map(转义HTML).join("、") || "无"}</p><small>${转义HTML(项.来源)}</small></section>`).join("")}${候选.人物关系.map((关系) => `<section><h4>${转义HTML(关系.标签)}</h4>${关系.项目.map((项) => `<p>${项.层级}：${转义HTML(项.说明)} <small>（${项.来源类型}）</small></p>`).join("")}</section>`).join("")}</details>
     </article>`).join("")}
   </div>`;
 }
@@ -1008,8 +1029,7 @@ function 渲染(): void {
     已解析时辰配置,
     北斗配置结果.配置,
   );
-  const { 最终, 历法结果, 四柱, 北斗, 日级风水禁忌, 真太阳时结果, 十二时辰, 时辰配置错误 } = 当前历时;
-  const 错误总数 = 基础配置错误总数 + 时辰配置错误.length + 北斗配置结果.错误.length;
+  const { 最终, 历法结果, 四柱, 北斗, 日级风水禁忌, 真太阳时结果, 十二时辰 } = 当前历时;
   当前时间依据 = 当前历时.时间依据;
   const 传统节日 = 获取传统节日(最终.最终时间);
   const 神圣纪念 = 获取神圣纪念日(神圣纪念资料配置, 历法结果.农历);
@@ -1146,12 +1166,8 @@ function 渲染(): void {
                 <div><dt>定位环境</dt><dd>${定位诊断详情()}</dd></div>
                 <div><dt>版本</dt><dd data-app-version>${__APP_VERSION__}</dd></div>
               </dl>
-              <p class="calculation-note">当前统一按${当前时间依据}计算；23:00进入子时，日柱仍在00:00换日</p>
+              <p class="calculation-note">子时自23:00起，日柱于00:00更替。</p>
             </details>
-
-            <p class="config-status${错误总数 > 0 ? " has-error" : ""}">
-              规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则${错误总数 > 0 ? ` · ${错误总数} 条待修正` : ""}
-            </p>
           </section>
         </div>
 

@@ -55,7 +55,10 @@ test("正式人物资料交互、同神异名、空详情和民俗栏目边界�
   await page.goto("/");
   await 选择日期(page, "2026-08-06");
   const 关帝按钮 = 神圣纪念栏(page).getByRole("button", { name: "关圣帝君", exact: true });
+  const 关帝纪念 = 神圣纪念栏(page).locator(".calendar-info-values > span").filter({ hasText: /^关圣帝君圣诞$/u });
+  await expect(关帝纪念).toHaveText("关圣帝君圣诞");
   await expect(关帝按钮).toBeVisible();
+  await expect(关帝纪念.getByRole("button", { name: "关圣帝君圣诞", exact: true })).toHaveCount(0);
   expect(await 关帝按钮.evaluate((元素) => {
     const 样式 = getComputedStyle(元素);
     return { 下划线: 样式.textDecorationLine, 下边框: 样式.borderBottomWidth, 鼠标: 样式.cursor, 颜色: 样式.color };
@@ -128,7 +131,7 @@ test("人物绑定纪念与无人物宗教纪日均可打开非空详情", async
   await page.goto("/");
 
   await 选择日期(page, "2026-09-25");
-  await 打开人物(page, "太阴朝元之辰");
+  await 打开人物(page, "太阴");
   await expect(page.locator("#deity-dialog-title")).toHaveText("太阴星君");
   await expect(page.locator(".deity-proclamation")).toContainText("太阴皇君诰");
   await expect(page.locator(".commemoration-introduction")).toContainText("朝元之辰");
@@ -148,8 +151,50 @@ test("人物绑定纪念与无人物宗教纪日均可打开非空详情", async
 
   await 选择日期(page, "2027-01-08");
   await 打开人物(page, "念经一卷胜常日");
-  await expect(page.locator(".commemoration-introduction")).toContainText("不应理解为现代可验证的客观功德倍数");
+  await expect(page.locator(".commemoration-introduction")).toContainText("诵经、持斋和修持");
+  await expect(page.locator(".commemoration-introduction")).not.toContainText("不应理解为现代可验证的客观功德倍数");
   await page.getByRole("button", { name: "关闭神圣纪念详情" }).click();
+});
+
+test("赤松黄大仙师圣诞仅链接人物名称，并展示已审核简介", async ({ page }) => {
+  const 控制台错误: string[] = [];
+  const 页面错误: string[] = [];
+  const 资源404: string[] = [];
+  page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
+  page.on("pageerror", (错误) => 页面错误.push(错误.message));
+  page.on("response", (响应) => { if (响应.status() === 404) 资源404.push(响应.url()); });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await 选择日期(page, "2026-10-03");
+  const 黄大仙纪念 = 神圣纪念栏(page).locator(".calendar-info-values > span").filter({ hasText: /^赤松黄大仙师圣诞$/u });
+  await expect(黄大仙纪念).toHaveText("赤松黄大仙师圣诞");
+  await expect(黄大仙纪念.getByRole("button", { name: "赤松黄大仙师", exact: true })).toHaveCount(1);
+  await expect(黄大仙纪念.getByRole("button", { name: "赤松黄大仙师圣诞", exact: true })).toHaveCount(0);
+  await 打开人物(page, "赤松黄大仙师");
+  await expect(page.locator("#deity-dialog-title")).toHaveText("赤松黄大仙师圣诞");
+  await expect(page.locator(".commemoration-introduction p")).toHaveText("黄初平（黄大仙）是道教神仙，生于浙江金华兰溪，少年时为牧童，后在山中修炼得道。宋代敕封为“养素净正真人”。");
+  await expect(page.locator(".commemoration-introduction")).not.toContainText("此处不强行统一");
+  expect(await page.locator(".deity-dialog-card").evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+  expect(控制台错误).toEqual([]);
+  expect(页面错误).toEqual([]);
+  expect(资源404).toEqual([]);
+});
+
+test("各类人物纪念名称均只链接人物部分", async ({ page }) => {
+  await page.goto("/");
+  for (const 场景 of [
+    { 日期: "2026-03-19", 名称: "太阳升殿之辰", 人物: "太阳", 事件: "升殿之辰" },
+    { 日期: "2026-10-18", 名称: "玄天上帝飞升", 人物: "玄天上帝", 事件: "飞升" },
+    { 日期: "2027-02-05", 名称: "清静真人孙不二成道", 人物: "清静真人孙不二", 事件: "成道" },
+  ]) {
+    await 选择日期(page, 场景.日期);
+    const 纪念 = 神圣纪念栏(page).locator(".calendar-info-values > span").filter({ hasText: new RegExp(`^${场景.名称}$`, "u") });
+    await expect(纪念).toHaveText(场景.名称);
+    await expect(纪念.getByRole("button", { name: 场景.人物, exact: true })).toHaveCount(1);
+    await expect(纪念.getByRole("button", { name: 场景.名称, exact: true })).toHaveCount(0);
+    await expect(纪念).toContainText(场景.事件);
+  }
 });
 
 for (const 场景 of [

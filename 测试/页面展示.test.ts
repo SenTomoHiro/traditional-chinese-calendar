@@ -182,7 +182,7 @@ describe("日期详情展示回归", () => {
   it("古籍依据是整个时辰详情的总脚注并明确区分风水配置", () => {
     expect(页面源码).toContain('class="hour-detail-source" aria-label="时辰详情依据"');
     expect(页面源码).toContain("时辰详情依据：");
-    expect(页面源码).toContain("风水禁忌另据项目中文风水规则配置。");
+    expect(页面源码).toContain("风水禁忌参见相关传统风水资料。");
     expect(页面源码).toMatch(/<section class="hour-rule-results"[\s\S]*?<\/section>\s*\$\{时辰详情依据\(时段\.详情\.依据\)\}/u);
     expect(页面源码).toContain("时段.详情.现代来源");
     expect(页面样式).toMatch(/\.hour-detail-source\s*\{[^}]*width:\s*100%[^}]*border-top:/u);
@@ -468,7 +468,7 @@ describe("日期详情展示回归", () => {
   });
 
   it("页面明确区分23点进入子时与午夜换日", () => {
-    expect(页面源码).toContain("23:00进入子时，日柱仍在00:00换日");
+    expect(页面源码).toContain("子时自23:00起，日柱于00:00更替。");
     expect(页面源码).not.toContain("日柱从子时开始的 23:00 换日");
   });
 
@@ -496,6 +496,13 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain("可选事项大类()");
     expect(页面源码).toContain("获取分类事项(大类)[0]");
     expect(页面源码).toContain("事项选择.innerHTML = 择日事项选项(择日事项大类, 择日事项)");
+  });
+
+  it("择日正文不展示规则覆盖、待校或排序过程说明", () => {
+    expect(页面源码).not.toContain("资料完整说明");
+    expect(页面源码).not.toContain("有待校项");
+    expect(页面源码).not.toContain("排序依次比较公共日课");
+    expect(页面源码).not.toContain('<p>待校：');
   });
 
   it("十二时辰详情默认常驻于概览之前且不可收起", () => {
@@ -588,11 +595,11 @@ describe("日期详情展示回归", () => {
     expect(页面样式).toMatch(/@media \(max-width: 820px\)[\s\S]*grid-template-columns:\s*1fr/u);
   });
 
-  it("时间依据默认折叠并把规则配置弱化成自动统计行", () => {
+  it("时间依据默认折叠且不展示内部规则统计", () => {
     expect(页面源码).toContain('<details class="calculation-details">');
     expect(页面源码).toContain("<summary>计算详情</summary>");
     expect(页面源码).not.toContain('<h2>时间与计算依据</h2>');
-    expect(页面源码).toContain("规则配置：已读取 ${配置结果.length + 1} 个文件 · ${规则总数} 条规则");
-    expect(页面源码).not.toContain("<strong>传统规则配置</strong>");
+    expect(页面源码).toContain("子时自23:00起，日柱于00:00更替。");
+    expect(页面源码).not.toContain("规则配置：已读取");
   });
 });

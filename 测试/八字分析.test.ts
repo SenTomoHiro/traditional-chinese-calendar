@@ -70,9 +70,9 @@ describe("八字分析 B01—B11", () => {
   it("B10 格局用扶抑调候三栏互不合并", () => {
     const 结果 = 分析日(2026, 8, 9);
     expect(Object.keys(结果.三套取用说明)).toEqual(["格局用", "扶抑", "调候"]);
-    expect(结果.调候.join("")).toContain("不把《穷通宝鉴》");
+    expect(结果.调候.join("")).toContain("不直接等同于喜用神");
     expect(JSON.stringify(结果)).not.toMatch(/\d+%/u);
-    expect(结果.三套取用说明.格局用).toContain("不作唯一终判");
+    expect(结果.三套取用说明.格局用).toContain("格局候选");
   });
 
   it("B11 破格与救应只作为候选链并明确人工复核", () => {
