@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const 外部基础地址 = process.env.PLAYWRIGHT_BASE_URL;
+
 export default defineConfig({
   testDir: "./测试/WebKit",
   fullyParallel: false,
@@ -7,7 +9,7 @@ export default defineConfig({
   reporter: "line",
   use: {
     ...devices["Desktop Safari"],
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: 外部基础地址 ?? "http://127.0.0.1:4173",
     headless: true,
   },
   projects: [
@@ -16,7 +18,7 @@ export default defineConfig({
       use: { browserName: "webkit" },
     },
   ],
-  webServer: {
+  webServer: 外部基础地址 ? undefined : {
     command: "npm run dev -- --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: true,

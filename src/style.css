@@ -257,6 +257,14 @@ button:focus-visible {
   display: none;
 }
 
+.mobile-picker-native {
+  display: block;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
 .bazi-form input,
 .bazi-form select,
 .bazi-locate {
@@ -1390,6 +1398,9 @@ body.deity-dialog-open {
 }
 
 .election-person {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  margin: 0;
   padding: 10px;
   border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   border-radius: 10px;
@@ -2391,7 +2402,7 @@ body.deity-dialog-open {
     pointer-events: none;
   }
 
-  .bazi-form .mobile-picker-native {
+  .mobile-picker-native {
     position: absolute;
     inset: 0;
     z-index: 1;

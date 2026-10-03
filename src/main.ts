@@ -806,17 +806,37 @@ function 生成八字结果区(): string {
   </div>`;
 }
 
-function 格式化八字日期显示(日期: string): string {
+function 格式化日期选择器显示(日期: string): string {
   const 匹配 = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(日期);
   if (!匹配) return 日期 || "请选择日期";
   return `${Number(匹配[1])}年${Number(匹配[2])}月${Number(匹配[3])}日`;
 }
 
-function 更新八字选择器显示(): void {
-  const 日期显示 = 根节点.querySelector<HTMLElement>('[data-picker-value="date"]');
-  const 时间显示 = 根节点.querySelector<HTMLElement>('[data-picker-value="time"]');
-  if (日期显示) 日期显示.textContent = 格式化八字日期显示(八字日期);
-  if (时间显示) 时间显示.textContent = 八字时间 || "请选择时间";
+interface 日期时间选择器参数 {
+  id: string;
+  键: string;
+  类型: "date" | "time";
+  数据属性: string;
+  标签: string;
+  值: string;
+  最小值?: string;
+  最大值?: string;
+}
+
+function 日期时间选择器({ id, 键, 类型, 数据属性, 标签, 值, 最小值, 最大值 }: 日期时间选择器参数): string {
+  const 可见值 = 类型 === "date" ? 格式化日期选择器显示(值) : 值 || "请选择时间";
+  return `<span class="mobile-picker-shell" data-picker-shell="${键}">
+    <span class="mobile-picker-value" data-picker-value="${键}" aria-hidden="true">${可见值}</span>
+    <input class="mobile-picker-native" id="${id}" type="${类型}" ${数据属性} aria-label="${标签}"${最小值 ? ` min="${最小值}"` : ""}${最大值 ? ` max="${最大值}"` : ""} value="${转义HTML(值)}">
+  </span>`;
+}
+
+function 更新日期时间选择器显示(输入框: HTMLInputElement): void {
+  const 可见值 = 输入框.closest(".mobile-picker-shell")?.querySelector<HTMLElement>(".mobile-picker-value");
+  if (!可见值) return;
+  可见值.textContent = 输入框.type === "date"
+    ? 格式化日期选择器显示(输入框.value)
+    : 输入框.value || "请选择时间";
 }
 
 function 更新八字结果区(): void {
@@ -830,16 +850,10 @@ function 八字查询卡片(): string {
       <header><h2>八字分析</h2><p>四柱关系与五行辨析</p></header>
       <div class="bazi-form">
         <label class="bazi-picker-field" for="bazi-birth-date">日期
-          <span class="mobile-picker-shell" data-picker-shell="date">
-            <span class="mobile-picker-value" data-picker-value="date" aria-hidden="true">${格式化八字日期显示(八字日期)}</span>
-            <input class="mobile-picker-native" id="bazi-birth-date" type="date" data-bazi-date aria-label="生辰日期" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${八字日期}">
-          </span>
+          ${日期时间选择器({ id: "bazi-birth-date", 键: "bazi-date", 类型: "date", 数据属性: "data-bazi-date", 标签: "生辰日期", 值: 八字日期, 最小值: 八字支持范围.最小日期, 最大值: 八字支持范围.最大日期 })}
         </label>
         <label class="bazi-picker-field" for="bazi-birth-time">时间
-          <span class="mobile-picker-shell" data-picker-shell="time">
-            <span class="mobile-picker-value" data-picker-value="time" aria-hidden="true">${八字时间 || "请选择时间"}</span>
-            <input class="mobile-picker-native" id="bazi-birth-time" type="time" data-bazi-time aria-label="生辰时间" value="${八字时间}">
-          </span>
+          ${日期时间选择器({ id: "bazi-birth-time", 键: "bazi-time", 类型: "time", 数据属性: "data-bazi-time", 标签: "生辰时间", 值: 八字时间 })}
         </label>
         <label>性别<select data-bazi-gender><option value="男"${八字性别 === "男" ? " selected" : ""}>男</option><option value="女"${八字性别 === "女" ? " selected" : ""}>女</option></select></label>
         <label>计算依据<select data-bazi-basis>
@@ -862,8 +876,8 @@ function 择日人物表单(索引: number, 标签: string): string {
     <dl><div><dt>出生</dt><dd>${转义HTML(八字日期)} ${转义HTML(八字时间)}</dd></div><div><dt>性别 / 依据</dt><dd>${八字性别} · ${八字时间依据}</dd></div></dl>
   </fieldset>`;
   return `<fieldset class="election-person" data-election-person="${索引}"><legend>${标签}</legend>
-    <label>出生日期<input type="date" data-person-date min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}" value="${八字日期}"></label>
-    <label>出生时间<input type="time" data-person-time value="${八字时间}"></label>
+    <label for="election-person-${索引}-date">出生日期${日期时间选择器({ id: `election-person-${索引}-date`, 键: `person-${索引}-date`, 类型: "date", 数据属性: "data-person-date", 标签: `${标签}出生日期`, 值: 八字日期, 最小值: 八字支持范围.最小日期, 最大值: 八字支持范围.最大日期 })}</label>
+    <label for="election-person-${索引}-time">出生时间${日期时间选择器({ id: `election-person-${索引}-time`, 键: `person-${索引}-time`, 类型: "time", 数据属性: "data-person-time", 标签: `${标签}出生时间`, 值: 八字时间 })}</label>
     <label>性别<select data-person-gender><option value="男">男</option><option value="女"${索引 === 1 ? " selected" : ""}>女</option></select></label>
     <label>时间依据<select data-person-basis><option value="北京时间">北京时间</option><option value="真太阳时">真太阳时</option></select></label>
     <label>出生地经度<input type="number" data-person-longitude min="-180" max="180" step="0.01" placeholder="真太阳时必填"></label>
@@ -907,8 +921,8 @@ function 择日卡片(): string {
     <div class="election-form">
       <label>事项大类<select data-election-category>${可选事项大类().map((大类) => `<option value="${大类}"${大类 === 择日事项大类 ? " selected" : ""}>${大类}</option>`).join("")}</select></label>
       <label>具体事项<select data-election-event>${择日事项选项(择日事项大类, 择日事项)}</select></label>
-      <label>开始日期<input type="date" data-election-start value="${默认择日开始}" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}"></label>
-      <label>结束日期<input type="date" data-election-end value="${默认择日结束}" min="${八字支持范围.最小日期}" max="${八字支持范围.最大日期}"></label>
+      <label for="election-start">开始日期${日期时间选择器({ id: "election-start", 键: "election-start", 类型: "date", 数据属性: "data-election-start", 标签: "择日开始日期", 值: 默认择日开始, 最小值: 八字支持范围.最小日期, 最大值: 八字支持范围.最大日期 })}</label>
+      <label for="election-end">结束日期${日期时间选择器({ id: "election-end", 键: "election-end", 类型: "date", 数据属性: "data-election-end", 标签: "择日结束日期", 值: 默认择日结束, 最小值: 八字支持范围.最小日期, 最大值: 八字支持范围.最大日期 })}</label>
       <label>候选时间依据<select data-election-basis><option value="北京时间">北京时间</option><option value="真太阳时">真太阳时</option></select></label>
       <label>候选地经度<input type="number" data-election-longitude min="-180" max="180" step="0.01" placeholder="真太阳时必填"></label>
     </div>
@@ -1207,16 +1221,15 @@ function 渲染(): void {
 
 根节点.addEventListener("change", (事件) => {
   const 目标 = 事件.target as HTMLInputElement | HTMLSelectElement;
+  if (目标 instanceof HTMLInputElement && 目标.matches(".mobile-picker-native")) 更新日期时间选择器显示(目标);
   if (目标.matches("[data-calendar-date]")) {
     主日期草稿 = 目标.value;
     if (!主日期键盘编辑) 提交主日期(目标.value, "原生选择");
   } else if (目标.matches("[data-bazi-date]")) {
     八字日期 = 目标.value;
-    更新八字选择器显示();
     更新八字结果区();
   } else if (目标.matches("[data-bazi-time]")) {
     八字时间 = 目标.value;
-    更新八字选择器显示();
     更新八字结果区();
   } else if (目标.matches("[data-bazi-basis]")) {
     八字时间依据 = 目标.value === "真太阳时" ? "真太阳时" : "北京时间";
@@ -1253,11 +1266,11 @@ function 渲染(): void {
 
 根节点.addEventListener("input", (事件) => {
   const 目标 = 事件.target as HTMLInputElement;
+  if (目标.matches(".mobile-picker-native")) 更新日期时间选择器显示(目标);
   if (目标.matches("[data-bazi-date]")) 八字日期 = 目标.value;
   else if (目标.matches("[data-bazi-time]")) 八字时间 = 目标.value;
   else if (目标.matches("[data-bazi-longitude]")) 八字经度文本 = 目标.value;
   else return;
-  更新八字选择器显示();
   更新八字结果区();
 });
 

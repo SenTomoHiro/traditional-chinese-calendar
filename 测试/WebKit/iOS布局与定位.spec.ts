@@ -58,7 +58,7 @@ for (const width of 手机宽度) {
     await page.setViewportSize({ width, height: 956 });
     await page.goto("/");
 
-    for (const 控件选择器 of ['[data-picker-shell="date"]', '[data-picker-shell="time"]']) {
+    for (const 控件选择器 of ['[data-picker-shell="bazi-date"]', '[data-picker-shell="bazi-time"]']) {
       断言位于父卡片内容区内(await 测量父卡片内容边界(page, 控件选择器, ".bazi-card"));
     }
     断言位于父卡片内容区内(await 测量父卡片内容边界(page, "[data-time-output]", ".calculation-card"));
@@ -88,32 +88,111 @@ for (const width of 手机宽度) {
 test("手机shell整块点击命中原生picker，日期和时间改变后可见值立即同步", async ({ page }) => {
   await page.setViewportSize({ width: 440, height: 956 });
   await page.goto("/");
-  await page.evaluate(() => {
-    (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks = { date: 0, time: 0 };
-    document.querySelector("[data-bazi-date]")?.addEventListener("click", () => {
-      (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks.date += 1;
-    });
-    document.querySelector("[data-bazi-time]")?.addEventListener("click", () => {
-      (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks.time += 1;
-    });
-  });
-
-  await page.locator('[data-picker-shell="date"]').click();
-  await page.locator('[data-picker-shell="time"]').click();
-  expect(await page.evaluate(() => (window as typeof window & { __pickerClicks: Record<string, number> }).__pickerClicks)).toEqual({ date: 1, time: 1 });
+  const 命中 = await page.evaluate(() => ["bazi-date", "bazi-time"].map((键) => {
+    const shell = document.querySelector<HTMLElement>(`[data-picker-shell="${键}"]`)!;
+    const 输入框 = shell.querySelector<HTMLInputElement>(".mobile-picker-native")!;
+    shell.scrollIntoView({ block: "center" });
+    const 矩形 = shell.getBoundingClientRect();
+    return document.elementFromPoint(矩形.left + 矩形.width / 2, 矩形.top + 矩形.height / 2) === 输入框;
+  }));
+  expect(命中).toEqual([true, true]);
 
   await page.locator("[data-bazi-date]").fill("1990-05-20");
-  await expect(page.locator('[data-picker-value="date"]')).toHaveText("1990年5月20日");
+  await expect(page.locator('[data-picker-value="bazi-date"]')).toHaveText("1990年5月20日");
   await page.locator("[data-bazi-time]").fill("14:35");
-  await expect(page.locator('[data-picker-value="time"]')).toHaveText("14:35");
+  await expect(page.locator('[data-picker-value="bazi-time"]')).toHaveText("14:35");
 });
 
-for (const width of [1024, 1440] as const) {
+for (const width of [440, 430, 390, 320] as const) {
+  test(`WebKit ${width}px：择日日期时间使用受控shell，fieldset不越过grid且值同步`, async ({ page }) => {
+    const 控制台错误: string[] = [];
+    const 资源404: string[] = [];
+    page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
+    page.on("response", (响应) => { if (响应.status() === 404) 资源404.push(响应.url()); });
+    await page.setViewportSize({ width, height: 956 });
+    await page.goto("/");
+
+    const 单人布局 = await page.evaluate(() => {
+      const 表单 = document.querySelector<HTMLElement>(".election-form")!;
+      const 容器框 = 表单.getBoundingClientRect();
+      return ["election-start", "election-end"].map((键) => {
+        const shell = document.querySelector<HTMLElement>(`[data-picker-shell="${键}"]`)!;
+        const 输入框 = shell.querySelector<HTMLInputElement>(".mobile-picker-native")!;
+        shell.scrollIntoView({ block: "center" });
+        const 标签框 = shell.closest("label")!.getBoundingClientRect();
+        const 框 = shell.getBoundingClientRect();
+        const 原生框 = 输入框.getBoundingClientRect();
+        const 原生样式 = getComputedStyle(输入框);
+        return {
+          在表单内容区: 框.left >= 容器框.left - 1 && 框.right <= 容器框.right + 1,
+          与标签等宽: Math.abs(框.left - 标签框.left) <= 1 && Math.abs(框.right - 标签框.right) <= 1,
+          原生覆盖shell: Math.abs(原生框.left - 框.left) <= 1 && Math.abs(原生框.right - 框.right) <= 1
+            && Math.abs(原生框.top - 框.top) <= 1 && Math.abs(原生框.bottom - 框.bottom) <= 1,
+          原生可用: 原生样式.position === "absolute" && 原生样式.opacity === "0" && 原生样式.display !== "none",
+          点击命中原生: document.elementFromPoint(框.left + 框.width / 2, 框.top + 框.height / 2) === 输入框,
+        };
+      });
+    });
+    expect(单人布局.every((项) => Object.values(项).every(Boolean))).toBe(true);
+
+    await page.getByRole("button", { name: "双人婚姻" }).click();
+    const 双人布局 = await page.evaluate(() => {
+      const 人物区 = document.querySelector<HTMLElement>(".election-people")!;
+      const 人物 = document.querySelector<HTMLElement>('[data-election-person="1"]')!;
+      const 人物区框 = 人物区.getBoundingClientRect();
+      const 人物框 = 人物.getBoundingClientRect();
+      const 人物样式 = getComputedStyle(人物);
+      const 控件 = ["person-1-date", "person-1-time"].map((键) => {
+        const shell = document.querySelector<HTMLElement>(`[data-picker-shell="${键}"]`)!;
+        const 输入框 = shell.querySelector<HTMLInputElement>(".mobile-picker-native")!;
+        shell.scrollIntoView({ block: "center" });
+        const 标签框 = shell.closest("label")!.getBoundingClientRect();
+        const 框 = shell.getBoundingClientRect();
+        const 原生框 = 输入框.getBoundingClientRect();
+        const 原生样式 = getComputedStyle(输入框);
+        return {
+          在fieldset内: 框.left >= 人物框.left - 1 && 框.right <= 人物框.right + 1,
+          与gridCell等宽: Math.abs(框.left - 标签框.left) <= 1 && Math.abs(框.right - 标签框.right) <= 1,
+          原生覆盖shell: Math.abs(原生框.left - 框.left) <= 1 && Math.abs(原生框.right - 框.right) <= 1
+            && Math.abs(原生框.top - 框.top) <= 1 && Math.abs(原生框.bottom - 框.bottom) <= 1,
+          原生可用: 原生样式.position === "absolute" && 原生样式.opacity === "0" && 原生样式.display !== "none",
+          点击命中原生: document.elementFromPoint(框.left + 框.width / 2, 框.top + 框.height / 2) === 输入框,
+        };
+      });
+      return {
+        fieldset在父grid内: 人物框.left >= 人物区框.left - 1 && 人物框.right <= 人物区框.right + 1,
+        fieldset根样式正确: 人物样式.boxSizing === "border-box" && 人物样式.marginLeft === "0px" && 人物样式.marginRight === "0px" && 人物样式.minInlineSize === "0px",
+        乙方两列符合断点: getComputedStyle(人物).gridTemplateColumns.split(" ").length === (innerWidth > 420 ? 2 : 1),
+        控件,
+        无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      };
+    });
+    expect(双人布局.fieldset在父grid内).toBe(true);
+    expect(双人布局.fieldset根样式正确).toBe(true);
+    expect(双人布局.乙方两列符合断点).toBe(true);
+    expect(双人布局.控件.every((项) => Object.values(项).every(Boolean))).toBe(true);
+    expect(双人布局.无横向滚动).toBe(true);
+
+    await page.locator("[data-election-start]").fill("2026-10-02");
+    await expect(page.locator('[data-picker-value="election-start"]')).toHaveText("2026年10月2日");
+    await page.locator("[data-election-end]").fill("2026-10-05");
+    await expect(page.locator('[data-picker-value="election-end"]')).toHaveText("2026年10月5日");
+    await page.locator("[data-person-date]").fill("1992-09-12");
+    await expect(page.locator('[data-picker-value="person-1-date"]')).toHaveText("1992年9月12日");
+    await page.locator("[data-person-time]").fill("08:10");
+    await expect(page.locator('[data-picker-value="person-1-time"]')).toHaveText("08:10");
+    expect(控制台错误).toEqual([]);
+    expect(资源404).toEqual([]);
+  });
+}
+
+for (const width of [768, 1024, 1440] as const) {
   test(`WebKit ${width}px：桌面原生picker保持可见且页面无横向滚动`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/");
+    await page.getByRole("button", { name: "双人婚姻" }).click();
 
-    for (const 控件选择器 of ["[data-bazi-date]", "[data-bazi-time]"]) {
+    for (const 控件选择器 of ["[data-bazi-date]", "[data-bazi-time]", "[data-election-start]", "[data-election-end]", "[data-person-date]", "[data-person-time]"]) {
       const 原生样式 = await page.locator(控件选择器).evaluate((控件) => {
         const 样式 = getComputedStyle(控件);
         return { position: 样式.position, opacity: 样式.opacity, display: 样式.display };

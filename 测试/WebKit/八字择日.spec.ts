@@ -306,8 +306,8 @@ for (const width of [390, 320]) {
   });
 }
 
-for (const width of [390, 320]) {
-  test(`${width}px iPhone 择日表单为单列且原生日期框不重叠、不裁边`, async ({ page }) => {
+for (const width of [440, 430, 390, 320]) {
+  test(`${width}px 择日表单为单列且日期shell不重叠、不裁边`, async ({ page }) => {
     const 控制台错误: string[] = [];
     page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
     await page.setViewportSize({ width, height: 900 });
@@ -315,16 +315,16 @@ for (const width of [390, 320]) {
 
     const 布局 = await page.locator(".election-form").evaluate((表单) => {
       const 矩形 = (选择器: string) => 表单.querySelector<HTMLElement>(选择器)!.getBoundingClientRect();
-      const 开始 = 矩形("[data-election-start]");
-      const 结束 = 矩形("[data-election-end]");
-      const 开始标签 = 表单.querySelector<HTMLElement>("[data-election-start]")!.parentElement!.getBoundingClientRect();
-      const 结束标签 = 表单.querySelector<HTMLElement>("[data-election-end]")!.parentElement!.getBoundingClientRect();
+      const 开始 = 矩形('[data-picker-shell="election-start"]');
+      const 结束 = 矩形('[data-picker-shell="election-end"]');
+      const 开始标签 = 表单.querySelector<HTMLElement>('[data-picker-shell="election-start"]')!.parentElement!.getBoundingClientRect();
+      const 结束标签 = 表单.querySelector<HTMLElement>('[data-picker-shell="election-end"]')!.parentElement!.getBoundingClientRect();
       const 表单框 = 表单.getBoundingClientRect();
-      const 控件 = [...表单.querySelectorAll<HTMLElement>("input, select")].map((元素) => {
+      const 控件 = [...表单.querySelectorAll<HTMLElement>(".mobile-picker-shell, select, input[type=number]")].map((元素) => {
         const 框 = 元素.getBoundingClientRect();
         const 样式 = getComputedStyle(元素);
         return {
-          类型: 元素.getAttribute("type") ?? 元素.tagName.toLowerCase(),
+          类型: 元素.matches(".mobile-picker-shell") ? "picker-shell" : 元素.getAttribute("type") ?? 元素.tagName.toLowerCase(),
           左侧在内: 框.left >= 表单框.left - 0.5,
           右侧在内: 框.right <= 表单框.right + 0.5,
           宽度吻合: Math.abs(框.width - 元素.parentElement!.getBoundingClientRect().width) <= 0.5,
@@ -350,29 +350,29 @@ for (const width of [390, 320]) {
     expect(布局.标签输入有留白).toBe(true);
     expect(布局.控件.every((控件) => 控件.左侧在内 && 控件.右侧在内 && 控件.宽度吻合)).toBe(true);
     expect(布局.控件.every((控件) => 控件.boxSizing === "border-box" && 控件.minWidth === "0px" && 控件.maxWidth !== "none")).toBe(true);
-    expect(布局.控件.filter((控件) => 控件.类型 === "date").every((控件) => 控件.上边框 === "1px")).toBe(true);
+    expect(布局.控件.filter((控件) => 控件.类型 === "picker-shell").every((控件) => 控件.上边框 === "1px")).toBe(true);
     expect(布局.无横向滚动).toBe(true);
     expect(控制台错误).toEqual([]);
   });
 }
 
-test("iPhone Safari 移动环境下择日日期框保持单列和完整边框", async ({ browser }) => {
+test("iPhone Safari 移动环境下择日日期shell保持单列和完整边框", async ({ browser }) => {
   const context = await browser.newContext({ ...devices["iPhone 13"] });
   const page = await context.newPage();
   const 控制台错误: string[] = [];
   page.on("console", (消息) => { if (消息.type() === "error") 控制台错误.push(消息.text()); });
   await page.goto("/");
   const 结果 = await page.locator(".election-form").evaluate((表单) => {
-    const 开始 = 表单.querySelector<HTMLInputElement>("[data-election-start]")!;
-    const 结束 = 表单.querySelector<HTMLInputElement>("[data-election-end]")!;
+    const 开始 = 表单.querySelector<HTMLElement>('[data-picker-shell="election-start"]')!;
+    const 结束 = 表单.querySelector<HTMLElement>('[data-picker-shell="election-end"]')!;
     const 开始框 = 开始.getBoundingClientRect();
     const 结束框 = 结束.getBoundingClientRect();
     const 表单框 = 表单.getBoundingClientRect();
     return {
       单列: 结束框.top > 开始框.bottom,
       等宽: Math.abs(开始框.width - 表单框.width) <= 0.5 && Math.abs(结束框.width - 表单框.width) <= 0.5,
-      完整边框: [开始, 结束].every((输入) => {
-        const 样式 = getComputedStyle(输入);
+      完整边框: [开始, 结束].every((shell) => {
+        const 样式 = getComputedStyle(shell);
         return 样式.borderTopWidth === "1px" && 样式.borderRightWidth === "1px"
           && 样式.borderBottomWidth === "1px" && 样式.borderLeftWidth === "1px";
       }),
