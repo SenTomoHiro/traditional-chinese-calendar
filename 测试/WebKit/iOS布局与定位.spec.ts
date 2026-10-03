@@ -58,7 +58,7 @@ for (const width of 手机宽度) {
     await page.setViewportSize({ width, height: 956 });
     await page.goto("/");
 
-    for (const 控件选择器 of ['[data-picker-shell="bazi-date"]', '[data-picker-shell="bazi-time"]']) {
+    for (const 控件选择器 of ['[data-picker-shell="date"]', '[data-picker-shell="time"]']) {
       断言位于父卡片内容区内(await 测量父卡片内容边界(page, 控件选择器, ".bazi-card"));
     }
     断言位于父卡片内容区内(await 测量父卡片内容边界(page, "[data-time-output]", ".calculation-card"));
@@ -88,7 +88,7 @@ for (const width of 手机宽度) {
 test("手机shell整块点击命中原生picker，日期和时间改变后可见值立即同步", async ({ page }) => {
   await page.setViewportSize({ width: 440, height: 956 });
   await page.goto("/");
-  const 命中 = await page.evaluate(() => ["bazi-date", "bazi-time"].map((键) => {
+  const 命中 = await page.evaluate(() => ["date", "time"].map((键) => {
     const shell = document.querySelector<HTMLElement>(`[data-picker-shell="${键}"]`)!;
     const 输入框 = shell.querySelector<HTMLInputElement>(".mobile-picker-native")!;
     shell.scrollIntoView({ block: "center" });
@@ -98,9 +98,9 @@ test("手机shell整块点击命中原生picker，日期和时间改变后可见
   expect(命中).toEqual([true, true]);
 
   await page.locator("[data-bazi-date]").fill("1990-05-20");
-  await expect(page.locator('[data-picker-value="bazi-date"]')).toHaveText("1990年5月20日");
+  await expect(page.locator('[data-picker-value="date"]')).toHaveText("1990年5月20日");
   await page.locator("[data-bazi-time]").fill("14:35");
-  await expect(page.locator('[data-picker-value="bazi-time"]')).toHaveText("14:35");
+  await expect(page.locator('[data-picker-value="time"]')).toHaveText("14:35");
 });
 
 for (const width of [440, 430, 390, 320] as const) {
@@ -142,7 +142,7 @@ for (const width of [440, 430, 390, 320] as const) {
       const 人物区框 = 人物区.getBoundingClientRect();
       const 人物框 = 人物.getBoundingClientRect();
       const 人物样式 = getComputedStyle(人物);
-      const 控件 = ["person-1-date", "person-1-time"].map((键) => {
+      const 控件 = ["person-date-1", "person-time-1"].map((键) => {
         const shell = document.querySelector<HTMLElement>(`[data-picker-shell="${键}"]`)!;
         const 输入框 = shell.querySelector<HTMLInputElement>(".mobile-picker-native")!;
         shell.scrollIntoView({ block: "center" });
@@ -178,9 +178,9 @@ for (const width of [440, 430, 390, 320] as const) {
     await page.locator("[data-election-end]").fill("2026-10-05");
     await expect(page.locator('[data-picker-value="election-end"]')).toHaveText("2026年10月5日");
     await page.locator("[data-person-date]").fill("1992-09-12");
-    await expect(page.locator('[data-picker-value="person-1-date"]')).toHaveText("1992年9月12日");
+    await expect(page.locator('[data-picker-value="person-date-1"]')).toHaveText("1992年9月12日");
     await page.locator("[data-person-time]").fill("08:10");
-    await expect(page.locator('[data-picker-value="person-1-time"]')).toHaveText("08:10");
+    await expect(page.locator('[data-picker-value="person-time-1"]')).toHaveText("08:10");
     expect(控制台错误).toEqual([]);
     expect(资源404).toEqual([]);
   });

@@ -247,17 +247,18 @@ describe("日期详情展示回归", () => {
 
   it("手机端日期时间改用可见shell与绝对定位透明原生picker", () => {
     const 手机断点 = 页面样式.match(/@media \(max-width: 560px\) \{[\s\S]*?(?=@media \(max-width: 350px\))/u)?.[0] ?? "";
-    expect(页面源码).toContain("function 日期时间选择器");
-    expect(页面源码).toContain('class="mobile-picker-shell" data-picker-shell="${键}"');
-    expect(页面源码).toContain('class="mobile-picker-value" data-picker-value="${键}"');
-    expect(页面源码).toContain('键: "election-start"');
-    expect(页面源码).toContain('键: "election-end"');
-    expect(页面源码).toContain('键: `person-${索引}-date`');
-    expect(页面源码).toContain('键: `person-${索引}-time`');
+    expect(页面源码).toContain('class="mobile-picker-shell" data-picker-shell="date"');
+    expect(页面源码).toContain('class="mobile-picker-shell" data-picker-shell="time"');
+    expect(页面源码).toContain('class="mobile-picker-value" data-picker-value="date"');
+    expect(页面源码).toContain('class="mobile-picker-value" data-picker-value="time"');
     expect(手机断点).toMatch(/\.mobile-picker-shell\s*\{[^}]*position:\s*relative[^}]*min-height:\s*38px[^}]*padding:\s*7px 9px[^}]*border:/u);
-    expect(手机断点).toMatch(/\.mobile-picker-native\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*opacity:\s*0[^}]*appearance:\s*auto/u);
-    expect(手机断点).not.toMatch(/\.mobile-picker-shell\s*\{[^}]*overflow:\s*hidden/u);
+    expect(手机断点).toMatch(/\.bazi-form \.mobile-picker-native,\s*\.election-form \.mobile-picker-native,\s*\.election-person \.mobile-picker-native\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*opacity:\s*0[^}]*appearance:\s*auto/u);
+    expect(页面源码).toContain('data-picker-shell="election-start"');
+    expect(页面源码).toContain('data-picker-shell="election-end"');
+    expect(页面源码).toContain('data-picker-shell="person-date-${索引}"');
+    expect(页面源码).toContain('data-picker-shell="person-time-${索引}"');
     expect(页面样式).toMatch(/\.election-person\s*\{[^}]*box-sizing:\s*border-box[^}]*min-inline-size:\s*0[^}]*margin:\s*0/u);
+    expect(手机断点).not.toMatch(/\.mobile-picker-shell\s*\{[^}]*overflow:\s*hidden/u);
     expect(页面样式).toMatch(/\.bazi-card\s*\{[^}]*min-width:\s*0/u);
     expect(页面样式).toMatch(/\.calculation-card\s*\{[^}]*min-width:\s*0/u);
   });
