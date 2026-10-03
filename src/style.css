@@ -1386,10 +1386,16 @@ body.deity-dialog-open {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-top: 12px;
 }
 
 .election-person {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  margin: 0;
   padding: 10px;
   border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   border-radius: 10px;
@@ -2391,7 +2397,9 @@ body.deity-dialog-open {
     pointer-events: none;
   }
 
-  .bazi-form .mobile-picker-native {
+  .bazi-form .mobile-picker-native,
+  .election-form .mobile-picker-native,
+  .election-person .mobile-picker-native {
     position: absolute;
     inset: 0;
     z-index: 1;
