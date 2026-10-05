@@ -227,6 +227,10 @@ for (const 场景 of [
     await 选择日期(page, "2026-08-06");
     await 打开人物(page, "关圣帝君");
     await 注入测试神像(page, 场景.图片宽, 场景.图片高);
+    // 布局断言在进入动画结束后测量，避免把正常缩放当成滚动位移。
+    await page.locator('[data-deity-dialog]').evaluate(async (元素) => {
+      await Promise.all(元素.getAnimations().map((动画) => 动画.finished));
+    });
 
     const 测量前 = await page.locator(".deity-dialog-card").evaluate((卡片) => {
       const 神像 = 卡片.querySelector<HTMLElement>(".deity-portrait")!;

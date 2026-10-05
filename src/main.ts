@@ -1,4 +1,5 @@
 import "./style.css";
+import { 初始化界面增强, 关闭神仙弹窗, 动画显示择日结果 } from "./界面/交互增强";
 import {
   创建月历格,
   格式化公历日期,
@@ -67,6 +68,7 @@ declare const __APP_VERSION__: string;
 const 应用容器 = document.querySelector<HTMLDivElement>("#app");
 if (!应用容器) throw new Error("页面初始化失败：找不到应用容器");
 const 根节点: HTMLDivElement = 应用容器;
+let 界面增强: ReturnType<typeof 初始化界面增强> | undefined;
 const 主题控制器 = 创建浏览器主题控制器();
 let 当前语言: 界面语言 = 读取界面语言();
 const 英文标签: Readonly<Record<string, string>> = {
@@ -500,7 +502,10 @@ function 打开神圣纪念详情(纪念: 当日神圣纪念, 触发元素: HTML
   当前详情纪念 = 纪念;
   document.body.classList.add("deity-dialog-open");
   对话框.showModal();
-  对话框.querySelector<HTMLButtonElement>("[data-action='close-deity']")?.focus();
+  对话框.querySelector<HTMLButtonElement>("[data-action='close-deity']")?.focus({ preventScroll: true });
+  // 新详情从正文起点阅读，消除原生 showModal 自动聚焦保留的滚动位置。
+  const 正文滚动区 = 对话框.querySelector<HTMLElement>(".deity-dialog-scroll");
+  if (正文滚动区) 正文滚动区.scrollTop = 0;
 }
 
 function 分享图数据(纪念: 当日神圣纪念): 分享图内容 {
@@ -548,7 +553,7 @@ async function 显示神圣纪念分享图(按钮: HTMLButtonElement): Promise<v
 }
 
 function 关闭人物详情(对话框: HTMLDialogElement): void {
-  if (对话框.open) 对话框.close();
+  关闭神仙弹窗(对话框);
 }
 
 function 每日宜忌栏(标题: "日宜" | "日忌", 内容: string[], 类型: "good" | "bad"): string {
@@ -660,8 +665,12 @@ function 规则标记(规则: 时辰规则判断): string {
 
 function 时辰概览卡片(项目: 时辰概览项): string {
   const 已手动选中 = 项目.时段.some((时段) => 时段.键 === 手动查看时辰键);
+  // 使用结构化时间生成 data-hour，避免反向解析展示文本中的分隔符。
+  const 时辰范围 = 项目.时段.length > 0
+    ? `${项目.时段[0].开始北京时间.时}-${项目.时段[项目.时段.length - 1].结束北京时间.时}`
+    : "";
   return `
-    <article class="hour-card${项目.当前 ? " is-current" : ""}${已手动选中 ? " is-selected" : ""}" aria-label="${项目.名称}${项目.当前 ? "，当前时辰" : ""}${已手动选中 ? "，已选中查看" : ""}">
+    <article class="hour-card${项目.当前 ? " is-current" : ""}${已手动选中 ? " is-selected" : ""}" data-hour="${时辰范围}" aria-label="${项目.名称}${项目.当前 ? "，当前时辰" : ""}${已手动选中 ? "，已选中查看" : ""}">
       <header><strong>${项目.名称}</strong>${项目.当前 || 已手动选中 ? `<span>${项目.当前 ? "当前" : ""}${项目.当前 && 已手动选中 ? " · " : ""}${已手动选中 ? "已选" : ""}</span>` : ""}</header>
       <div class="hour-segments">
         ${项目.时段.map((时段) => `
@@ -831,6 +840,7 @@ function 更新八字选择器显示(): void {
 function 更新八字结果区(): void {
   const 结果容器 = 根节点.querySelector<HTMLElement>("[data-bazi-output]");
   if (结果容器) 结果容器.innerHTML = 生成八字结果区();
+  界面增强?.刷新();
 }
 
 function 八字查询卡片(): string {
@@ -989,7 +999,10 @@ function 运行择日查询(): void {
     择日错误 = 错误 instanceof Error ? 错误.message : "择日查询失败";
   }
   const 输出 = 根节点.querySelector<HTMLElement>("[data-election-output]");
-  if (输出) 输出.innerHTML = 生成择日结果区();
+  if (输出) {
+    输出.innerHTML = 生成择日结果区();
+    动画显示择日结果(输出);
+  }
 }
 
 function 时辰展开详情(时段: 时辰概览段 | undefined): string {
@@ -1145,6 +1158,8 @@ function 渲染(): void {
                 const 是今天 = 是同一天(当前日期, 今天);
                 const 已选择 = 是同一天(当前日期, 所选);
                 const 全部事件 = [...日期信息.传统节日, ...日期信息.神圣纪念, ...日期信息.斗降];
+                const 有神仙圣诞 = 日期信息.神圣纪念.length > 0;
+                const 格式化日期 = `${状态.年}-${String(状态.月 + 1).padStart(2, '0')}-${String(日期).padStart(2, '0')}`;
                 const 事件提示 = 全部事件.length > 0 ? `，${全部事件.join("、")}` : "";
                 const 无障碍说明 = 转义HTML(
                   `${格式化公历日期(当前日期)}，${星期名称[当前日期.getDay()]}，农历${日期信息.农历.显示}${事件提示}${是今天 ? "，今天" : ""}`,
@@ -1152,8 +1167,9 @@ function 渲染(): void {
                 return `
                   <button
                     type="button"
-                    class="day-button${是今天 ? " is-today" : ""}${已选择 ? " is-selected" : ""}"
+                    class="day-button${是今天 ? " is-today" : ""}${已选择 ? " is-selected" : ""}${有神仙圣诞 ? " has-deity" : ""}"
                     data-day="${日期}"
+                    data-date="${格式化日期}"
                     role="gridcell"
                     aria-label="${无障碍说明}"
                     ${是今天 ? 'aria-current="date"' : ""}
@@ -1223,6 +1239,7 @@ function 渲染(): void {
     <dialog class="deity-dialog" data-deity-dialog aria-labelledby="deity-dialog-title"></dialog>
   `;
   应用英文标签();
+  界面增强?.刷新();
 }
 
 根节点.addEventListener("input", (事件) => {
@@ -1271,7 +1288,10 @@ function 渲染(): void {
     const 事项选择 = 根节点.querySelector<HTMLSelectElement>("[data-election-event]");
     if (事项选择) 事项选择.innerHTML = 择日事项选项(择日事项大类, 择日事项);
     const 输出 = 根节点.querySelector<HTMLElement>("[data-election-output]");
-    if (输出) 输出.innerHTML = 生成择日结果区();
+    if (输出) {
+      输出.innerHTML = 生成择日结果区();
+      动画显示择日结果(输出);
+    }
   } else if (目标.matches("[data-election-event]")) {
     const 事项 = 目标.value as 现代事项;
     if (!获取分类事项(择日事项大类).includes(事项)) return;
@@ -1279,7 +1299,10 @@ function 渲染(): void {
     最近择日结果 = null;
     择日错误 = "";
     const 输出 = 根节点.querySelector<HTMLElement>("[data-election-output]");
-    if (输出) 输出.innerHTML = 生成择日结果区();
+    if (输出) {
+      输出.innerHTML = 生成择日结果区();
+      动画显示择日结果(输出);
+    }
   } else return;
 });
 
@@ -1521,3 +1544,6 @@ const 分钟实时更新器 = 创建分钟实时更新器((当前毫秒) => {
 分钟实时更新器.启动();
 window.addEventListener("pagehide", () => 分钟实时更新器.停止());
 window.addEventListener("pageshow", () => 分钟实时更新器.启动());
+
+// 初始化界面增强动画
+界面增强 = 初始化界面增强(根节点);

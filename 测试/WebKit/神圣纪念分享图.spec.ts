@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { 分享图尺寸 } from "../../src/界面/神圣纪念分享图";
 
 async function 打开纪念(page: Page, 日期: string, 名称: string): Promise<void> {
   await page.goto("/");
@@ -43,21 +44,21 @@ test("无神像的独立纪念仍可生成分享图", async ({ page }) => {
   await expect(page.getByAltText("天腊之辰朋友圈分享图预览")).toBeVisible();
 });
 
-test("上方 3:4 主视觉固定，文字区随实际正文增长并完整导出", async ({ page }) => {
+test("新版主视觉固定，文字区随实际正文增长并完整导出", async ({ page }) => {
   await 打开纪念(page, "2026-07-02", "湛然天师");
   await page.getByRole("button", { name: "生成分享图" }).click();
   const 短图 = page.locator(".deity-share-panel > img");
   await expect(短图).toHaveJSProperty("complete", true);
   const 短高 = await 短图.evaluate((图片) => (图片 as HTMLImageElement).naturalHeight);
   expect(短高).toBeGreaterThan(1440);
-  const 拼接处 = await 短图.evaluate((图片) => {
+  const 拼接处 = await 短图.evaluate((图片, 主视觉高) => {
     const 画布 = document.createElement("canvas");
     画布.width = (图片 as HTMLImageElement).naturalWidth;
     画布.height = (图片 as HTMLImageElement).naturalHeight;
     const 画笔 = 画布.getContext("2d")!;
     画笔.drawImage(图片 as HTMLImageElement, 0, 0);
-    return [1438, 1450].map((y) => Array.from(画笔.getImageData(540, y, 1, 1).data));
-  });
+    return [主视觉高 - 2, 主视觉高 + 12].map((y) => Array.from(画笔.getImageData(540, y, 1, 1).data));
+  }, 分享图尺寸.主视觉高);
   expect(拼接处[0]).not.toEqual(拼接处[1]);
   expect(拼接处[1][0]).toBeGreaterThan(240);
   await page.getByRole("button", { name: "关闭分享图预览" }).click();

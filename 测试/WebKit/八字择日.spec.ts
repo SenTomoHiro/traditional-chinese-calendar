@@ -17,12 +17,18 @@ test("择日四档均可真实显示且徽标颜色互异", async ({ page }) => 
   await expect(徽标.first()).toHaveText("优先推荐");
   await expect(徽标.nth(1)).toHaveText("推荐");
   await expect(徽标.nth(2)).toHaveText("可以考虑");
-  const 颜色 = await 徽标.evaluateAll((元素) => 元素.slice(0, 3).map((项) => getComputedStyle(项).backgroundColor));
+  const 颜色 = await 徽标.evaluateAll((元素) => 元素.slice(0, 3).map((项) => {
+    const 样式 = getComputedStyle(项);
+    return `${样式.backgroundColor}|${样式.backgroundImage}`;
+  }));
   await page.locator("[data-election-start]").fill("2026-08-10");
   await page.locator("[data-election-end]").fill("2026-08-10");
   await page.getByRole("button", { name: "开始筛选" }).click();
   await expect(徽标.first()).toHaveText("谨慎选择");
-  颜色.push(await 徽标.first().evaluate((项) => getComputedStyle(项).backgroundColor));
+  颜色.push(await 徽标.first().evaluate((项) => {
+    const 样式 = getComputedStyle(项);
+    return `${样式.backgroundColor}|${样式.backgroundImage}`;
+  }));
   expect(new Set(颜色).size).toBe(4);
 });
 

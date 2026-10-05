@@ -28,6 +28,20 @@
   --calendar-muted: #766043;
   --warm-icon-filter: invert(23%) sepia(27%) saturate(1357%) hue-rotate(354deg) brightness(92%) contrast(94%);
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23684823' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  /* 动画变量系统 */
+  --duration-quick: 150ms;
+  --duration-normal: 200ms;
+  --duration-smooth: 280ms;
+  --duration-slow: 350ms;
+  --ease-out-smooth: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* 阴影层次扩展 */
+  --shadow-sm: 0 2px 8px rgba(71, 45, 21, 0.08);
+  --shadow-lg: 0 32px 100px rgba(32, 17, 8, 0.42);
 }
 
 * {
@@ -548,7 +562,13 @@ button:focus-visible {
   cursor: pointer;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 16px;
-  transition: background 130ms ease, color 130ms ease, transform 130ms ease;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    background var(--duration-quick) ease,
+    color var(--duration-quick) ease,
+    transform var(--duration-quick) var(--ease-out-smooth),
+    box-shadow var(--duration-quick) ease;
 }
 
 .solar-day {
@@ -593,7 +613,8 @@ button:focus-visible {
 
 .day-button:hover {
   background: color-mix(in srgb, var(--gold-soft) 36%, transparent);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: var(--shadow-sm);
 }
 
 .day-button.is-today .today-mark {
@@ -604,6 +625,63 @@ button:focus-visible {
   font-family: inherit;
   font-size: 9px;
   font-weight: 700;
+  animation: today-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes today-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+}
+
+/* 神仙圣诞日期金色光晕 */
+.day-button.has-deity::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(212, 175, 55, 0.2),
+    transparent 70%
+  );
+  opacity: 0;
+  animation: deity-aura 2.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes deity-aura {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* 点击涟漪效果 */
+.day-button .ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.4);
+  transform: scale(0);
+  animation: ripple-expand 0.6s var(--ease-out-smooth);
+  pointer-events: none;
+}
+
+@keyframes ripple-expand {
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }
 
 .day-button.is-selected {
@@ -987,9 +1065,68 @@ body.deity-dialog-open {
   box-shadow: 0 32px 100px rgba(32, 17, 8, 0.42);
 }
 
+/* 弹窗进入动画 */
+.deity-dialog[open] {
+  animation: dialog-scale-in var(--duration-smooth) var(--ease-out-smooth);
+}
+
+@keyframes dialog-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .deity-dialog::backdrop {
   background: rgba(23, 12, 7, 0.7);
   backdrop-filter: blur(2px);
+  animation: backdrop-fade-in var(--duration-smooth) var(--ease-out-smooth);
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+}
+
+/* 弹窗退出动画 */
+.deity-dialog.is-closing {
+  animation: dialog-scale-out var(--duration-normal) var(--ease-in-out-smooth);
+}
+
+@keyframes dialog-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+}
+
+.deity-dialog.is-closing::backdrop {
+  animation: backdrop-fade-out var(--duration-normal) var(--ease-in-out-smooth);
+}
+
+@keyframes backdrop-fade-out {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
 }
 
 .deity-dialog-card {
@@ -1184,6 +1321,27 @@ body.deity-dialog-open {
   min-width: 0;
   padding: 10px 6px;
   text-align: center;
+  opacity: 1;
+}
+
+.bazi-chart.is-animating .bazi-chart-column {
+  animation: pillar-fade-in 0.5s var(--ease-elastic) both;
+}
+
+.bazi-chart-column:nth-child(1) { animation-delay: 0ms; }
+.bazi-chart-column:nth-child(2) { animation-delay: 100ms; }
+.bazi-chart-column:nth-child(3) { animation-delay: 200ms; }
+.bazi-chart-column:nth-child(4) { animation-delay: 300ms; }
+
+@keyframes pillar-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bazi-chart-column + .bazi-chart-column {
@@ -1218,6 +1376,15 @@ body.deity-dialog-open {
   background: color-mix(in srgb, var(--gold-soft) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   border-radius: 12px;
+  transition:
+    transform var(--duration-normal) var(--ease-out-smooth),
+    box-shadow var(--duration-normal) var(--ease-out-smooth),
+    border-color var(--duration-quick) ease;
+}
+
+.election-day:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-sm);
 }
 
 .analysis-grid h3,
@@ -1473,7 +1640,25 @@ body.deity-dialog-open {
 
 .election-results > header strong { color: var(--gold-strong); font-size: 13px; }
 .election-results > header span { color: var(--calendar-muted); font-size: 9px; }
-.election-day.is-leading { border-color: var(--gold); }
+.election-day.is-leading {
+  border-color: var(--gold);
+  animation: leading-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes leading-shimmer {
+  0%, 100% {
+    border-color: var(--gold);
+    box-shadow:
+      0 0 0 1px var(--gold),
+      0 0 12px 0 rgba(170, 120, 44, 0.3);
+  }
+  50% {
+    border-color: var(--gold-strong);
+    box-shadow:
+      0 0 0 1px var(--gold-strong),
+      0 0 20px 2px rgba(170, 120, 44, 0.45);
+  }
+}
 
 .election-day-heading {
   display: flex;
@@ -1484,9 +1669,37 @@ body.deity-dialog-open {
 
 .election-day-heading div { display: flex; gap: 7px; align-items: center; }
 .election-day-heading time { color: var(--gold-strong); font-family: var(--serif-font); font-size: 16px; font-weight: 700; }
-.election-day-heading .election-grade { padding: 3px 8px; border: 1px solid currentColor; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
-.election-grade.is-优先推荐 { color: #fff8eb; background: var(--gold-strong); border-color: var(--gold-strong); }
-.election-grade.is-推荐 { color: var(--gold-strong); background: color-mix(in srgb, var(--gold-soft) 34%, var(--surface-strong)); border-color: var(--gold); }
+.election-day-heading .election-grade {
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background var(--duration-quick) ease,
+    transform var(--duration-quick) var(--ease-out-smooth);
+}
+
+.election-day:hover .election-grade {
+  transform: scale(1.05);
+}
+
+.election-grade.is-优先推荐 {
+  color: #fff8eb;
+  background: linear-gradient(135deg, var(--gold-strong), #b8924a);
+  border-color: var(--gold-strong);
+  box-shadow: 0 2px 8px rgba(112, 71, 19, 0.3);
+}
+
+.election-grade.is-推荐 {
+  color: var(--gold-strong);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--gold-soft) 40%, var(--surface-strong)),
+    color-mix(in srgb, var(--gold-soft) 28%, var(--surface-strong))
+  );
+  border-color: var(--gold);
+}
 .election-grade.is-可以考虑 { color: var(--muted); background: color-mix(in srgb, var(--gold-soft) 14%, var(--surface-strong)); border-color: var(--line); }
 .election-grade.is-谨慎选择 { color: var(--accent-strong); background: color-mix(in srgb, var(--accent-soft) 60%, var(--surface-strong)); border-color: var(--accent); }
 .election-day-heading p { margin: 0; color: var(--calendar-muted); font-size: 9px; line-height: 1.5; text-align: right; }
@@ -1890,17 +2103,45 @@ body.deity-dialog-open {
   background: color-mix(in srgb, var(--gold) 7%, transparent);
   border: 1px solid var(--panel-line);
   border-radius: 10px;
+  transition:
+    transform var(--duration-normal) var(--ease-out-smooth),
+    box-shadow var(--duration-normal) var(--ease-out-smooth),
+    background var(--duration-quick) ease;
+  will-change: transform;
+}
+
+.hour-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 .hour-card.is-current {
   background: color-mix(in srgb, var(--gold) 18%, transparent);
   border-color: var(--gold-soft);
   box-shadow: inset 3px 0 0 var(--accent);
+  animation: hour-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes hour-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 3px 0 0 var(--accent),
+      0 0 0 0 rgba(212, 175, 55, 0);
+  }
+  50% {
+    box-shadow:
+      inset 3px 0 0 var(--accent),
+      0 0 12px 2px rgba(212, 175, 55, 0.35);
+  }
 }
 
 .hour-card.is-selected {
   background: color-mix(in srgb, var(--accent) 13%, transparent);
   border-color: color-mix(in srgb, var(--accent) 78%, var(--gold-soft));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 0 16px 0 rgba(147, 54, 44, 0.4);
+  transform: translateY(-1px);
 }
 
 .hour-card > header {
@@ -1938,16 +2179,34 @@ body.deity-dialog-open {
   border: 1px solid transparent;
   border-radius: 7px;
   cursor: pointer;
+  transition:
+    background var(--duration-quick) ease,
+    border-color var(--duration-quick) ease,
+    transform var(--duration-quick) var(--ease-out-smooth);
 }
 
 .hour-segment:hover {
   background: color-mix(in srgb, var(--gold) 12%, transparent);
+  transform: translateX(2px);
 }
 
 .hour-segment.is-selected {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
   border-color: color-mix(in srgb, var(--accent) 76%, var(--gold-soft));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-soft) 25%, transparent);
+  animation: segment-glow 0.4s var(--ease-out-smooth);
+}
+
+@keyframes segment-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-soft) 25%, transparent);
+  }
 }
 
 .hour-segment + .hour-segment {
@@ -2633,7 +2892,70 @@ body.deity-dialog-open {
   color: #25170d;
 }
 
+/* 深色模式动画适配 */
+:root[data-theme="dark"] .hour-card.is-current {
+  animation: hour-breathe-dark 2.4s ease-in-out infinite;
+}
+
+@keyframes hour-breathe-dark {
+  0%, 100% {
+    box-shadow:
+      inset 3px 0 0 var(--accent),
+      0 0 0 0 rgba(197, 160, 82, 0);
+  }
+  50% {
+    box-shadow:
+      inset 3px 0 0 var(--accent),
+      0 0 16px 3px rgba(197, 160, 82, 0.25);
+  }
+}
+
+:root[data-theme="dark"] .day-button.has-deity::before {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(197, 160, 82, 0.18),
+    transparent 70%
+  );
+}
+
+:root[data-theme="dark"] .election-day.is-leading {
+  animation: leading-shimmer-dark 2s ease-in-out infinite;
+}
+
+@keyframes leading-shimmer-dark {
+  0%, 100% {
+    border-color: var(--gold);
+    box-shadow:
+      0 0 0 1px var(--gold),
+      0 0 16px 0 rgba(197, 160, 82, 0.35);
+  }
+  50% {
+    border-color: var(--gold-strong);
+    box-shadow:
+      0 0 0 1px var(--gold-strong),
+      0 0 24px 2px rgba(197, 160, 82, 0.5);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* 禁用所有动画 */
+  .deity-dialog[open],
+  .deity-dialog.is-closing,
+  .deity-dialog::backdrop,
+  .hour-card,
+  .hour-card.is-current,
+  .hour-segment.is-selected,
+  .bazi-chart-column,
+  .day-button.is-today .today-mark,
+  .day-button.has-deity::before,
+  .day-button .ripple,
+  .election-day.is-leading,
+  .election-grade,
+  :root[data-theme="dark"] .hour-card.is-current,
+  :root[data-theme="dark"] .election-day.is-leading {
+    animation: none !important;
+  }
+
   *,
   *::before,
   *::after {

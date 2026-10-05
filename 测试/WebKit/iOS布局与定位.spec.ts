@@ -142,6 +142,10 @@ for (const width of [440, 430, 390, 320] as const) {
       const 人物区框 = 人物区.getBoundingClientRect();
       const 人物框 = 人物.getBoundingClientRect();
       const 人物样式 = getComputedStyle(人物);
+      const [日期标签, 时间标签] = Array.from(人物.querySelectorAll(':scope > label')).map((元素) => 元素.getBoundingClientRect());
+      const 乙方列布局正确 = innerWidth > 420
+        ? Math.abs(日期标签.top - 时间标签.top) <= 1 && 时间标签.left >= 日期标签.right - 1
+        : Math.abs(日期标签.left - 时间标签.left) <= 1 && 时间标签.top >= 日期标签.bottom - 1;
       const 控件 = ["person-date-1", "person-time-1"].map((键) => {
         const shell = document.querySelector<HTMLElement>(`[data-picker-shell="${键}"]`)!;
         const 输入框 = shell.querySelector<HTMLInputElement>(".mobile-picker-native")!;
@@ -162,7 +166,7 @@ for (const width of [440, 430, 390, 320] as const) {
       return {
         fieldset在父grid内: 人物框.left >= 人物区框.left - 1 && 人物框.right <= 人物区框.right + 1,
         fieldset根样式正确: 人物样式.boxSizing === "border-box" && 人物样式.marginLeft === "0px" && 人物样式.marginRight === "0px" && 人物样式.minInlineSize === "0px",
-        乙方两列符合断点: getComputedStyle(人物).gridTemplateColumns.split(" ").length === (innerWidth > 420 ? 2 : 1),
+        乙方两列符合断点: 乙方列布局正确,
         控件,
         无横向滚动: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
       };
