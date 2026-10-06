@@ -1170,6 +1170,7 @@ function 渲染(): void {
                     class="day-button${是今天 ? " is-today" : ""}${已选择 ? " is-selected" : ""}${有神仙圣诞 ? " has-deity" : ""}"
                     data-day="${日期}"
                     data-date="${格式化日期}"
+                    ${日期信息.其余事件数 > 0 ? 'data-has-more-events' : ""}
                     role="gridcell"
                     aria-label="${无障碍说明}"
                     ${是今天 ? 'aria-current="date"' : ""}
@@ -1179,7 +1180,6 @@ function 渲染(): void {
                     <span class="lunar-day">${日期信息.农历摘要}</span>
                     <span class="day-events" title="${转义HTML(全部事件.join("、"))}">
                       ${日期信息.显示事件.map((名称) => `<span class="day-event">${转义HTML(名称)}</span>`).join("")}
-                      ${日期信息.其余事件数 > 0 ? `<span class="day-event day-event-more">另${日期信息.其余事件数}项</span>` : ""}
                     </span>
                     ${是今天 ? '<small class="today-mark">今</small>' : ""}
                   </button>`;

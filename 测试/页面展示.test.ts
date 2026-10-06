@@ -378,13 +378,16 @@ describe("日期详情展示回归", () => {
     expect(页面源码).toContain('日期信息项目("传统节日", 传统节日)');
   });
 
-  it("月历固定三条信息区且超出后显示另N项", () => {
+  it("月历固定三条信息区并以纯视觉标记提示其余事件", () => {
     expect(页面源码).toContain('class="day-events"');
     expect(页面源码).toContain("日期信息.显示事件.map");
-    expect(页面源码).toContain("另${日期信息.其余事件数}项");
-    expect(页面样式).toContain("grid-template-rows: repeat(3, 1.15em)");
+    expect(页面源码).toContain("日期信息.其余事件数 > 0 ? 'data-has-more-events'");
+    expect(页面源码).not.toContain("另${日期信息.其余事件数}项");
+    expect(页面源码).toContain('aria-label="${无障碍说明}"');
+    expect(页面样式).toContain("grid-template-rows: repeat(3, 1.2em)");
     expect(页面样式).toMatch(/\.days-grid\s*\{[^}]*gap:\s*2px;/u);
-    expect(页面样式).toMatch(/\.day-event\s*\{[^}]*font-size:\s*8px;/u);
+    expect(页面样式).toMatch(/\.day-event\s*\{[^}]*font-size:\s*10px;/u);
+    expect(页面样式).toContain(".day-button[data-has-more-events]::after");
   });
 
   it("三项辅助信息三栏、详情内风水规则自适应多列", () => {
